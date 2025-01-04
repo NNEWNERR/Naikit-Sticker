@@ -58,6 +58,190 @@ export class CreateWorkSheetComponent implements OnInit {
     }
   ]
 
+  contacts = [
+    {
+      title: 'หน้าร้าน',
+      value: 'front',
+      disabled: false
+    },
+    {
+      title: 'โทรศัพท์',
+      value: 'phone',
+      disabled: false
+    },
+    {
+      title: 'เฟสบุ๊ค',
+      value: 'facebook',
+      disabled: false
+    },
+    {
+      title: 'ไลน์',
+      value: 'line',
+      disabled: false
+    },
+    {
+      title: 'อีเมล',
+      value: 'email',
+      disabled: false
+    }
+  ]
+
+  // contacts = ['หน้าร้าน', 'โทรศัพท์', 'เฟสบุ๊ค', 'ไลน์', 'อีเมล']
+  // sellers = นาเดียร์ แมว น้ำ ซัง ซิน
+  // designers = ฟุ๊ก ไนซ์ เลย์ เอก เยาว์
+  // printers = ฟุ๊ก ไนซ์ เลย์ เอก เยาว์ นิว ซี ฮอล อัน ดาว(พ) เลย์(ช)
+
+  sellers = [
+    {
+      title: 'admin',
+      value: 'admin',
+      disabled: false
+    },
+    {
+      title: 'นาเดียร์',
+      value: 'นาเดียร์',
+      disabled: false
+    },
+    {
+      title: 'แมว',
+      value: 'แมว',
+      disabled: false
+    },
+    {
+      title: 'น้ำ',
+      value: 'น้ำ',
+      disabled: false
+    },
+    {
+      title: 'ซัง',
+      value: 'ซัง',
+      disabled: false
+    },
+    {
+      title: 'ซิน',
+      value: 'ซิน',
+      disabled: false
+    }
+  ]
+
+  payments = [
+    {
+      title: 'เงินสด',
+      value: 'เงินสด',
+      disabled: false
+    },
+    {
+      title: 'โอน',
+      value: 'โอน',
+      disabled: false
+    },
+    {
+      title: 'เช็ค',
+      value: 'เช็ค',
+      disabled: false
+    },
+    {
+      title: 'เครดิต',
+      value: 'เครดิต',
+      disabled: false
+    },
+    {
+      title: 'อื่นๆ',
+      value: 'อื่นๆ',
+      disabled: false
+    },
+  ]
+
+  designers = [
+    {
+      title: 'admin',
+      value: 'admin',
+      disabled: false
+    },
+    {
+      title: 'ฟุ๊ก',
+      value: 'ฟุ๊ก',
+      disabled: false
+    },
+    {
+      title: 'ไนซ์',
+      value: 'ไนซ์',
+      disabled: false
+    },
+    {
+      title: 'เลย์',
+      value: 'เลย์',
+      disabled: false
+    },
+    {
+      title: 'เอก',
+      value: 'เอก',
+      disabled: false
+    },
+    {
+      title: 'เยาว์',
+      value: 'เยาว์',
+      disabled: false
+    }
+  ]
+
+  printers = [
+    {
+      title: 'admin',
+      value: 'admin',
+      disabled: false
+    },
+    {
+      title: 'ฟุ๊ก',
+      value: 'ฟุ๊ก',
+      disabled: false
+    },
+    {
+      title: 'ไนซ์',
+      value: 'ไนซ์',
+      disabled: false
+    },
+    {
+      title: 'เลย์',
+      value: 'เลย์',
+      disabled: false
+    },
+    {
+      title: 'เอก',
+      value: 'เอก',
+      disabled: false
+    },
+    {
+      title: 'เยาว์',
+      value: 'เยาว์',
+      disabled: false
+    },
+    {
+      title: 'นิว',
+      value: 'นิว',
+      disabled: false
+    },
+    {
+      title: 'ซี',
+      value: 'ซี',
+      disabled: false
+    },
+    {
+      title: 'อัน',
+      value: 'อัน',
+      disabled: false
+    },
+    {
+      title: 'ดาว',
+      value: 'ดาว',
+      disabled: false
+    },
+    {
+      title: 'เลย์(ช)',
+      value: 'เลย์(ช)',
+      disabled: false
+    }
+  ]
 
   constructor(
     private firestoreService: FirestoreService,
@@ -71,7 +255,20 @@ export class CreateWorkSheetComponent implements OnInit {
 
   initForm() {
     this.form = this.fb.group({
-      types: ['']
+      reference: [''],
+      contact: [''],
+      name: [''],
+      phone: [''],
+      line: [''],
+      seller: [''],
+      total: [''],
+      deposit: [''],
+      payment: [''],
+      designer: [''],
+      date: [''],
+      printer: [''],
+      print_date: [''],
+      remark: ['']
     })
   }
 
@@ -147,5 +344,78 @@ export class CreateWorkSheetComponent implements OnInit {
         this.modalController.dismiss();
       }
     })
+  }
+
+  onSubmit() {
+    if (this.form.valid) {
+      console.log(this.form.value);
+      const date = new Date();
+      const newDate = new Date(date.setDate(date.getDate() + 1));
+      const total = 600
+      const deposit = 600
+      const remaining = total - deposit
+      const data = {
+        id: uuidv4(),  // รหัสงาน
+        serial_number: this.form.value.reference, // หมายเลขงาน
+        contact: this.form.value.contact, // ช่องทางการติดต่อ
+        customer_name: this.form.value.name, // ชื่อลูกค้า
+        phone: this.form.value.phone,  // เบอร์โทร 
+        line_name: this.form.value.line, // ชื่อผู้ติดต่อ
+        created_at: new Date(),  // วันที่สร้าง
+        created_by: "admin",  // ผู้สร้าง
+        seller_name: this.form.value.seller, // ชื่อผู้ขาย
+        work: [
+          // {
+          //   id: uuidv4(),
+          //   type: "ไวนิล",  // ชนิดงาน
+          //   height: "300", // ความสูง
+          //   width: "800",  // ความกว้าง
+          //   unit_of_length: "cm.",  // หน่วย
+          //   option: "ตาไก่",  // หมวดหมู่
+          //   quantity: 2,  // จํานวน
+          //   total: 500,  // ราคาต่อหน่วย
+          // },
+          // {
+          //   id: uuidv4(),
+          //   type: "สตก.",  // ชนิดงาน
+          //   height: "30", // ความสูง
+          //   width: "80",  // ความกว้าง
+          //   unit_of_length: "cm.",  // หน่วย
+          //   option: "ติดฟิว",  // หมวดหมู่
+          //   quantity: 2,  // จํานวน
+          //   total: 500,  // ราคาต่อหน่วย
+          // },
+        ],
+        other: "",  // งานอื่นๆ
+        payment: {
+          total: total,  // ราคารวม
+          deposit: deposit,   // เงินมัดจำ
+          date_of_payment: new Date(),   // วันที่ชําระ
+          payment_method: "เงินสด",  // วิธีการชําระ
+          remaining: remaining,  // คงเหลือ
+        },
+        status: "รอออกแบบ",
+        remark: this.form.value.remark,  // หมายเหตุ 
+        design_by: this.form.value.designer,  // ผู้ออกแบบ 
+        design_date: "",  // วันที่รับแบบ
+        confirm_by: "admin",  // ผู้อนุมัติ
+        confirm_date: "",  // วันที่อนุมัติ
+        print_by: this.form.value.printer, // ผู้พิมพ์
+        print_date: "", // วันที่พิมพ์
+        is_urgent: false,  // เป็นงานด่วน
+        date_of_acceptance: newDate, // วันที่รับงาน
+        date_of_submission: "", // วันที่ส่งแบบ
+        date_of_completion: "", // วันที่ส่งมอบงาน
+      }
+      console.log(data);
+
+      const collectionRef = collection(db, "jobs");
+      this.firestoreService.addDatatoFirebase(collectionRef, data).then(() => {
+        this.modalController.dismiss();
+        this.form.reset();
+      }).catch((error) => {
+        console.log(error);
+      })
+    }
   }
 }
