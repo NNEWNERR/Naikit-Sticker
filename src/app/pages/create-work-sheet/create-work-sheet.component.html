@@ -1,0 +1,34 @@
+<ion-content class="ion-padding">
+    <div>ใบสั่งงาน</div>
+    <ion-button expand="block" (click)="create()">สร้างใบงาน</ion-button>
+    <form [formGroup]="form">
+        <app-select [parentForm]="form" label="ประเภทงาน" formControlName="types" placeholder="กรุณาเลือกประเภทงาน"
+            [multiple]="false" [options]="types" (selectChange)="segmentChanged($event)"></app-select>
+    </form>
+    <div [ngSwitch]="type">
+        <div *ngSwitchCase="'vinyl'">
+            Vinyl
+        </div>
+        <div *ngSwitchCase="'sticker'">
+            Sticker
+        </div>
+        <div *ngSwitchCase="'label'">
+            Label
+        </div>
+        <div *ngSwitchCase="'card'">
+            Card
+        </div>
+        <div *ngSwitchCase="'plow'">
+            Plow
+        </div>
+        <div *ngSwitchCase="'light_box'">
+            Light Box
+        </div>
+        <div *ngSwitchCase="'plastic'">
+            Plastic
+        </div>
+        <div *ngSwitchCase="'tarp'">
+            Tarp
+        </div>
+    </div>
+</ion-content>

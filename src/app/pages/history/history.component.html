@@ -1,0 +1,11 @@
+<app-header title="ประวัติ"></app-header>
+<ion-content>
+  <ion-card *ngFor="let site of sites" [ngClass]="site.group.color" (click)="sitePage(site)">
+    <ion-card-header>
+      <ion-card-title>{{site.name}}</ion-card-title>
+    </ion-card-header>
+    <!-- <ion-card-content>
+      <img [src]="site.image" alt="">
+    </ion-card-content> -->
+  </ion-card>
+</ion-content>

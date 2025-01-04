@@ -1,0 +1,44 @@
+<!-- <app-header title="รายละเอียดงาน" [modal]="true"></app-header> -->
+<ion-content>
+  <div class="p-4">
+    <div>ตรวจสอบสถานะ</div>
+    <div>
+      <form (ngSubmit)="onSubmit()" [formGroup]="form">
+        <app-input [parentForm]="form" label="เบอร์โทรศัพท์" typeInput="text" formControlName="phone"
+          placeholder="กรุณาระบุหมายเลขโทรศัพท์"></app-input>
+
+        <ion-button expand="block" type="submit" [disabled]="form.invalid">ตรวจสอบ</ion-button>
+      </form>
+    </div>
+
+    <div class="grid md:grid-cols-2 grid-cols-1">
+      <ion-card *ngFor="let job of jobByPhone">
+        <ion-card-header>
+          <ion-card-title>{{job.address}}</ion-card-title>
+          <!-- <ion-card-subtitle>{{formatTime(job.book.date)}}</ion-card-subtitle> -->
+        </ion-card-header>
+        <ion-card-content>
+          <div>วันที่ทำรายการ: {{formatTime(job.created_at)}}</div>
+          <div>วันที่จอง: {{formatTime(job.book.date)}}</div>
+          <div>เบอร์โทรศัพท์: {{job.phone}}</div>
+          <div>ประเภทงาน: {{job.type}} จำนวน {{job.qty || 1}} เครื่อง</div>
+          <div>สถานะ: <span
+              [ngClass]="{'text-red-400':job.status == 'BOOKED'||job.status == 'CANCELED' || job.status == 'REJECTED','text-gray-400':job.status == 'PENDING','text-green-400' :job.status == 'COMPLETED'}">
+              {{job.status == 'PENDING' ? 'รออนุมัติ' : job.status == 'BOOKED' ? 'รอดำเนินการ' : job.status ==
+              'COMPLETED'
+              ?'เสร็จสิ้น' : job.status == 'REJECTED' ? 'งานถูกปฏิเสธ' : job.status == 'CANCELED' ? 'งานถูกยกเลิก' :
+              ''}}
+            </span>
+          </div>
+          <div>หมายเหตุ: {{job.remark}}</div>
+        </ion-card-content>
+        <!-- <div class="flex justify-end p-3">
+          <ion-button (click)="acceptJob(job)" color="success">รับงาน</ion-button>
+        <ion-button (click)="infoJob(job)">ดูงาน</ion-button>
+        <ion-button (click)="rejectJob(job)" color="danger">ปฏิเสธ</ion-button>
+        </div> -->
+      </ion-card>
+    </div>
+
+  </div>
+</ion-content>

@@ -1,0 +1,49 @@
+<app-header title="Job Schedule"></app-header>
+<ion-content>
+  <div *ngIf="rows">
+    <mat-form-field class="w-full sm:w-80 p-2">
+      <mat-label>Choose a date</mat-label>
+      <input matInput [matDatepicker]="picker" [(ngModel)]="date" (dateChange)="searchJobs()">
+      <!-- <mat-hint>MM/DD/YYYY</mat-hint> -->
+      <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+      <mat-datepicker [dateClass]="dateClass" #picker></mat-datepicker>
+    </mat-form-field>
+    <!-- sorts dir = 'asc' or 'desc' -->
+    <ngx-datatable class="flex w-full custom-datatable material expandable p-2" [columnMode]="'force'" [rows]="rows"
+      [limit]="100" rowHeight="auto" [headerHeight]="50" [footerHeight]="50" [scrollbarH]="true"
+      [rowClass]="getRowClass" [sorts]="[{prop: 'group_id', dir: 'desc'},{prop:'name', dir: 'asc'}]" (activate)="onActivate($event)">
+      <ngx-datatable-column name="สถานที่" prop="name">
+        <ng-template let-row="row" ngx-datatable-cell-template>
+          {{row.name}}
+        </ng-template>
+      </ngx-datatable-column>
+      <ngx-datatable-column [name]="time" prop="time" *ngFor="let time of column" [width]="100">
+        <ng-template let-row="row" ngx-datatable-cell-template>
+          <!-- is_qrcode -->
+          <div *ngIf="row.time[time]" class="w-full h-full text-white text-center rounded-md cursor-pointer"
+            (click)="onSelect(row.time[time].job)"
+            [ngClass]="{'bg-red-400':row.time[time].status === 'BOOKED' && row.time[time].is_qrcode === false,'bg-sky-500':row.time[time].status === 'BOOKED' && row.time[time].is_qrcode === true,'bg-gray-400':row.time[time].status === 'PENDING','bg-green-400' :row.time[time].status === 'COMPLETED'}">
+            {{row.time[time].name}} <br>
+            {{row.time[time].job ? row.time[time].job.qty ? row.time[time].job.qty + ' ตัว': '' : ''}}
+          </div>
+        </ng-template>
+      </ngx-datatable-column>
+    </ngx-datatable>
+  </div>
+
+  <!-- <ion-button (click)="add()">
+    add job
+  </ion-button> -->
+
+  <!-- <ion-item>
+    <ion-label>Select a Color</ion-label>
+    <ion-select interface="popover" placeholder="Select fruit" [(ngModel)]="selectedColor">
+      <ion-select-option *ngFor="let color of colors" [value]="color">{{color}}</ion-select-option>
+    </ion-select>
+  </ion-item>
+
+  <ion-item class="flex" *ngIf="selectedColor">
+    <ion-avatar item-start [ngClass]="selectedColor"></ion-avatar>
+    <ion-input class="ml-2" type="text" [(ngModel)]="selectedColor" readonly="true"></ion-input>
+  </ion-item> -->
+</ion-content>

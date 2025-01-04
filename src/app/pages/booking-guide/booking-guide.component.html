@@ -1,0 +1,19 @@
+<app-header title="Booking Guide" [modal]="true"></app-header>
+<ion-content>
+  <ion-card *ngFor="let guide of guides">
+    <ion-card-header>
+      <ion-card-title>{{guide.name}}</ion-card-title>
+    </ion-card-header>
+    <ion-card-content>
+      <img [src]="guide.image" alt="">
+      <div class="pt-4">{{guide.description}}</div>
+    </ion-card-content>
+  </ion-card>
+</ion-content>
+<ion-footer>
+  <ion-toolbar>
+    <ion-button (click)="closeModal()" expand="block" class="p-4">
+      จองเลย
+    </ion-button>
+  </ion-toolbar>
+</ion-footer>

@@ -1,0 +1,23 @@
+.input-wrap {
+    // padding-bottom: 20px;
+    /* sync */
+    position: relative;
+}
+
+.form-control {
+    display: flex;
+    flex-direction: column;
+}
+
+.field-error {
+    font-size: .8em;
+    text-align: right;
+    // margin-top: -19px;
+    /* sync */
+    height: 19px;
+    /* sync */
+}
+
+.custom-input {
+    @apply bg-transparent appearance-none border-2 border-gray-400 rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:bg-white focus:border-blue-500;
+}

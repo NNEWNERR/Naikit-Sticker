@@ -1,0 +1,46 @@
+<app-header [title]="title" [modal]="true"></app-header>
+<ion-content class="ion-padding">
+  <form [formGroup]="form" (ngSubmit)="submit()" [ngSwitch]="type">
+    <div *ngSwitchCase="'user'">
+      <app-input [parentForm]="form" label="ชื่อ" typeInput="text" formControlName="name"
+        placeholder="ชื่อ"></app-input>
+
+      <app-input [parentForm]="form" label="นามสกุล" typeInput="text" formControlName="last_name"
+        placeholder="นามสกุล"></app-input>
+
+      <app-input [parentForm]="form" label="ชื่อเล่น" typeInput="text" formControlName="nick_name"
+        placeholder="ชื่อเล่น"></app-input>
+
+      <app-input [parentForm]="form" label="เบอร์โทรศัพท์" typeInput="text" formControlName="phone"
+        placeholder="เบอร์โทรศัพท์"></app-input>
+    </div>
+
+    <div *ngSwitchCase="'group'">
+      <app-input [parentForm]="form" label="ชื่อกลุ่ม" typeInput="text" formControlName="name"
+        placeholder="ชื่อกลุ่ม"></app-input>
+
+      <!-- <app-input [parentForm]="form" label="รูปภาพ" typeInput="text" formControlName="image"
+        placeholder="เลือกรูปภาพ"></app-input> -->
+
+      <!-- <app-input [parentForm]="form" label="ผู้รับผิดชอบ" typeInput="text" formControlName="reader"
+        placeholder="ผู้รับผิดชอบ"></app-input> -->
+
+      <app-input [parentForm]="form" label="จำนวนทีม" typeInput="text" formControlName="limit"
+        placeholder="จำนวนทีม"></app-input>
+
+      <app-select [parentForm]="form" label="สี" formControlName="color" placeholder="เลือกสี" [multiple]="false"
+        [options]="colors"></app-select>
+
+      <app-select [parentForm]="form" label="สถานที่" formControlName="site_groups" placeholder="เลือกสถานที่"
+        [multiple]="true" [options]="sites"></app-select>
+    </div>
+
+    <div *ngSwitchCase="'site'">
+      <app-input [parentForm]="form" label="ชื่อโครงการ" typeInput="text" formControlName="name"
+        placeholder="ชื่อโครงการ"></app-input>
+    </div>
+  </form>
+</ion-content>
+<ion-footer class="ion-no-border ion-padding">
+  <ion-button type="submit" expand="block" (click)="submit()" [disabled]="form.invalid">บันทึก</ion-button>
+</ion-footer>

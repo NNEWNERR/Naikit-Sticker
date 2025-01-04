@@ -1,0 +1,168 @@
+// Custom Theming for Angular Material
+// For more information: https://material.angular.io/guide/theming
+@use '@angular/material' as mat;
+// Plus imports for other components in your app.
+
+// Include the common styles for Angular Material. We include this here so that you only
+// have to load a single css file for Angular Material in your app.
+// Be sure that you only ever include this mixin once!
+@include mat.core();
+
+// Define the palettes for your theme using the Material Design palettes available in palette.scss
+// (imported above). For each palette, you can optionally specify a default, lighter, and darker
+// hue. Available color palettes: https://material.io/design/color/
+$app-primary: mat.define-palette(mat.$indigo-palette);
+$app-accent: mat.define-palette(mat.$pink-palette, A200, A100, A400);
+
+// The warn palette is optional (defaults to red).
+$app-warn: mat.define-palette(mat.$red-palette);
+
+// Create the theme object. A theme consists of configurations for individual
+// theming systems such as "color" or "typography".
+$app-theme: mat.define-light-theme((color: (primary: $app-primary,
+        accent: $app-accent,
+        warn: $app-warn,
+      ),
+      typography: mat.define-typography-config(),
+      density: 0));
+
+// Include theme styles for core and each component used in your app.
+// Alternatively, you can import and @include the theme mixins for each component
+// that you are using.
+@include mat.all-component-themes($app-theme);
+
+/*
+ * App Global CSS
+ * ----------------------------------------------------------------------------
+ * Put style rules here that you want to apply globally. These styles are for
+ * the entire app and not just one component. Additionally, this file can be
+ * used as an entry point to import other CSS/Sass files to be included in the
+ * output CSS.
+ * For more information on global stylesheets, visit the documentation:
+ * https://ionicframework.com/docs/layout/global-stylesheets
+ */
+
+/* Core CSS required for Ionic components to work properly */
+@import "@ionic/angular/css/core.css";
+
+/* Basic CSS for apps built with Ionic */
+@import "@ionic/angular/css/normalize.css";
+@import "@ionic/angular/css/structure.css";
+@import "@ionic/angular/css/typography.css";
+@import "@ionic/angular/css/display.css";
+
+/* Optional CSS utils that can be commented out */
+@import "@ionic/angular/css/padding.css";
+@import "@ionic/angular/css/float-elements.css";
+@import "@ionic/angular/css/text-alignment.css";
+@import "@ionic/angular/css/text-transformation.css";
+@import "@ionic/angular/css/flex-utils.css";
+
+/* ngx datatable */
+@import "../node_modules/@swimlane/ngx-datatable/index.css";
+@import "../node_modules/@swimlane/ngx-datatable/assets/icons.css";
+@import "../node_modules/@swimlane/ngx-datatable/themes/material.css";
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@100..900&display=swap');
+
+* {
+    font-family: "Noto Sans Thai", sans-serif;
+}
+.ngx-datatable.material {
+  box-shadow: none;
+
+  .datatable-header {
+    border-bottom: none;
+
+    .datatable-header-cell {
+      background-color: #f5f5f5;
+      border-bottom: none;
+    }
+  }
+
+  .datatable-body-row {
+    border-top: 1px solid #f5f5f5;
+
+    .datatable-body-cell {
+      border-top: none;
+    }
+  }
+
+  .datatable-footer {
+    border-top: none;
+  }
+}
+
+.custom-datatable.ngx-datatable.material {
+  box-shadow: none;
+
+  .datatable-header {
+    border: solid 1px #000;
+
+    .datatable-header-cell {
+      background-color: #f5f5f5;
+      border-right: solid 1px #000;
+      // border-left: solid 1px #000;
+    }
+  }
+
+  .datatable-body-row {
+    border: 1px solid #000;
+    border-top: none;
+
+    .datatable-body-cell {
+      // border-top: none;
+      border-right: solid 1px #000;
+      // border-left: solid 1px #000;
+    }
+  }
+
+  .datatable-footer {
+    border-top: none;
+  }
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+}
+
+
+
+/* Custom CSS */
+ion-modal .my-custom-class {
+  --backdrop-opacity: 0.5;
+  --background: #ffffff;
+  --border-color: #3880ff;
+  --border-radius: 4px;
+  --border-style: solid;
+  --border-width: 8px;
+  --height: 90%;
+  // --max-height: 100%;
+  // --max-width: 100%;
+  // --min-height: 100%;
+  // --min-width: 100%;
+  --width: 500px;
+}
+
+.item-radio-checked.sc-ion-select-popover-md {
+  --background: rgba(var(--ion-color-medium-rgb, 146, 148, 156), 0.08);
+  --background-focused: var(--ion-color-medium);
+  --background-focused-opacity: 0.2;
+  --background-hover: var(--ion-color-medium);
+  --background-hover-opacity: 0.12;
+}
+
+.comma-separated span:not(:last-child)::after {
+  content: ', ';
+}
+
+.ellipsis {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

@@ -1,0 +1,7 @@
+{
+  "name": "Krungthon-Air-FE",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular"
+}

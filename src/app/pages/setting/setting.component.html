@@ -1,0 +1,22 @@
+<app-header title="Setting"></app-header>
+<ion-content>
+    <ion-segment [value]="segment" mode="md" (ionChange)="segmentChanged($event)">
+        <ion-segment-button [value]="option.value" *ngFor="let option of segment_option">
+            <ion-label>{{option.title}}</ion-label>
+        </ion-segment-button>
+    </ion-segment>
+    <div [ngSwitch]="segment">
+        <div *ngSwitchCase="'user'">
+            <app-user></app-user>
+        </div>
+        <div *ngSwitchCase="'site'">
+            <app-site></app-site>
+        </div>
+        <div *ngSwitchCase="'group'">
+            <app-group></app-group>
+        </div>
+        <div *ngSwitchCase="'job'">
+            <app-job></app-job>
+        </div>
+    </div>
+</ion-content>

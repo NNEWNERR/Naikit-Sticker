@@ -1,0 +1,121 @@
+<app-header title="Home"></app-header>
+<ion-content>
+    <ion-segment [value]="segment" mode="md" (ionChange)="segmentChanged($event)">
+        <ion-segment-button [value]="option.value" *ngFor="let option of segment_option">
+            <ion-label>{{option.title}}</ion-label>
+        </ion-segment-button>
+    </ion-segment>
+    <div [ngSwitch]="segment">
+        <div *ngSwitchCase="'booking'" class="grid md:grid-cols-2 grid-cols-1">
+            <ion-button (click)="createWorkSheet()" color="success">สร้างใบงาน</ion-button>
+            <ion-card *ngFor="let workSheet of workSheets">
+                <ion-card-header>
+                    <ion-card-title class="flex flex-row justify-between items-center">
+                        <div>{{workSheet.serial_number}} {{workSheet.customer_name}}</div>
+                        <div class="px-2 py-1 bg-red-500 rounded-md mr-2 text-white">
+                            {{workSheet.status}}</div>
+                    </ion-card-title>
+                    <ion-card-subtitle>
+                        <div class="flex flex-row ">
+                            <div *ngIf="workSheet.is_urgent" class="px-2 py-1 bg-red-500 rounded-full mr-2 text-white">
+                                ด่วน</div>
+                            <div class="px-2 py-1 bg-red-500 rounded-full mr-2 text-white">
+                                นัดรับ {{formatTime(workSheet.date_of_acceptance)}}</div>
+                        </div>
+                    </ion-card-subtitle>
+                </ion-card-header>
+                <ion-card-content>
+                    <div *ngFor="let job of workSheet.work, let i = index ;">
+                        {{i+1}}. {{job.type}} {{job.width + ' x ' + job.height + ' ' + job.unit_of_length}}
+                        {{job.option}} จำนวน
+                        {{job.quantity}} แผ่น
+                    </div>
+                </ion-card-content>
+                <div class="flex justify-between items-center py-2 px-3">
+                    <!-- <ion-button (click)="acceptJob(workSheet)" color="success">รับงาน</ion-button> -->
+                    <div class="flex flex-row">
+                        <div>S.{{workSheet.seller_name}} G.{{workSheet.design_by || '-'}}</div>
+                    </div>
+                    <div>
+                        <ion-button (click)="infoJob(workSheet)">รายละเอียด</ion-button>
+                    </div>
+                    <!-- <ion-button (click)="rejectJob(workSheet)" color="danger">ปฏิเสธ</ion-button> -->
+                </div>
+            </ion-card>
+            <!-- <ion-card *ngFor="let job of jobPending">
+                <ion-card-header>
+                    <ion-card-title>{{job.book.time[0]}} {{getSiteName(job.site_id)}} {{job.address}}</ion-card-title>
+                    <ion-card-subtitle>{{formatTime(job.book.date)}}</ion-card-subtitle>
+                </ion-card-header>
+                <ion-card-content>
+                    <div>
+                        {{job.phone}}<br>
+                        {{job.type}} จำนวน {{job.qty || 1}} เครื่อง
+                    </div>
+                </ion-card-content>
+                <div class="flex justify-end p-3">
+                    <ion-button (click)="acceptJob(job)" color="success">รับงาน</ion-button>
+                    <ion-button (click)="infoJob(job)">ดูงาน</ion-button>
+                    <ion-button (click)="rejectJob(job)" color="danger">ปฏิเสธ</ion-button>
+                </div>
+            </ion-card> -->
+        </div>
+        <div *ngSwitchCase="'pending'" class="grid md:grid-cols-2 grid-cols-1">
+            <ion-card *ngFor="let job of jobBooked">
+                <ion-card-header>
+                    <ion-card-title>{{job.book.time[0]}} {{getSiteName(job.site_id)}} {{job.address}}</ion-card-title>
+                    <ion-card-subtitle>{{formatTime(job.book.date)}}</ion-card-subtitle>
+                </ion-card-header>
+                <ion-card-content>
+                    <div>
+                        {{job.phone}}<br>
+                        {{job.type}} จำนวน {{job.qty || 1}} เครื่อง
+                    </div>
+                </ion-card-content>
+                <div class="flex justify-end p-3">
+                    <ion-button (click)="completeJob(job)" color="success">ส่งงาน</ion-button>
+                    <ion-button (click)="infoJob(job)" color="warning">รายงาน</ion-button>
+                    <ion-button (click)="cancelJob(job)" color="danger">ยกเลิก</ion-button>
+                </div>
+            </ion-card>
+        </div>
+        <div *ngSwitchCase="'completed'" class="grid md:grid-cols-2 grid-cols-1">
+            <ion-card *ngFor="let job of jobCompleted">
+                <ion-card-header>
+                    <ion-card-title>{{job.book.time[0]}} {{getSiteName(job.site_id)}} {{job.address}}</ion-card-title>
+                    <ion-card-subtitle>{{formatTime(job.book.date)}}</ion-card-subtitle>
+                </ion-card-header>
+                <ion-card-content>
+                    <div>
+                        {{job.phone}}<br>
+                        {{job.type}} จำนวน {{job.qty || 1}} เครื่อง
+                    </div>
+                </ion-card-content>
+                <div class="flex justify-end p-3">
+                    <!-- <ion-button (click)="completeJob(job)" color="success">ส่งงาน</ion-button>
+                    <ion-button (click)="reportJob(job)" color="warning">รายงาน</ion-button> -->
+                    <ion-button (click)="infoJob(job)">รายละเอียด</ion-button>
+                </div>
+            </ion-card>
+        </div>
+        <div *ngSwitchCase="'rejected-canceled'" class="grid md:grid-cols-2 grid-cols-1">
+            <ion-card *ngFor="let job of jobRejectedCanceled">
+                <ion-card-header>
+                    <ion-card-title>{{job.book.time[0]}} {{getSiteName(job.site_id)}} {{job.address}}</ion-card-title>
+                    <ion-card-subtitle>{{formatTime(job.book.date)}}</ion-card-subtitle>
+                </ion-card-header>
+                <ion-card-content>
+                    <div>
+                        {{job.phone}}<br>
+                        {{job.type}} จำนวน {{job.qty || 1}} เครื่อง
+                    </div>
+                </ion-card-content>
+                <div class="flex justify-end p-3">
+                    <!-- <ion-button (click)="completeJob(job)" color="success">ส่งงาน</ion-button>
+                    <ion-button (click)="reportJob(job)" color="warning">รายงาน</ion-button> -->
+                    <ion-button (click)="infoJob(job)">รายละเอียด</ion-button>
+                </div>
+            </ion-card>
+        </div>
+    </div>
+</ion-content>

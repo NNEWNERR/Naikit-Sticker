@@ -1,0 +1,34 @@
+<div class="w-full grid grid-cols-12 gap-2">
+  <ion-searchbar class="col-span-9" mode="md" show-clear-button="focus"
+    (ionInput)="handleInput($event)"></ion-searchbar>
+  <ion-button class="col-span-3 my-2" mode="md" (click)="add()">เพิ่มสถานที่</ion-button>
+</div>
+<ngx-datatable class="flex w-full. material expandable" [columnMode]="'force'" [rows]="results" [limit]="10"
+  rowHeight="auto" [headerHeight]="50" [footerHeight]="50" [scrollbarH]="true" [sorts]="[{prop: 'group_id', dir: 'asc'}]"
+  (activate)="onActivate($event)" *ngIf="data.length > 0">
+  <!-- <ngx-datatable-column name="Site ID" prop="site_id">
+    <ng-template let-row="row" ngx-datatable-cell-template>
+      {{row.site_id}}
+    </ng-template>
+  </ngx-datatable-column> -->
+  <ngx-datatable-column name="ชื่อคอนโด" prop="name">
+    <ng-template let-row="row" ngx-datatable-cell-template>
+      {{row.name}}
+    </ng-template>
+  </ngx-datatable-column>
+  <ngx-datatable-column name="รหัสกลุ่ม" prop="group_id">
+    <ng-template let-row="row" ngx-datatable-cell-template>
+      {{row.group_id}}
+    </ng-template>
+  </ngx-datatable-column>
+  <ngx-datatable-column name="ACTION">
+    <ng-template let-row="row" ngx-datatable-cell-template>
+      <ion-text (click)="showQrCode(row)" color="primary" class="cursor-pointer">
+        แสดง QR Code
+      </ion-text>
+      <ion-text (click)="edit(row)" color="danger" class="cursor-pointer">
+        แก้ไข
+      </ion-text>
+    </ng-template>
+  </ngx-datatable-column>
+</ngx-datatable>

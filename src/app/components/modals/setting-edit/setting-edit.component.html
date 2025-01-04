@@ -1,0 +1,116 @@
+<app-header [title]="title" [modal]="true"></app-header>
+<ion-content class="ion-padding">
+  <form [formGroup]="form" (ngSubmit)="submit()" [ngSwitch]="type">
+    <div *ngSwitchCase="'user'">
+      <app-input [parentForm]="form" label="ชื่อ" typeInput="text" formControlName="name"
+        placeholder="ชื่อ"></app-input>
+
+      <app-input [parentForm]="form" label="นามสกุล" typeInput="text" formControlName="last_name"
+        placeholder="นามสกุล"></app-input>
+
+      <app-input [parentForm]="form" label="ชื่อเล่น" typeInput="text" formControlName="nick_name"
+        placeholder="ชื่อเล่น"></app-input>
+
+      <app-input [parentForm]="form" label="เบอร์โทรศัพท์" typeInput="text" formControlName="phone"
+        placeholder="เบอร์โทรศัพท์"></app-input>
+    </div>
+
+    <div *ngSwitchCase="'group'">
+      <app-input [parentForm]="form" label="ชื่อกลุ่ม" typeInput="text" formControlName="name"
+        placeholder="ชื่อกลุ่ม"></app-input>
+
+      <!-- <app-input [parentForm]="form" label="รูปภาพ" typeInput="text" formControlName="image"
+        placeholder="เลือกรูปภาพ"></app-input> -->
+
+      <app-input [parentForm]="form" label="ผู้รับผิดชอบ" typeInput="text" formControlName="reader"
+        placeholder="ผู้รับผิดชอบ"></app-input>
+
+      <app-input [parentForm]="form" label="จำนวนทีม" typeInput="text" formControlName="limit"
+        placeholder="จำนวนทีม"></app-input>
+
+      <app-select [parentForm]="form" label="สี" formControlName="color" placeholder="เลือกสี" [multiple]="false"
+        [options]="colors"></app-select>
+
+      <app-select [parentForm]="form" label="สถานที่" formControlName="site_groups" placeholder="เลือกสถานที่"
+        [multiple]="true" [options]="sites"></app-select>
+
+    </div>
+
+    <div *ngSwitchCase="'site'">
+      <app-input [parentForm]="form" label="ชื่อโครงการ" typeInput="text" formControlName="name"
+        placeholder="ชื่อโครงการ"></app-input>
+
+      <app-input [parentForm]="form" label="กลุ่ม" typeInput="text" formControlName="group_id"
+        placeholder="กลุ่ม"></app-input>
+    </div>
+
+    <div *ngSwitchCase="'job'">
+
+      <!-- date -->
+      <mat-form-field class="w-full py-2">
+        <mat-label>กรุณาเลือกวันที่ต้องการย้าย</mat-label>
+        <input matInput [matDatepicker]="picker" formControlName="date" (dateChange)="searchJobs()">
+        <mat-hint>DD/MM/YYYY</mat-hint>
+        <mat-datepicker-toggle matTextSuffix [for]="picker"></mat-datepicker-toggle>
+        <mat-datepicker #picker></mat-datepicker>
+      </mat-form-field>
+
+      <!-- time -->
+      <app-select [parentForm]="form" label="เวลา" formControlName="time" placeholder="เลือกเวลา" [multiple]="false"
+        [options]="times" (selectChange)="timeChange()"></app-select>
+
+      <!-- address -->
+      <app-input [parentForm]="form" label="อาคาร/ชั้น/ห้อง" typeInput="text" formControlName="address"
+        placeholder="ระบุอาคาร/ชั้น/ห้อง"></app-input>
+
+      <!-- phone -->
+      <app-input [parentForm]="form" label="เบอร์โทรศัพท์" typeInput="text" formControlName="phone"
+        placeholder="เบอร์โทรศัพท์"></app-input>
+
+      <!-- type -->
+      <app-select [parentForm]="form" label="ประเภทงาน" formControlName="type" placeholder="เลือกประเภทงาน"
+        [multiple]="false" [options]="types"></app-select>
+
+      <app-input [parentForm]="form" label="อื่นๆ(โปรดระบุ)" typeInput="text" formControlName="type_other"
+        placeholder="อื่นๆ(โปรดระบุ)" *ngIf="form.value.type.value=== 'อื่นๆ'"></app-input>
+
+      <!-- qty -->
+      <label class="block my-1 text-sm font-medium text-black">
+        <span>จํานวน<span class="text-red-500">*</span><span class="text-gray-400">( 1 ตัว = 1 ชั่วโมง )</span></span>
+      </label>
+      <div class="flex items-center">
+        <ion-button shape="round" (click)="subQty()">
+          <!-- <ion-icon slot="icon-only" ios="logo-apple" md="remove-outline"></ion-icon> -->
+          -
+        </ion-button>
+        <span class="px-4 text-2xl">{{form.value.qty}}</span>
+        <ion-button shape="round" (click)="addQty()">
+          <!-- <ion-icon slot="icon-only" ios="logo-apple" md="add-outline"></ion-icon> -->
+          +
+        </ion-button>
+      </div>
+
+      <app-input [parentForm]="form" label="เพิ่มโดย" typeInput="text" formControlName="created_by"
+        placeholder="เพิ่มโดย"></app-input>
+
+      <!-- status -->
+      <app-select [parentForm]="form" label="สถานะงาน" formControlName="status" placeholder="เลือกสถานะงาน"
+        [multiple]="false" [options]="statuses"></app-select>
+
+      <!-- remark -->
+      <app-input [parentForm]="form" label="หมายเหตุ" typeInput="text" formControlName="remark"
+        placeholder="หมายเหตุ"></app-input>
+    </div>
+  </form>
+</ion-content>
+<ion-footer class="ion-no-border ion-padding">
+  <div class="grid grid-cols-1 gap-4" *ngIf="job"
+    [ngClass]="{ 'grid-cols-2': job.status === 'PENDING'|| job.status  === 'BOOKED' }">
+    <ion-button *ngIf="job?.status === 'PENDING'" type="submit" expand="block"
+      (click)="rejectJob(job)">ปฏิเสธ</ion-button>
+    <ion-button *ngIf="job?.status=== 'BOOKED'" type="submit" expand="block"
+      (click)="cancelJob(job)">ยกเลิก</ion-button>
+    <ion-button type="submit" expand="block" (click)="submit()" [disabled]="form.invalid">บันทึก</ion-button>
+  </div>
+  <ion-button *ngIf="!job" type="submit" expand="block" (click)="submit()" [disabled]="form.invalid">บันทึก</ion-button>
+</ion-footer>

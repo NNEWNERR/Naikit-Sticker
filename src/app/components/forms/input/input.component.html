@@ -1,0 +1,19 @@
+<div class="form-control">
+  <label [for]="formControlName" class="block my-1 text-sm font-medium text-black">
+    <span>{{label}}<span class="text-red-500" [hidden]="!isRequired">*</span></span>
+  </label>
+
+  <div class="input-wrap">
+    <input [type]="typeInput" [name]="formControlName" [id]="formControlName" [placeholder]="placeholder"
+      [disabled]="disabled" (input)="onChange($event)" [value]="value"
+      class="custom-input"
+      required>
+    <div #childrenWrapper>
+      <ng-content></ng-content>
+    </div>
+  </div>
+
+  <span class="field-error text-red-500" *ngIf="formField?.invalid && formField?.touched">
+    {{'ERROR.' + errorMessage }}
+  </span>
+</div>

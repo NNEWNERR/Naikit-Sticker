@@ -1,0 +1,20 @@
+<div class="form-control">
+  <label [for]="formControlName" class="block my-1 text-sm font-medium text-black">
+    <span>{{label}}<span class="text-red-500" [hidden]="!isRequired">*</span></span>
+  </label>
+
+  <div class="input-wrap">
+    <ion-select interface="popover" mode="md" fill="outline" [placeholder]="placeholder" [value]="value"
+      [name]="formControlName" [id]="formControlName" [multiple]="multiple" (ionChange)="onChange($event)">
+      <ion-select-option *ngFor="let option of options" [disabled]="option.disabled"
+        [value]="option">{{option.title}}</ion-select-option>
+    </ion-select>
+    <div #childrenWrapper>
+      <ng-content></ng-content>
+    </div>
+  </div>
+
+  <span class="field-error text-red-500" *ngIf="!formField?.valid && formField?.touched">
+    {{'ERROR.' + errorMessage }}
+  </span>
+</div>
