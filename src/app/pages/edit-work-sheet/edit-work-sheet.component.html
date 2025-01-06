@@ -1,0 +1,59 @@
+<ion-content class="ion-padding">
+  <div>ใบสั่งงาน</div>
+  <div (click)="close()" class="px-2 py-1 bg-red-500 rounded-full text-white">ปิด</div>
+  <form [formGroup]="form">
+      <app-select [parentForm]="form" label="ด่วน" formControlName="is_urgent" placeholder="กรุณาเลือก"
+          [multiple]="false" [options]="is_ergents"></app-select>
+      <!-- เลขที่อ้างอิง -->
+      <app-input [parentForm]="form" label="เลขที่อ้างอิง" typeInput="text" formControlName="reference"
+          placeholder="กรุณากรอกเลขที่อ้างอิง"></app-input>
+      <!-- ช่องทางติดต่อ -->
+      <app-select [parentForm]="form" label="ช่องทางติดต่อ" formControlName="contact"
+          placeholder="กรุณาเลือกช่องทางติดต่อ" [multiple]="false" [options]="contacts"></app-select>
+      <!-- ชื่อ -->
+      <app-input [parentForm]="form" label="ชื่อ" typeInput="text" formControlName="name"
+          placeholder="กรุณาระบุชื่อ"></app-input>
+      <!-- เบอร์โทรศัพท์ -->
+      <app-input [parentForm]="form" label="เบอร์โทรศัพท์" typeInput="text" formControlName="phone"
+          placeholder="กรุณากรอกเบอร์โทรศัพท์"></app-input>
+      <!-- ไลน์ -->
+      <app-input [parentForm]="form" label="ไลน์" typeInput="text" formControlName="line"
+          placeholder="กรุณากรอกไลน์"></app-input>
+      <!-- seller -->
+      <app-select [parentForm]="form" label="ผู้ขาย" formControlName="seller" placeholder="กรุณาเลือกผู้ขาย"
+          [multiple]="false" [options]="sellers"></app-select>
+      <!-- ยอดรวม -->
+      <app-input [parentForm]="form" label="ยอดรวม" typeInput="text" formControlName="total"
+          placeholder="กรุณากรอกยอดรวม"></app-input>
+      <!-- เงินมัดจำ -->
+      <app-input [parentForm]="form" label="เงินมัดจำ" typeInput="text" formControlName="deposit"
+          placeholder="กรุณากรอกเงินมัดจำ"></app-input>
+      <!-- payment -->
+      <app-select [parentForm]="form" label="การชําระเงิน" formControlName="payment"
+          placeholder="กรุณาเลือกการชําระเงิน" [multiple]="false" [options]="payments"></app-select>
+      <!-- วันนัดรับ -->
+      <app-input [parentForm]="form" label="วันนัดรับ" typeInput="date" formControlName="date_of_acceptance"
+          placeholder="กรุณากรอกวันนัดรับ"></app-input>
+      <!-- ผู้ออกแบบ -->
+      <app-select [parentForm]="form" label="ผู้ออกแบบ" formControlName="designer" placeholder="กรุณาเลือกผู้ออกแบบ"
+          [multiple]="false" [options]="designers"></app-select>
+      <!-- วันที่ส่งแบบ -->
+      <app-input [parentForm]="form" label="วันที่ส่งแบบ" typeInput="date" formControlName="date_of_submission"
+          placeholder="กรุณากรอกวันที่ส่งแบบ"></app-input>
+      <!-- ผู้พิมพ์งาน -->
+      <app-select [parentForm]="form" label="ผู้พิมพ์งาน" formControlName="printer"
+          placeholder="กรุณาเลือกผู้พิมพ์งาน" [multiple]="false" [options]="printers"></app-select>
+      <!-- วันที่พิมพ์ -->
+      <app-input [parentForm]="form" label="วันที่พิมพ์" typeInput="date" formControlName="print_date"
+          placeholder="กรุณากรอกวันที่พิมพ์"></app-input>
+      <!-- หมายเหตุ -->
+      <app-input [parentForm]="form" label="หมายเหตุ" typeInput="text" formControlName="remark"
+          placeholder="หมายเหตุ"></app-input>
+      <app-select [parentForm]="form" label="สถานะ" formControlName="status" placeholder="กรุณาเลือกสถานะ"
+          [multiple]="false" [options]="statuses"></app-select>
+
+      <ion-button (click)="onSubmit()" expand="block" shape="round">
+          onSubmit
+      </ion-button>
+  </form>
+</ion-content>

@@ -16,11 +16,18 @@
                             {{workSheet.status}}</div>
                     </ion-card-title>
                     <ion-card-subtitle>
-                        <div class="flex flex-row ">
-                            <div *ngIf="workSheet.is_urgent" class="px-2 py-1 bg-red-500 rounded-full mr-2 text-white">
+                        <div class="flex flex-wrap gap-2">
+                            <div *ngIf="workSheet.is_urgent" class="px-2 py-1 bg-red-500 rounded-full text-white">
                                 ด่วน</div>
-                            <div class="px-2 py-1 bg-red-500 rounded-full mr-2 text-white">
+                            <div class="px-2 py-1 bg-red-500 rounded-full text-white"
+                                *ngIf="workSheet.date_of_acceptance">
                                 นัดรับ {{formatTime(workSheet.date_of_acceptance)}}</div>
+                            <div class="px-2 py-1 bg-red-500 rounded-full text-white"
+                                *ngIf="workSheet.date_of_submission">
+                                วันส่งแบบ {{formatTime(workSheet.date_of_submission)}}</div>
+                            <div class="px-2 py-1 bg-red-500 rounded-full text-white"
+                                *ngIf="workSheet.print_date">
+                                วันพิมพ์ {{formatTime(workSheet.print_date)}}</div>
                         </div>
                     </ion-card-subtitle>
                 </ion-card-header>
@@ -37,6 +44,7 @@
                         <div>S.{{workSheet.seller_name}} G.{{workSheet.design_by || '-'}}</div>
                     </div>
                     <div>
+                        <ion-button (click)="editWorkSheet(workSheet)">แก้ไข</ion-button>
                         <ion-button (click)="infoJob(workSheet)">รายละเอียด</ion-button>
                     </div>
                     <!-- <ion-button (click)="rejectJob(workSheet)" color="danger">ปฏิเสธ</ion-button> -->

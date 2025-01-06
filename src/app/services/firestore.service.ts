@@ -505,9 +505,9 @@ export class FirestoreService {
     const formatQueryDate = new Date(querydate);
     formatQueryDate.setDate(formatQueryDate.getDate());
     const q = query(collection(db, "jobs"),
-      where("status", "in", ["กำลังออกแบบ","รอออกแบบ"]),
+      where("status", "in", ["กำลังออกแบบ", "รอออกแบบ", "รอคอนเฟิร์มแบบ", "คอนเฟิร์มแล้ว", "รอผลิต", "กําลังผลิต", "รอส่งมอบ", "สำเร็จแล้ว"]),
       // where("book.date", ">=", formatQueryDate)
-      );
+    );
     return new Promise<any>((resolve) => {
       const subscription = onSnapshot(q, { includeMetadataChanges: true }, async (querySnapshot) => {
         const data: any = [];

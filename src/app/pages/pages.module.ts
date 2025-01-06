@@ -33,6 +33,7 @@ import { ServiceComponent } from './service/service.component';
 import { HistoryComponent } from './history/history.component';
 import { SiteHistoryComponent } from './history/site-history/site-history.component';
 import { CreateWorkSheetComponent } from './create-work-sheet/create-work-sheet.component';
+import { EditWorkSheetComponent } from './edit-work-sheet/edit-work-sheet.component';
 
 
 
@@ -59,7 +60,8 @@ import { CreateWorkSheetComponent } from './create-work-sheet/create-work-sheet.
     ServiceComponent,
     HistoryComponent,
     SiteHistoryComponent,
-    CreateWorkSheetComponent
+    CreateWorkSheetComponent,
+    EditWorkSheetComponent
   ],
   imports: [
     CommonModule,

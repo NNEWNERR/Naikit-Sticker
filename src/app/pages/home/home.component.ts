@@ -11,6 +11,7 @@ import { JobInfoComponent } from 'src/app/components/modals/job-info/job-info.co
 import { db } from 'src/app/services/firebase-config';
 import { FirestoreService } from 'src/app/services/firestore.service';
 import { ServiceService } from 'src/app/services/service.service';
+import { EditWorkSheetComponent } from '../edit-work-sheet/edit-work-sheet.component';
 
 @Component({
   selector: 'app-home',
@@ -234,14 +235,24 @@ export class HomeComponent implements OnInit {
       } else if (b.is_urgent) {
         return 1
       } else {
-        // if (a.date.seconds < b.date.seconds) {
-        //   return -1
-        // } else if (a.date.seconds > b.date.seconds) {
-        //   return 1
-        // } else {
-        //   return 0
-        // }
+        if (a.date_of_acceptance < b.date_of_acceptance) {
+          return -1
+        } else if (a.date_of_acceptance > b.date_of_acceptance) {
+          return 1
+        } else {
+          return 0
+        }
       }
     })
+  }
+
+  editWorkSheet(workSheet) {
+    this.modalController.create({
+      component: EditWorkSheetComponent,
+      componentProps: {
+        workSheet: workSheet
+      },
+      cssClass: 'my-custom-class',
+    }).then(modal => modal.present());
   }
 }

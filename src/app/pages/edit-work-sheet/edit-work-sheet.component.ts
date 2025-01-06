@@ -1,18 +1,19 @@
-import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { Component, Input, OnInit } from '@angular/core';
+import { FormGroup, FormBuilder } from '@angular/forms';
 import { ModalController } from '@ionic/angular';
-import { collection } from 'firebase/firestore';
+import { collection, doc } from 'firebase/firestore';
 import { db } from 'src/app/services/firebase-config';
+import { FirestoreService } from 'src/app/services/firestore.service';
+
 import { v4 as uuidv4 } from 'uuid';
-import { FirestoreService } from '../../services/firestore.service';
 
 @Component({
-  selector: 'app-create-work-sheet',
-  templateUrl: './create-work-sheet.component.html',
-  styleUrls: ['./create-work-sheet.component.scss'],
+  selector: 'app-edit-work-sheet',
+  templateUrl: './edit-work-sheet.component.html',
+  styleUrls: ['./edit-work-sheet.component.scss'],
 })
-export class CreateWorkSheetComponent implements OnInit {
-
+export class EditWorkSheetComponent implements OnInit {
+  @Input() workSheet: any;
   form: FormGroup;
   type = "vinyl";
   types = [
@@ -255,6 +256,49 @@ export class CreateWorkSheetComponent implements OnInit {
       disabled: false
     }
   ]
+  // รอออกแบบ กำลังออกแบบ รอคอนเฟิร์มแบบ คอนเฟิร์มแล้ว รอผลิต กําลังผลิต รอส่งมอบ สำเร็จแล้ว
+  statuses = [
+    {
+      title: 'รอออกแบบ',
+      value: 'รอออกแบบ',
+      disabled: false
+    },
+    {
+      title: 'กำลังออกแบบ',
+      value: 'กำลังออกแบบ',
+      disabled: false
+    },
+    {
+      title: 'รอคอนเฟิร์มแบบ',
+      value: 'รอคอนเฟิร์มแบบ',
+      disabled: false
+    },
+    {
+      title: 'คอนเฟิร์มแล้ว',
+      value: 'คอนเฟิร์มแล้ว',
+      disabled: false
+    },
+    {
+      title: 'รอผลิต',
+      value: 'รอผลิต',
+      disabled: false
+    },
+    {
+      title: 'กําลังผลิต',
+      value: 'กําลังผลิต',
+      disabled: false
+    },
+    {
+      title: 'รอส่งมอบ',
+      value: 'รอส่งมอบ',
+      disabled: false
+    },
+    {
+      title: 'สำเร็จแล้ว',
+      value: 'สำเร็จแล้ว',
+      disabled: false
+    }
+  ]
 
   constructor(
     private firestoreService: FirestoreService,
@@ -263,104 +307,34 @@ export class CreateWorkSheetComponent implements OnInit {
   ) { }
 
   ngOnInit() {
+    console.log(this.workSheet);
+
     this.initForm();
   }
 
   initForm() {
     this.form = this.fb.group({
-      reference: [''],
-      contact: [''],
-      name: [''],
-      phone: [''],
-      line: [''],
-      seller: [''],
-      total: [''],
-      deposit: [''],
-      payment: [''],
-      designer: [''],
-      date_of_acceptance: [''],
-      date_of_submission: [''],
-      printer: [''],
-      print_date: [''],
-      remark: [''],
-      is_urgent: [''],
+      reference: [this.workSheet.serial_number],
+      contact: [this.workSheet.contact ? this.contacts.find(c => c.value === this.workSheet.contact) || '' : ''],
+      name: [this.workSheet.customer_name],
+      phone: [this.workSheet.phone],
+      line: [this.workSheet.line_name],
+      seller: [this.workSheet.seller_name ? this.sellers.find(s => s.value === this.workSheet.seller_name) || '' : ''],
+      total: [this.workSheet.payment.total],
+      deposit: [this.workSheet.payment.deposit],
+      payment: [this.workSheet.payment.payment_method ? this.payments.find(p => p.value === this.workSheet.payment.payment_method) || '' : ''],
+      date_of_acceptance: [this.workSheet.date_of_acceptance ? new Date(this.workSheet.date_of_acceptance.seconds * 1000).toISOString().split('T')[0] : ''],
+      designer: [this.workSheet.design_by ? this.designers.find(d => d.value === this.workSheet.design_by) || '' : ''],
+      date_of_submission: [this.workSheet.date_of_submission ? new Date(this.workSheet.date_of_submission.seconds * 1000).toISOString().split('T')[0] : ''],
+      printer: [this.workSheet.print_by ? this.printers.find(p => p.value === this.workSheet.print_by) || '' : ''],
+      print_date: [this.workSheet.print_date ? new Date(this.workSheet.print_date.seconds * 1000).toISOString().split('T')[0] : ''],
+      remark: [this.workSheet.remark],
+      is_urgent: [this.workSheet.is_urgent == true ? this.is_ergents.find(p => p.value === 'ด่วน') || '' : this.is_ergents.find(p => p.value === 'ไม่ด่วน') || ''],
+      status: [this.workSheet.status ? this.statuses.find(s => s.value === this.workSheet.status) || '' : ''],
     })
+    console.log(this.form.value);
+
   }
-
-
-  segmentChanged(event) {
-    this.type = event.value;
-  }
-
-  create() {
-    const date = new Date();
-    const newDate = new Date(date.setDate(date.getDate() + 1));
-    const total = 600
-    const deposit = 600
-    const remaining = total - deposit
-    const data = {
-      id: uuidv4(),  // รหัสงาน
-      serial_number: "ม.ค. 001", // หมายเลขงาน
-      contact: "ไลน์", // ช่องทางการติดต่อ
-      customer_name: "วัดภุมรินทร์", // ชื่อลูกค้า
-      phone: "",  // เบอร์โทร 
-      line_name: "พระอาจารย์ คง", // ชื่อผู้ติดต่อ
-      created_at: new Date(),  // วันที่สร้าง
-      created_by: "admin",  // ผู้สร้าง
-      seller_name: "admin", // ชื่อผู้ขาย
-      work: [
-        {
-          id: uuidv4(),
-          type: "ไวนิล",  // ชนิดงาน
-          height: "300", // ความสูง
-          width: "800",  // ความกว้าง
-          unit_of_length: "cm.",  // หน่วย
-          option: "ตาไก่",  // หมวดหมู่
-          quantity: 2,  // จํานวน
-          total: 500,  // ราคาต่อหน่วย
-        },
-        {
-          id: uuidv4(),
-          type: "สตก.",  // ชนิดงาน
-          height: "30", // ความสูง
-          width: "80",  // ความกว้าง
-          unit_of_length: "cm.",  // หน่วย
-          option: "ติดฟิว",  // หมวดหมู่
-          quantity: 2,  // จํานวน
-          total: 500,  // ราคาต่อหน่วย
-        },
-      ],
-      other: "",  // งานอื่นๆ
-      payment: {
-        total: total,  // ราคารวม
-        deposit: deposit,   // เงินมัดจำ
-        date_of_payment: new Date(),   // วันที่ชําระ
-        payment_method: "เงินสด",  // วิธีการชําระ
-        remaining: remaining,  // คงเหลือ
-      },
-      status: "รอออกแบบ",
-      remark: "",  // หมายเหตุ 
-      design_by: "admin",  // ผู้ออกแบบ 
-      design_date: "",  // วันที่รับแบบ
-      confirm_by: "admin",  // ผู้อนุมัติ
-      confirm_date: "",  // วันที่อนุมัติ
-      print_by: "admin", // ผู้พิมพ์
-      print_date: "", // วันที่พิมพ์
-      is_urgent: true,  // เป็นงานด่วน
-      date_of_acceptance: newDate, // วันที่รับงาน
-      date_of_submission: "", // วันที่ส่งแบบ
-      date_of_completion: "", // วันที่ส่งมอบงาน
-    }
-    const collectionRef = collection(db, "jobs");
-    this.firestoreService.addDatatoFirebase(
-      collectionRef, data
-    ).then((res) => {
-      if (res) {
-        this.modalController.dismiss();
-      }
-    })
-  }
-
   onSubmit() {
     if (this.form.valid) {
       console.log(this.form.value);
@@ -406,26 +380,25 @@ export class CreateWorkSheetComponent implements OnInit {
           total: total,  // ราคารวม
           deposit: deposit,   // เงินมัดจำ
           date_of_payment: new Date(),   // วันที่ชําระ
-          payment_method: this.form.value.payment.value || "",  // วิธีการชําระ
-          remaining: remaining,  // คงเหลือ
+          payment_method: this.form.value.payment.value,  // วิธีการชําระ
+          remaining: remaining || "",  // คงเหลือ
         },
-        status: "รอออกแบบ",
+        status: this.form.value.status.value || "",
         remark: this.form.value.remark || "",  // หมายเหตุ 
         design_by: this.form.value.designer.value || "",  // ผู้ออกแบบ 
-        design_date: this.form.value.date_of_submission || "",  // วันที่ส่งแบบ
+        design_date: "",  // วันที่รับแบบ
         confirm_by: "",  // ผู้อนุมัติ
         confirm_date: "",  // วันที่อนุมัติ
         print_by: this.form.value.printer.value || "", // ผู้พิมพ์
-        print_date: "", // วันที่พิมพ์
+        print_date: this.form.value.print_date ? new Date(this.form.value.print_date) : "", // วันที่พิมพ์
         is_urgent: this.form.value.is_urgent.value == 'ด่วน' ? true : false,  // เป็นงานด่วน
         date_of_acceptance: this.form.value.date_of_acceptance ? new Date(this.form.value.date_of_acceptance) : "", // วันที่รับงาน
-        date_of_submission:  "", // วันที่ส่งแบบ
-        date_of_completion: "", // วันที่ส่งงาน
+        date_of_submission: this.form.value.date_of_submission ? new Date(this.form.value.date_of_submission) : "", // วันที่ส่งแบบ
+        date_of_completion: "", // วันที่ส่งมอบงาน
       }
       console.log(data);
-
-      const collectionRef = collection(db, "jobs");
-      this.firestoreService.addDatatoFirebase(collectionRef, data).then(() => {
+      const docRef = doc(db, "jobs", this.workSheet.key);
+      this.firestoreService.updateDatatoFirebase(docRef, data).then(() => {
         this.modalController.dismiss();
         this.form.reset();
       }).catch((error) => {
@@ -433,9 +406,7 @@ export class CreateWorkSheetComponent implements OnInit {
       })
     }
   }
-  
   close(){
     this.modalController.dismiss();
   }
 }
-    
