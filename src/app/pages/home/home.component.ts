@@ -30,7 +30,7 @@ export class HomeComponent implements OnInit {
   workSheetForSeller = [];
   workSheetForGraphic = [];
   workSheetForProduction = [];
-  segment = 'booking';
+  segment = 'seller';
   segment_option = [
     {
       title: 'ฝ่ายขาย',
@@ -229,6 +229,21 @@ export class HomeComponent implements OnInit {
   }
 
   editWorkSheet(workSheet) {
+    this.modalController.create({
+      component: EditWorkSheetComponent,
+      componentProps: {
+        workSheet: workSheet
+      },
+      cssClass: 'my-custom-class',
+    }).then(modal => modal.present());
+  }
+
+  confirmWorkSheet(workSheet) {
+    console.log(workSheet);
+    
+  }
+
+  workSheetInfo(workSheet) {
     this.modalController.create({
       component: EditWorkSheetComponent,
       componentProps: {

@@ -1,7 +1,5 @@
+<app-header title="ใบสั่งงาน" [modal]="true"></app-header>
 <ion-content class="ion-padding">
-    <div>ใบสั่งงาน</div>
-    <div (click)="close()" class="px-2 py-1 bg-red-500 rounded-full text-white">ปิด</div>
-    <ion-button expand="block" (click)="create()">สร้างใบงาน</ion-button>
     <form [formGroup]="form">
         <app-select [parentForm]="form" label="ด่วน" formControlName="is_urgent" placeholder="กรุณาเลือก"
             [multiple]="false" [options]="is_ergents"></app-select>

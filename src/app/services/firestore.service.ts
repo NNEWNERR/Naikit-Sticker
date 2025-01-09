@@ -549,7 +549,7 @@ export class FirestoreService {
 
   fetchWorkSheetForSeller() {
     const q = query(collection(db, "jobs"),
-      where("status", "in", ["กำลังออกแบบ", "รอออกแบบ", "รอคอนเฟิร์มแบบ", "คอนเฟิร์มแล้ว", "รอผลิต", "กําลังผลิต", "รอส่งมอบ", "สำเร็จแล้ว"]),
+      where("status", "in", ["กำลังออกแบบ", "รอออกแบบ", "รอคอนเฟิร์มแบบ", "คอนเฟิร์มแล้ว", "รอผลิต", "กําลังผลิต", "รอส่งมอบ"]),
     );
     return new Promise<any>((resolve) => {
       const subscription = onSnapshot(q, { includeMetadataChanges: true }, async (querySnapshot) => {

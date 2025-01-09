@@ -11,7 +11,10 @@
             <ion-card *ngFor="let workSheet of workSheetForSeller">
                 <ion-card-header>
                     <ion-card-title class="flex flex-row justify-between items-center">
-                        <div>{{workSheet.serial_number}} {{workSheet.customer_name}}</div>
+                        <div class="flex items-center gap-2">{{workSheet.serial_number}} {{workSheet.customer_name}}
+                            <ion-icon class="text-2xl cursor-pointer" name="pencil-outline"
+                                (click)="editWorkSheet(workSheet)"></ion-icon>
+                        </div>
                         <div class="px-2 py-1 bg-red-500 rounded-md mr-2 text-white">
                             {{workSheet.status}}</div>
                     </ion-card-title>
@@ -43,8 +46,13 @@
                         <div>S.{{workSheet.seller_name}} G.{{workSheet.design_by || '-'}}</div>
                     </div>
                     <div>
-                        <ion-button (click)="editWorkSheet(workSheet)">แก้ไข</ion-button>
-                        <ion-button (click)="infoJob(workSheet)">รายละเอียด</ion-button>
+                        <ion-button *ngIf="workSheet.status === 'รอคอนเฟิร์มแบบ'" color="danger"
+                            (click)="confirmWorkSheet(workSheet)">ส่งแก้ไข</ion-button>
+                        <ion-button *ngIf="workSheet.status === 'รอคอนเฟิร์มแบบ'" color="success"
+                            (click)="confirmWorkSheet(workSheet)">คอนเฟิร์ม</ion-button>
+                        <ion-button *ngIf="workSheet.status === 'รอส่งมอบ'" color="success"
+                            (click)="confirmWorkSheet(workSheet)">ส่งมอบ</ion-button>
+                        <ion-button (click)="workSheetInfo(workSheet)">รายละเอียด</ion-button>
                     </div>
                     <!-- <ion-button (click)="rejectJob(workSheet)" color="danger">ปฏิเสธ</ion-button> -->
                 </div>
@@ -54,7 +62,10 @@
             <ion-card *ngFor="let workSheet of workSheetForGraphic">
                 <ion-card-header>
                     <ion-card-title class="flex flex-row justify-between items-center">
-                        <div>{{workSheet.serial_number}} {{workSheet.customer_name}}</div>
+                        <div class="flex items-center gap-2">{{workSheet.serial_number}} {{workSheet.customer_name}}
+                            <ion-icon class="text-2xl cursor-pointer" name="pencil-outline"
+                                (click)="editWorkSheet(workSheet)"></ion-icon>
+                        </div>
                         <div class="px-2 py-1 bg-red-500 rounded-md mr-2 text-white">
                             {{workSheet.status}}</div>
                     </ion-card-title>
@@ -86,7 +97,12 @@
                         <div>S.{{workSheet.seller_name}} G.{{workSheet.design_by || '-'}}</div>
                     </div>
                     <div>
-                        <ion-button (click)="editWorkSheet(workSheet)">แก้ไข</ion-button>
+                        <ion-button *ngIf="workSheet.status === 'รอออกแบบ'" color="success"
+                            (click)="confirmWorkSheet(workSheet)">รับออกแบบ</ion-button>
+                        <ion-button *ngIf="workSheet.status === 'กำลังออกแบบ'" color="success"
+                            (click)="confirmWorkSheet(workSheet)">ส่งแบบ</ion-button>
+                        <ion-button *ngIf="workSheet.status === 'คอนเฟิร์มแล้ว'" color="success"
+                            (click)="confirmWorkSheet(workSheet)">ส่งผลิต</ion-button>
                         <ion-button (click)="infoJob(workSheet)">รายละเอียด</ion-button>
                     </div>
                     <!-- <ion-button (click)="rejectJob(workSheet)" color="danger">ปฏิเสธ</ion-button> -->
@@ -97,7 +113,10 @@
             <ion-card *ngFor="let workSheet of workSheetForProduction">
                 <ion-card-header>
                     <ion-card-title class="flex flex-row justify-between items-center">
-                        <div>{{workSheet.serial_number}} {{workSheet.customer_name}}</div>
+                        <div class="flex items-center gap-2">{{workSheet.serial_number}} {{workSheet.customer_name}}
+                            <ion-icon class="text-2xl cursor-pointer" name="pencil-outline"
+                                (click)="editWorkSheet(workSheet)"></ion-icon>
+                        </div>
                         <div class="px-2 py-1 bg-red-500 rounded-md mr-2 text-white">
                             {{workSheet.status}}</div>
                     </ion-card-title>
@@ -129,7 +148,10 @@
                         <div>S.{{workSheet.seller_name}} G.{{workSheet.design_by || '-'}}</div>
                     </div>
                     <div>
-                        <ion-button (click)="editWorkSheet(workSheet)">แก้ไข</ion-button>
+                        <ion-button *ngIf="workSheet.status === 'รอผลิต'" color="success"
+                            (click)="confirmWorkSheet(workSheet)">ส่งผลิต</ion-button>
+                        <ion-button *ngIf="workSheet.status === 'กําลังผลิต'" color="success"
+                            (click)="confirmWorkSheet(workSheet)">ส่งงาน</ion-button>
                         <ion-button (click)="infoJob(workSheet)">รายละเอียด</ion-button>
                     </div>
                     <!-- <ion-button (click)="rejectJob(workSheet)" color="danger">ปฏิเสธ</ion-button> -->
