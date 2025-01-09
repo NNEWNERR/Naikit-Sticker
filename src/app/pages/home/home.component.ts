@@ -26,19 +26,23 @@ export class HomeComponent implements OnInit {
   jobCompleted = [];
   jobRejectedCanceled = [];
   workSheets = [];
+  workSheetForAdmin = [];
+  workSheetForSeller = [];
+  workSheetForGraphic = [];
+  workSheetForProduction = [];
   segment = 'booking';
   segment_option = [
     {
       title: 'ฝ่ายขาย',
-      value: 'booking'
+      value: 'seller'
     },
     {
       title: 'กราฟิก',
-      value: 'pending'
+      value: 'graphic'
     },
     {
       title: 'ผลิต',
-      value: 'completed'
+      value: 'production'
     },
     {
       title: 'ยกเลิกแล้ว',
@@ -53,56 +57,34 @@ export class HomeComponent implements OnInit {
   ) { }
 
   async ngOnInit() {
-    if (this.param_id) {
-      getDoc(doc(db, 'jobs', this.param_id)).then(doc => {
-        if (doc.exists()) {
-          this.infoJob(doc.data())
-        }
-      })
-    }
     this.firestoreService.fetchWorkSheet();
+    this.firestoreService.fetchWorkSheetForAdmin();
+    this.firestoreService.fetchWorkSheetForSeller();
+    this.firestoreService.fetchWorkSheetForGraphic();
+    this.firestoreService.fetchWorkSheetForProduction();
     this.firestoreService.fetchDataSite('1');
-    this.firestoreService.fetchJobPending();
-    this.firestoreService.fetchJobBooked();
-    this.firestoreService.fetchJobCompleted();
-    this.firestoreService.fetchJobRejectedCanceled();
     this.firestoreService.sitesChange.subscribe(sites => {
       this.sites = sites;
-    })
-    this.firestoreService.jobPendingChange.subscribe(jobs => {
-      this.jobPending = jobs;
-      this.sortJobs(this.jobPending);
-    })
-    this.firestoreService.jobBookedChange.subscribe(jobs => {
-      this.jobBooked = jobs;
-      this.sortJobs(this.jobBooked);
-    })
-    this.firestoreService.jobCompletedChange.subscribe(jobs => {
-      this.jobCompleted = jobs;
-      this.sortJobs(this.jobCompleted);
-    })
-    this.firestoreService.jobRejectedCanceledChange.subscribe(jobs => {
-      this.jobRejectedCanceled = jobs;
-      this.sortJobs(this.jobRejectedCanceled);
     })
     this.firestoreService.workSheetChange.subscribe((data) => {
       this.workSheets = data;
       this.sortWorkSheet(this.workSheets);
     })
-    const data = {
-      province: [],
-      amphure: [],
-      tambon: [],
-    }
-    const id = 1;
-    Provinces.filter((province) => province.id == id).forEach((province) => {
-      data.province.push(province)
-      Amphures.filter((amphure) => amphure.province_id == province.id).forEach((amphure) => {
-        data.amphure.push(amphure)
-        Tambons.filter((tambon) => amphure.id == tambon.amphure_id).forEach((tambon) => {
-          data.tambon.push(tambon)
-        })
-      })
+    this.firestoreService.workSheetForAdminChange.subscribe((data) => {
+      this.workSheetForAdmin = data;
+      this.sortWorkSheet(this.workSheetForAdmin);
+    })
+    this.firestoreService.workSheetForSellerChange.subscribe((data) => {
+      this.workSheetForSeller = data;
+      this.sortWorkSheet(this.workSheetForSeller);
+    })
+    this.firestoreService.workSheetForGraphicChange.subscribe((data) => {
+      this.workSheetForGraphic = data;
+      this.sortWorkSheet(this.workSheetForGraphic);
+    })
+    this.firestoreService.workSheetForProductionChange.subscribe((data) => {
+      this.workSheetForProduction = data;
+      this.sortWorkSheet(this.workSheetForProduction);
     })
   }
 

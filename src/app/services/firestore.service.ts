@@ -524,5 +524,80 @@ export class FirestoreService {
   createWorkSheet() {
 
   }
+
+  workSheetForAdminChange = new Subject<any>();
+  workSheetForSellerChange = new Subject<any>();
+  workSheetForGraphicChange = new Subject<any>();
+  workSheetForProductionChange = new Subject<any>();
+
+  fetchWorkSheetForAdmin() {
+    const q = query(collection(db, "jobs"),
+      where("status", "in", ["กำลังออกแบบ", "รอออกแบบ", "รอคอนเฟิร์มแบบ", "คอนเฟิร์มแล้ว", "รอผลิต", "กําลังผลิต", "รอส่งมอบ", "สำเร็จแล้ว"]),
+    );
+    return new Promise<any>((resolve) => {
+      const subscription = onSnapshot(q, { includeMetadataChanges: true }, async (querySnapshot) => {
+        const data: any = [];
+        for (const docs of querySnapshot.docs) {
+          data.push({ ...docs.data(), key: docs.id });
+        }
+        this.workSheetForAdminChange.next(data);
+        resolve(data);
+      })
+      this.subscriptions.push(subscription);
+    });
+  }
+
+  fetchWorkSheetForSeller() {
+    const q = query(collection(db, "jobs"),
+      where("status", "in", ["กำลังออกแบบ", "รอออกแบบ", "รอคอนเฟิร์มแบบ", "คอนเฟิร์มแล้ว", "รอผลิต", "กําลังผลิต", "รอส่งมอบ", "สำเร็จแล้ว"]),
+    );
+    return new Promise<any>((resolve) => {
+      const subscription = onSnapshot(q, { includeMetadataChanges: true }, async (querySnapshot) => {
+        const data: any = [];
+        for (const docs of querySnapshot.docs) {
+          data.push({ ...docs.data(), key: docs.id });
+        }
+        this.workSheetForSellerChange.next(data);
+        resolve(data);
+      })
+      this.subscriptions.push(subscription);
+    });
+  }
+
+
+  fetchWorkSheetForGraphic() {
+    const q = query(collection(db, "jobs"),
+      where("status", "in", ["รอออกแบบ", "กำลังออกแบบ", "รอคอนเฟิร์มแบบ", "คอนเฟิร์มแล้ว"]),
+    );
+    return new Promise<any>((resolve) => {
+      const subscription = onSnapshot(q, { includeMetadataChanges: true }, async (querySnapshot) => {
+        const data: any = [];
+        for (const docs of querySnapshot.docs) {
+          data.push({ ...docs.data(), key: docs.id });
+        }
+        this.workSheetForGraphicChange.next(data);
+        resolve(data);
+      })
+      this.subscriptions.push(subscription);
+    });
+  }
+
+  fetchWorkSheetForProduction() {
+    const q = query(collection(db, "jobs"),
+      where("status", "in", ["รอผลิต", "กําลังผลิต"]),
+    );
+    return new Promise<any>((resolve) => {
+      const subscription = onSnapshot(q, { includeMetadataChanges: true }, async (querySnapshot) => {
+        const data: any = [];
+        for (const docs of querySnapshot.docs) {
+          data.push({ ...docs.data(), key: docs.id });
+        }
+        this.workSheetForProductionChange.next(data);
+        resolve(data);
+      })
+      this.subscriptions.push(subscription);
+    });
+  }
+
 }
 

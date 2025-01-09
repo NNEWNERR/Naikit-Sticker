@@ -6,9 +6,9 @@
         </ion-segment-button>
     </ion-segment>
     <div [ngSwitch]="segment">
-        <div *ngSwitchCase="'booking'" class="grid md:grid-cols-2 grid-cols-1">
+        <div *ngSwitchCase="'seller'" class="grid md:grid-cols-2 grid-cols-1">
             <ion-button (click)="createWorkSheet()" color="success">สร้างใบงาน</ion-button>
-            <ion-card *ngFor="let workSheet of workSheets">
+            <ion-card *ngFor="let workSheet of workSheetForSeller">
                 <ion-card-header>
                     <ion-card-title class="flex flex-row justify-between items-center">
                         <div>{{workSheet.serial_number}} {{workSheet.customer_name}}</div>
@@ -25,8 +25,7 @@
                             <div class="px-2 py-1 bg-red-500 rounded-full text-white"
                                 *ngIf="workSheet.date_of_submission">
                                 วันส่งแบบ {{formatTime(workSheet.date_of_submission)}}</div>
-                            <div class="px-2 py-1 bg-red-500 rounded-full text-white"
-                                *ngIf="workSheet.print_date">
+                            <div class="px-2 py-1 bg-red-500 rounded-full text-white" *ngIf="workSheet.print_date">
                                 วันพิมพ์ {{formatTime(workSheet.print_date)}}</div>
                         </div>
                     </ion-card-subtitle>
@@ -50,59 +49,90 @@
                     <!-- <ion-button (click)="rejectJob(workSheet)" color="danger">ปฏิเสธ</ion-button> -->
                 </div>
             </ion-card>
-            <!-- <ion-card *ngFor="let job of jobPending">
-                <ion-card-header>
-                    <ion-card-title>{{job.book.time[0]}} {{getSiteName(job.site_id)}} {{job.address}}</ion-card-title>
-                    <ion-card-subtitle>{{formatTime(job.book.date)}}</ion-card-subtitle>
-                </ion-card-header>
-                <ion-card-content>
-                    <div>
-                        {{job.phone}}<br>
-                        {{job.type}} จำนวน {{job.qty || 1}} เครื่อง
-                    </div>
-                </ion-card-content>
-                <div class="flex justify-end p-3">
-                    <ion-button (click)="acceptJob(job)" color="success">รับงาน</ion-button>
-                    <ion-button (click)="infoJob(job)">ดูงาน</ion-button>
-                    <ion-button (click)="rejectJob(job)" color="danger">ปฏิเสธ</ion-button>
-                </div>
-            </ion-card> -->
         </div>
-        <div *ngSwitchCase="'pending'" class="grid md:grid-cols-2 grid-cols-1">
-            <ion-card *ngFor="let job of jobBooked">
+        <div *ngSwitchCase="'graphic'" class="grid md:grid-cols-2 grid-cols-1">
+            <ion-card *ngFor="let workSheet of workSheetForGraphic">
                 <ion-card-header>
-                    <ion-card-title>{{job.book.time[0]}} {{getSiteName(job.site_id)}} {{job.address}}</ion-card-title>
-                    <ion-card-subtitle>{{formatTime(job.book.date)}}</ion-card-subtitle>
+                    <ion-card-title class="flex flex-row justify-between items-center">
+                        <div>{{workSheet.serial_number}} {{workSheet.customer_name}}</div>
+                        <div class="px-2 py-1 bg-red-500 rounded-md mr-2 text-white">
+                            {{workSheet.status}}</div>
+                    </ion-card-title>
+                    <ion-card-subtitle>
+                        <div class="flex flex-wrap gap-2">
+                            <div *ngIf="workSheet.is_urgent" class="px-2 py-1 bg-red-500 rounded-full text-white">
+                                ด่วน</div>
+                            <div class="px-2 py-1 bg-red-500 rounded-full text-white"
+                                *ngIf="workSheet.date_of_acceptance">
+                                นัดรับ {{formatTime(workSheet.date_of_acceptance)}}</div>
+                            <div class="px-2 py-1 bg-red-500 rounded-full text-white"
+                                *ngIf="workSheet.date_of_submission">
+                                วันส่งแบบ {{formatTime(workSheet.date_of_submission)}}</div>
+                            <div class="px-2 py-1 bg-red-500 rounded-full text-white" *ngIf="workSheet.print_date">
+                                วันพิมพ์ {{formatTime(workSheet.print_date)}}</div>
+                        </div>
+                    </ion-card-subtitle>
                 </ion-card-header>
                 <ion-card-content>
-                    <div>
-                        {{job.phone}}<br>
-                        {{job.type}} จำนวน {{job.qty || 1}} เครื่อง
+                    <div *ngFor="let job of workSheet.work, let i = index ;">
+                        {{i+1}}. {{job.type}} {{job.width + ' x ' + job.height + ' ' + job.unit_of_length}}
+                        {{job.option}} จำนวน
+                        {{job.quantity}} แผ่น
                     </div>
                 </ion-card-content>
-                <div class="flex justify-end p-3">
-                    <ion-button (click)="completeJob(job)" color="success">ส่งงาน</ion-button>
-                    <ion-button (click)="infoJob(job)" color="warning">รายงาน</ion-button>
-                    <ion-button (click)="cancelJob(job)" color="danger">ยกเลิก</ion-button>
+                <div class="flex justify-between items-center py-2 px-3">
+                    <!-- <ion-button (click)="acceptJob(workSheet)" color="success">รับงาน</ion-button> -->
+                    <div class="flex flex-row">
+                        <div>S.{{workSheet.seller_name}} G.{{workSheet.design_by || '-'}}</div>
+                    </div>
+                    <div>
+                        <ion-button (click)="editWorkSheet(workSheet)">แก้ไข</ion-button>
+                        <ion-button (click)="infoJob(workSheet)">รายละเอียด</ion-button>
+                    </div>
+                    <!-- <ion-button (click)="rejectJob(workSheet)" color="danger">ปฏิเสธ</ion-button> -->
                 </div>
             </ion-card>
         </div>
-        <div *ngSwitchCase="'completed'" class="grid md:grid-cols-2 grid-cols-1">
-            <ion-card *ngFor="let job of jobCompleted">
+        <div *ngSwitchCase="'production'" class="grid md:grid-cols-2 grid-cols-1">
+            <ion-card *ngFor="let workSheet of workSheetForProduction">
                 <ion-card-header>
-                    <ion-card-title>{{job.book.time[0]}} {{getSiteName(job.site_id)}} {{job.address}}</ion-card-title>
-                    <ion-card-subtitle>{{formatTime(job.book.date)}}</ion-card-subtitle>
+                    <ion-card-title class="flex flex-row justify-between items-center">
+                        <div>{{workSheet.serial_number}} {{workSheet.customer_name}}</div>
+                        <div class="px-2 py-1 bg-red-500 rounded-md mr-2 text-white">
+                            {{workSheet.status}}</div>
+                    </ion-card-title>
+                    <ion-card-subtitle>
+                        <div class="flex flex-wrap gap-2">
+                            <div *ngIf="workSheet.is_urgent" class="px-2 py-1 bg-red-500 rounded-full text-white">
+                                ด่วน</div>
+                            <div class="px-2 py-1 bg-red-500 rounded-full text-white"
+                                *ngIf="workSheet.date_of_acceptance">
+                                นัดรับ {{formatTime(workSheet.date_of_acceptance)}}</div>
+                            <div class="px-2 py-1 bg-red-500 rounded-full text-white"
+                                *ngIf="workSheet.date_of_submission">
+                                วันส่งแบบ {{formatTime(workSheet.date_of_submission)}}</div>
+                            <div class="px-2 py-1 bg-red-500 rounded-full text-white" *ngIf="workSheet.print_date">
+                                วันพิมพ์ {{formatTime(workSheet.print_date)}}</div>
+                        </div>
+                    </ion-card-subtitle>
                 </ion-card-header>
                 <ion-card-content>
-                    <div>
-                        {{job.phone}}<br>
-                        {{job.type}} จำนวน {{job.qty || 1}} เครื่อง
+                    <div *ngFor="let job of workSheet.work, let i = index ;">
+                        {{i+1}}. {{job.type}} {{job.width + ' x ' + job.height + ' ' + job.unit_of_length}}
+                        {{job.option}} จำนวน
+                        {{job.quantity}} แผ่น
                     </div>
                 </ion-card-content>
-                <div class="flex justify-end p-3">
-                    <!-- <ion-button (click)="completeJob(job)" color="success">ส่งงาน</ion-button>
-                    <ion-button (click)="reportJob(job)" color="warning">รายงาน</ion-button> -->
-                    <ion-button (click)="infoJob(job)">รายละเอียด</ion-button>
+                <div class="flex justify-between items-center py-2 px-3">
+                    <!-- <ion-button (click)="acceptJob(workSheet)" color="success">รับงาน</ion-button> -->
+                    <div class="flex flex-row">
+                        <div>S.{{workSheet.seller_name}} G.{{workSheet.design_by || '-'}}</div>
+                    </div>
+                    <div>
+                        <ion-button (click)="editWorkSheet(workSheet)">แก้ไข</ion-button>
+                        <ion-button (click)="infoJob(workSheet)">รายละเอียด</ion-button>
+                    </div>
+                    <!-- <ion-button (click)="rejectJob(workSheet)" color="danger">ปฏิเสธ</ion-button> -->
                 </div>
             </ion-card>
         </div>
