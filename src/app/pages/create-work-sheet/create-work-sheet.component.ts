@@ -347,6 +347,7 @@ export class CreateWorkSheetComponent implements OnInit {
       print_by: "admin", // ผู้พิมพ์
       print_date: "", // วันที่พิมพ์
       is_urgent: true,  // เป็นงานด่วน
+      modify: 0,
       date_of_acceptance: newDate, // วันที่รับงาน
       date_of_submission: "", // วันที่ส่งแบบ
       date_of_completion: "", // วันที่ส่งมอบงาน
@@ -413,13 +414,14 @@ export class CreateWorkSheetComponent implements OnInit {
         remark: this.form.value.remark || "",  // หมายเหตุ 
         design_by: this.form.value.designer.value || "",  // ผู้ออกแบบ 
         design_date: this.form.value.date_of_submission || "",  // วันที่ส่งแบบ
+        modify: 0,
         confirm_by: "",  // ผู้อนุมัติ
         confirm_date: "",  // วันที่อนุมัติ
         print_by: this.form.value.printer.value || "", // ผู้พิมพ์
         print_date: "", // วันที่พิมพ์
         is_urgent: this.form.value.is_urgent.value == 'ด่วน' ? true : false,  // เป็นงานด่วน
         date_of_acceptance: this.form.value.date_of_acceptance ? new Date(this.form.value.date_of_acceptance) : "", // วันที่รับงาน
-        date_of_submission:  "", // วันที่ส่งแบบ
+        date_of_submission: "", // วันที่ส่งแบบ
         date_of_completion: "", // วันที่ส่งงาน
       }
       console.log(data);
@@ -433,9 +435,8 @@ export class CreateWorkSheetComponent implements OnInit {
       })
     }
   }
-  
-  close(){
+
+  close() {
     this.modalController.dismiss();
   }
 }
-    

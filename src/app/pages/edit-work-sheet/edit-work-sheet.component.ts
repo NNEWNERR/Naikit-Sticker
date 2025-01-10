@@ -256,7 +256,7 @@ export class EditWorkSheetComponent implements OnInit {
       disabled: false
     }
   ]
-  // รอออกแบบ กำลังออกแบบ รอคอนเฟิร์มแบบ คอนเฟิร์มแล้ว รอผลิต กําลังผลิต รอส่งมอบ สำเร็จแล้ว
+  // รอออกแบบ กำลังออกแบบ รอคอนเฟิร์มแบบ คอนเฟิร์มแล้ว รอผลิต กําลังผลิต รอส่งมอบ ส่งมอบแล้ว
   statuses = [
     {
       title: 'รอออกแบบ',
@@ -294,8 +294,8 @@ export class EditWorkSheetComponent implements OnInit {
       disabled: false
     },
     {
-      title: 'สำเร็จแล้ว',
-      value: 'สำเร็จแล้ว',
+      title: 'ส่งมอบแล้ว',
+      value: 'ส่งมอบแล้ว',
       disabled: false
     }
   ]
@@ -389,6 +389,7 @@ export class EditWorkSheetComponent implements OnInit {
         design_date: "",  // วันที่รับแบบ
         confirm_by: "",  // ผู้อนุมัติ
         confirm_date: "",  // วันที่อนุมัติ
+        modify: 0,
         print_by: this.form.value.printer.value || "", // ผู้พิมพ์
         print_date: this.form.value.print_date ? new Date(this.form.value.print_date) : "", // วันที่พิมพ์
         is_urgent: this.form.value.is_urgent.value == 'ด่วน' ? true : false,  // เป็นงานด่วน
@@ -406,7 +407,7 @@ export class EditWorkSheetComponent implements OnInit {
       })
     }
   }
-  close(){
+  close() {
     this.modalController.dismiss();
   }
 }

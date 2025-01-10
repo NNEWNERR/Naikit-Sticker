@@ -15,8 +15,12 @@
                             <ion-icon class="text-2xl cursor-pointer" name="pencil-outline"
                                 (click)="editWorkSheet(workSheet)"></ion-icon>
                         </div>
-                        <div class="px-2 py-1 bg-red-500 rounded-md mr-2 text-white">
-                            {{workSheet.status}}</div>
+                        <div class="flex items-center gap-2">
+                            <div *ngIf="workSheet.modify > 0" class="px-2 py-1 bg-red-500 rounded-md mr-2 text-white">แก้ครั้งที่ 
+                                {{workSheet.modify}}</div>
+                            <div class="px-2 py-1 bg-red-500 rounded-md mr-2 text-white">
+                                {{workSheet.status}}</div>
+                        </div>
                     </ion-card-title>
                     <ion-card-subtitle>
                         <div class="flex flex-wrap gap-2">
@@ -47,14 +51,13 @@
                     </div>
                     <div>
                         <ion-button *ngIf="workSheet.status === 'รอคอนเฟิร์มแบบ'" color="danger"
-                            (click)="confirmWorkSheet(workSheet)">ส่งแก้ไข</ion-button>
+                            (click)="modifyWorkSheet(workSheet)">ส่งแก้ไข</ion-button>
                         <ion-button *ngIf="workSheet.status === 'รอคอนเฟิร์มแบบ'" color="success"
                             (click)="confirmWorkSheet(workSheet)">คอนเฟิร์ม</ion-button>
                         <ion-button *ngIf="workSheet.status === 'รอส่งมอบ'" color="success"
-                            (click)="confirmWorkSheet(workSheet)">ส่งมอบ</ion-button>
+                            (click)="deliverWorkSheet(workSheet)">ส่งมอบ</ion-button>
                         <ion-button (click)="workSheetInfo(workSheet)">รายละเอียด</ion-button>
                     </div>
-                    <!-- <ion-button (click)="rejectJob(workSheet)" color="danger">ปฏิเสธ</ion-button> -->
                 </div>
             </ion-card>
         </div>
@@ -66,8 +69,12 @@
                             <ion-icon class="text-2xl cursor-pointer" name="pencil-outline"
                                 (click)="editWorkSheet(workSheet)"></ion-icon>
                         </div>
-                        <div class="px-2 py-1 bg-red-500 rounded-md mr-2 text-white">
-                            {{workSheet.status}}</div>
+                        <div class="flex items-center gap-2">
+                            <div *ngIf="workSheet.modify > 0" class="px-2 py-1 bg-red-500 rounded-md mr-2 text-white">แก้ครั้งที่ 
+                                {{workSheet.modify}}</div>
+                            <div class="px-2 py-1 bg-red-500 rounded-md mr-2 text-white">
+                                {{workSheet.status}}</div>
+                        </div>
                     </ion-card-title>
                     <ion-card-subtitle>
                         <div class="flex flex-wrap gap-2">
@@ -97,12 +104,13 @@
                         <div>S.{{workSheet.seller_name}} G.{{workSheet.design_by || '-'}}</div>
                     </div>
                     <div>
+                        <!-- รับออกแบบ -->
                         <ion-button *ngIf="workSheet.status === 'รอออกแบบ'" color="success"
-                            (click)="confirmWorkSheet(workSheet)">รับออกแบบ</ion-button>
+                            (click)="acceptWorkSheet(workSheet)">รับออกแบบ</ion-button>
                         <ion-button *ngIf="workSheet.status === 'กำลังออกแบบ'" color="success"
-                            (click)="confirmWorkSheet(workSheet)">ส่งแบบ</ion-button>
+                            (click)="offerWorkSheet(workSheet)">ส่งแบบ</ion-button>
                         <ion-button *ngIf="workSheet.status === 'คอนเฟิร์มแล้ว'" color="success"
-                            (click)="confirmWorkSheet(workSheet)">ส่งผลิต</ion-button>
+                            (click)="sendProductionWorkSheet(workSheet)">ส่งผลิต</ion-button>
                         <ion-button (click)="infoJob(workSheet)">รายละเอียด</ion-button>
                     </div>
                     <!-- <ion-button (click)="rejectJob(workSheet)" color="danger">ปฏิเสธ</ion-button> -->

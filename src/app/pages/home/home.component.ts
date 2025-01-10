@@ -238,9 +238,58 @@ export class HomeComponent implements OnInit {
     }).then(modal => modal.present());
   }
 
+  modifyWorkSheet(workSheet) {
+    const docRef = doc(db, 'jobs', workSheet.key);
+    const data = {
+      status: 'กำลังออกแบบ',
+      modify: workSheet.modify + 1
+    }
+    this.firestoreService.updateDatatoFirebase(docRef, data);
+  }
+
   confirmWorkSheet(workSheet) {
-    console.log(workSheet);
-    
+    const docRef = doc(db, 'jobs', workSheet.key);
+    const data = {
+      status: 'คอนเฟิร์มแล้ว',
+      confirm_date: new Date(),
+    }
+    this.firestoreService.updateDatatoFirebase(docRef, data);
+  }
+
+  deliverWorkSheet(workSheet) {
+    const docRef = doc(db, 'jobs', workSheet.key);
+    const data = {
+      status: 'ส่งมอบแล้ว',
+      date_of_completion: new Date(),
+    }
+    this.firestoreService.updateDatatoFirebase(docRef, data);
+  }
+
+  acceptWorkSheet(workSheet) {
+    const docRef = doc(db, 'jobs', workSheet.key);
+    const data = {
+      status: 'กำลังออกแบบ',
+      design_date: new Date(),
+    }
+    this.firestoreService.updateDatatoFirebase(docRef, data);
+  }
+
+  offerWorkSheet(workSheet) {
+    const docRef = doc(db, 'jobs', workSheet.key);
+    const data = {
+      status: 'รอคอนเฟิร์มแบบ',
+      date_of_submission: new Date(),
+    }
+    this.firestoreService.updateDatatoFirebase(docRef, data);
+  }
+
+  sendProductionWorkSheet(workSheet) {
+    const docRef = doc(db, 'jobs', workSheet.key);
+    const data = {
+      status: 'รอผลิต',
+      date_of_submission: new Date(),
+    }
+    this.firestoreService.updateDatatoFirebase(docRef, data);
   }
 
   workSheetInfo(workSheet) {
