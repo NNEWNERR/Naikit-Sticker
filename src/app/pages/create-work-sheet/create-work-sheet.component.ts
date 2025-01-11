@@ -283,7 +283,7 @@ export class CreateWorkSheetComponent implements OnInit {
       printer: [''],
       print_date: [''],
       remark: [''],
-      is_urgent: [''],
+      is_urgent: [this.is_ergents.find(p => p.value === 'ไม่ด่วน') || ''],
     })
   }
 
@@ -367,12 +367,12 @@ export class CreateWorkSheetComponent implements OnInit {
       console.log(this.form.value);
       const date = new Date();
       const newDate = new Date(date.setDate(date.getDate() + 1));
-      const total = this.form.value.total
-      const deposit = this.form.value.deposit
+      const total = this.form.value.total || 0
+      const deposit = this.form.value.deposit || 0
       const remaining = total - deposit
       const data = {
         id: uuidv4(),  // รหัสงาน
-        serial_number: this.form.value.reference || "", // หมายเลขงาน
+        serial_number: this.form.value.reference.replace(" ", "") || "", // หมายเลขงาน
         contact: this.form.value.contact.value || "", // ช่องทางการติดต่อ
         customer_name: this.form.value.name || "", // ชื่อลูกค้า
         phone: this.form.value.phone || "",  // เบอร์โทร 

@@ -406,6 +406,26 @@ export class FirestoreService {
     });
   }
 
+  signInWithUsernameAndPassword(username: string, password: string) {
+    const q = query(collection(db, "users"), where("username", "==", username), where("password", "==", password));
+    return new Promise<any>((resolve) => {
+      const snapshot = getDocs(q);
+      snapshot.then((querySnapshot) => {
+        if (querySnapshot.empty) {
+          const { header, message } = NoUserData();
+          this.service.showAlert(header, message, () => { })
+          resolve([]);
+        } else {
+          const data: any = [];
+          for (const docs of querySnapshot.docs) {
+            data.push(docs.data());
+          };
+          resolve(data);
+        }
+      });
+    });
+  }
+  
   async CheckUserOnSite(phone: any) {
     const q = query(collection(db, "users"), where("phone", "==", phone));
     // const q = query(collection(db, "users"), where("user_phone", "==", phone), where("user_is_enabled", "==", true), where("user_is_deleted", "==", false));

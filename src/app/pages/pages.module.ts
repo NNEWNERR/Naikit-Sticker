@@ -34,6 +34,7 @@ import { HistoryComponent } from './history/history.component';
 import { SiteHistoryComponent } from './history/site-history/site-history.component';
 import { CreateWorkSheetComponent } from './create-work-sheet/create-work-sheet.component';
 import { EditWorkSheetComponent } from './edit-work-sheet/edit-work-sheet.component';
+import { GraphicComponent } from './graphic/graphic.component';
 
 
 
@@ -61,7 +62,8 @@ import { EditWorkSheetComponent } from './edit-work-sheet/edit-work-sheet.compon
     HistoryComponent,
     SiteHistoryComponent,
     CreateWorkSheetComponent,
-    EditWorkSheetComponent
+    EditWorkSheetComponent,
+    GraphicComponent
   ],
   imports: [
     CommonModule,

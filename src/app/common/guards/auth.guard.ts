@@ -18,7 +18,7 @@ export class AuthGuard {
       return true;
     }
     else {
-      localStorage.removeItem('token');
+      // localStorage.removeItem('token');
       this.router.navigate(['/login']);
       return false;
     }

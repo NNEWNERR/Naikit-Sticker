@@ -380,7 +380,7 @@ export class EditWorkSheetComponent implements OnInit {
           total: total,  // ราคารวม
           deposit: deposit,   // เงินมัดจำ
           date_of_payment: new Date(),   // วันที่ชําระ
-          payment_method: this.form.value.payment.value,  // วิธีการชําระ
+          payment_method: this.form.value.payment.value || "",  // วิธีการชําระ
           remaining: remaining || "",  // คงเหลือ
         },
         status: this.form.value.status.value || "",

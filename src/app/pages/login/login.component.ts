@@ -14,6 +14,7 @@ import { ServiceService } from "src/app/services/service.service";
   styleUrls: ['./login.component.scss'],
 })
 export class LoginComponent implements OnInit {
+  form: FormGroup;
   formPhone: FormGroup;
   formOTP: FormGroup;
   has_user: boolean = false;
@@ -38,10 +39,22 @@ export class LoginComponent implements OnInit {
     this.formOTP = this.formBuilder.group({
       otp: ['', Validators.required]
     })
+    this.form = this.formBuilder.group({
+      username: ['', Validators.required],
+      password: ['', Validators.required]
+    })
   }
 
   submitPhone() {
     this.LoginWithPhone(this.formPhone.value.phone);
+  }
+  signIn() {
+    this.firestoreService.signInWithUsernameAndPassword(this.form.value.username, this.form.value.password).then((data: any) => {
+      if (data.length > 0) {
+        localStorage.setItem('token', JSON.stringify(data[0]))
+        window.location.reload();
+      }
+    });
   }
 
   submitOTP() {

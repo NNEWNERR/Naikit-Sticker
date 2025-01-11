@@ -1,25 +1,28 @@
 <ion-content>
   <div class="w-full h-full bg-white flex flex-col justify-center items-center">
-    <div class="h-60 w-60">
-      <ion-img [src]="'../../assets/icon/logo.jpeg'"></ion-img>
+    <div class="h-60 w-60 rounded-full">
+      <img class="rounded-full" [src]="'../../assets/images/naikit-logo.jpg'">
+      <!-- <ion-img [src]="'../../assets/icon/logo.jpeg'"></ion-img> -->
     </div>
     <div class="p-4">
-      <form [formGroup]="formPhone" *ngIf="!has_user">
-
-        <app-input [parentForm]="formPhone" label="หมายเลขโทรศัพท์" typeInput="tel" formControlName="phone"
-          placeholder="ระบุหมายเลขโทรศัพท์ของคุณ"></app-input>
-
-        <ion-button class="w-full" [disabled]="formPhone.invalid" (click)="submitPhone()">เข้าสู่ระบบ</ion-button>
+      <form [formGroup]="form" *ngIf="!has_user">
+        <!-- username -->
+        <app-input [parentForm]="formPhone" label="ชื่อผู้ใช้" typeInput="text" formControlName="username"
+          placeholder="ระบุชื่อผู้ใช้"></app-input>
+        <!-- password -->
+        <app-input [parentForm]="formPhone" label="รหัสผ่าน" typeInput="password" formControlName="password"
+          placeholder="ระบุรหัสผ่าน"></app-input>
+        <ion-button class="w-full" [disabled]="form.invalid" (click)="signIn()">เข้าสู่ระบบ</ion-button>
       </form>
 
-      <form [formGroup]="formOTP" *ngIf="has_user">
+      <!-- <form [formGroup]="formOTP" *ngIf="has_user">
 
         <app-input [parentForm]="formOTP" label="OTP" typeInput="tel" formControlName="otp"
           placeholder="ระบุรหัส OTP"></app-input>
 
         <ion-button class="w-full" [disabled]="formOTP.invalid" (click)="submitOTP()">ยืนยัน</ion-button>
 
-      </form>
+      </form> -->
     </div>
     <!-- <div class="w-full text-center justify-center flex-row p-6">
       <img src="https://ionicframework.com/docs/img/demos/card-media.png" class="w-1/2 py-5">
