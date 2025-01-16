@@ -35,6 +35,8 @@ import { SiteHistoryComponent } from './history/site-history/site-history.compon
 import { CreateWorkSheetComponent } from './create-work-sheet/create-work-sheet.component';
 import { EditWorkSheetComponent } from './edit-work-sheet/edit-work-sheet.component';
 import { GraphicComponent } from './graphic/graphic.component';
+import { DragAndDropFileComponent } from './drag-and-drop-file/drag-and-drop-file.component';
+import { ProgressComponent } from './drag-and-drop-file/progress/progress.component';
 
 
 
@@ -63,7 +65,9 @@ import { GraphicComponent } from './graphic/graphic.component';
     SiteHistoryComponent,
     CreateWorkSheetComponent,
     EditWorkSheetComponent,
-    GraphicComponent
+    GraphicComponent,
+    DragAndDropFileComponent,
+    ProgressComponent
   ],
   imports: [
     CommonModule,

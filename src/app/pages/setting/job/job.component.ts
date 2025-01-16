@@ -63,7 +63,7 @@ export class JobComponent implements OnInit {
 
   handleInput(event) {
     const query = event.target.value.toLowerCase();
-    this.results = this.data.filter((d) => d.address.toLowerCase().indexOf(query) > -1 || d.phone.toLowerCase().indexOf(query) > -1 || this.formatTime(d.book.date).toLowerCase().indexOf(query) > -1);
+    this.results = this.data.filter((d) => d.serial_number.toLowerCase().indexOf(query) > -1 || d.customer_name.toLowerCase().indexOf(query) > -1);
   }
 
   onActivate(event) {

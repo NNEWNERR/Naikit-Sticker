@@ -271,7 +271,7 @@ export class BookingComponent implements OnInit {
 // ที่อยู่/ห้อง : ${this.form.value.address}
 // หมายเหตุ : ${this.form.value.remark || '-'}
 // เพิ่มโดย : ${this.is_admin == 'true' ? name : 'คิวอาร์โค้ด'}
-// https://krungthon-air.web.app/krungthon/job-schedule?job_id=${res.id}`,
+// https://naikit-sticker.web.app/naikit-sticker/job-schedule?job_id=${res.id}`,
 //           stickerPackageId: 6632,
 //           stickerId: 11825396
 //         }).subscribe(async (res) => {

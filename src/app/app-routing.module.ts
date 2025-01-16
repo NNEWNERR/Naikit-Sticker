@@ -21,11 +21,11 @@ import { TestComponent } from './test/test.component';
 export const routes: Routes = [
   {
     path: '',
-    redirectTo: 'krungthon/home',
+    redirectTo: 'naikit-sticker/home',
     pathMatch: 'full'
   },
   {
-    path: 'krungthon',
+    path: 'naikit-sticker',
     component: MainLayoutComponent,
     canActivate: [AuthGuard],
     children: [

@@ -11,12 +11,12 @@ import { ServiceService } from 'src/app/services/service.service';
 })
 export class MainLayoutComponent implements OnInit {
   public appPages = [
-    { title: 'home', url: '/krungthon/home', icon: 'home' },
-    { title: 'dashboard', url: '/krungthon/dashboard', icon: 'pie-chart' },
-    { title: 'ประวัติการจอง', url: '/krungthon/history', icon: 'book' },
-    { title: 'ตารางงาน', url: '/krungthon/job-schedule', icon: 'calendar' },
-    { title: 'ทีมงาน', url: '/krungthon/work-group', icon: 'people-circle' },
-    { title: 'ตั้งค่า', url: '/krungthon/setting', icon: 'settings' },
+    { title: 'home', url: '/naikit-sticker/home', icon: 'home' },
+    // { title: 'dashboard', url: '/naikit-sticker/dashboard', icon: 'pie-chart' },
+    // { title: 'ประวัติการจอง', url: '/naikit-sticker/history', icon: 'book' },
+    // { title: 'ตารางงาน', url: '/naikit-sticker/job-schedule', icon: 'calendar' },
+    // { title: 'ทีมงาน', url: '/naikit-sticker/work-group', icon: 'people-circle' },
+    { title: 'ตั้งค่า', url: '/naikit-sticker/setting', icon: 'settings' },
   ];
   phone
   constructor(

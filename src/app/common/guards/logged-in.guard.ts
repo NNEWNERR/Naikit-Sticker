@@ -19,7 +19,7 @@ export class LoggedInGuard {
       return true;
     }
     else {
-      this.router.navigate(['/krungthon/home']);
+      this.router.navigate(['/naikit-sticker/home']);
       return false;
     }
   }

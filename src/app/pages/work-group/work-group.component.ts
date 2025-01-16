@@ -49,7 +49,7 @@ export class WorkGroupComponent implements OnInit {
       subtitle: 'ผู้รับผิดชอบ',
       description: 'คอนโด 1,คอนโด 2,คอนโด 3,คอนโด 4',
       img: 'https://ionicframework.com/docs/img/demos/card-media.png',
-      url: '/krungthon/home'
+      url: '/naikit-sticker/home'
     });
   }
 

@@ -7,8 +7,8 @@
     </ion-segment>
     <div [ngSwitch]="segment">
         <div *ngSwitchCase="'seller'">
-            <ion-searchbar placeholder="ค้นหาใบงาน" (ionChange)="onWorkSheetForSellerSearchChange($event)"
-                [debounce]="250" showCancelButton="always"></ion-searchbar>
+            <ion-searchbar placeholder="ค้นหาใบงาน" (ionInput)="onWorkSheetForSellerSearchChange($event)"
+                showCancelButton="always"></ion-searchbar>
             <ion-button (click)="createWorkSheet()" color="success">สร้างใบงาน</ion-button><br>
             status : <ion-button (click)="filteringWorkSheetForSeller(status.value)" *ngFor="let status of statuses"
                 color="success">{{status.title}}</ion-button><br>
@@ -75,7 +75,7 @@
 
         </div>
         <div *ngSwitchCase="'graphic'">
-            <ion-searchbar placeholder="ค้นหาใบงาน" (ionChange)="onWorkSheetForGraphicSearchChange($event)"
+            <ion-searchbar placeholder="ค้นหาใบงาน" (ionInput)="onWorkSheetForGraphicSearchChange($event)"
                 [debounce]="250" showCancelButton="always"></ion-searchbar>
             status :<ion-button (click)="filteringWorkSheetForGraphic(status.value)" *ngFor="let status of statuses"
                 color="success">{{status.title}}</ion-button><br>

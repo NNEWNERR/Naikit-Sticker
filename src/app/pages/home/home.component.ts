@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { ModalController } from '@ionic/angular';
-import { Timestamp, doc, getDoc } from 'firebase/firestore';
+import { Timestamp, arrayUnion, doc, getDoc } from 'firebase/firestore';
 import { Amphures } from 'src/app/common/constant/thai-data/thai_amphures';
 import { Geographies } from 'src/app/common/constant/thai-data/thai_geographies';
 import { Provinces } from 'src/app/common/constant/thai-data/thai_provinces';
@@ -13,6 +13,9 @@ import { FirestoreService } from 'src/app/services/firestore.service';
 import { ServiceService } from 'src/app/services/service.service';
 import { EditWorkSheetComponent } from '../edit-work-sheet/edit-work-sheet.component';
 import { GraphicComponent } from '../graphic/graphic.component';
+import { DragAndDropFileComponent } from '../drag-and-drop-file/drag-and-drop-file.component';
+import { v4 as uuidv4 } from 'uuid';
+import { StorageService } from 'src/app/services/storage.service';
 
 @Component({
   selector: 'app-home',
@@ -168,7 +171,8 @@ export class HomeComponent implements OnInit {
     private route: ActivatedRoute,
     private firestoreService: FirestoreService,
     private service: ServiceService,
-    private modalController: ModalController
+    private modalController: ModalController,
+    private storageService: StorageService
   ) { }
 
   async ngOnInit() {
@@ -435,13 +439,60 @@ export class HomeComponent implements OnInit {
     // this.firestoreService.updateDatatoFirebase(docRef, data);
   }
 
-  offerWorkSheet(workSheet) {
-    const docRef = doc(db, 'jobs', workSheet.key);
-    const data = {
-      status: 'รอคอนเฟิร์มแบบ',
-      date_of_submission: new Date(),
+  async offerWorkSheet(workSheet) {
+    const modal = await this.modalController.create({
+      component: DragAndDropFileComponent,
+      cssClass: 'my-custom-class',
+    })
+    await modal.present()
+    const { role, data } = await modal.onWillDismiss();
+    console.log(role, data);
+    if (role === 'confirm') {
+      const files = data;
+      let imagePath = '';
+      let imageUrl = '';
+      let imageUrls = [];
+      if (files) {
+        try {
+          for (const file of files) {
+            let date = new Date();
+            // 2025
+            let format_date = date.getFullYear().toString();
+            imagePath = `images/${format_date}/${workSheet.serial_number}/${workSheet.customer_name}_${file.name}`;
+            imageUrl = await this.storageService.uploadImage(file, imagePath);
+            imageUrls.push(imageUrl);
+          }
+          console.log('Image uploaded successfully');
+          // create id for image
+          let images = [];
+          if (imageUrls.length > 0) {
+            images = imageUrls.map((url) => {
+              return {
+                id: uuidv4(),
+                url: url,
+                date: new Date()
+              }
+            })
+          }
+          const docRef = doc(db, 'jobs', workSheet.key);
+          const update = {
+            status: 'รอคอนเฟิร์มแบบ',
+            date_of_submission: new Date(),
+            images: images.length > 0 ? arrayUnion(...images) : []
+          }
+          this.firestoreService.updateDatatoFirebase(docRef, update);
+        } catch (error) {
+          console.error('failed:', error);
+        }
+      }
+
     }
-    this.firestoreService.updateDatatoFirebase(docRef, data);
+    // const docRef = doc(db, 'jobs', workSheet.key);
+    // const data = {
+    //   status: 'รอคอนเฟิร์มแบบ',
+    //   date_of_submission: new Date(),
+    // }
+    // this.firestoreService.updateDatatoFirebase(docRef, data);
   }
 
   sendProductionWorkSheet(workSheet) {

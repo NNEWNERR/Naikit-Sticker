@@ -124,7 +124,7 @@ export class ShowQrCodeComponent implements OnInit {
     this.imageHeight = this.showImage ? this.data_model.imageHeight : undefined
     this.imageWidth = this.showImage ? this.data_model.imageWidth : undefined
     this.margin = this.data_model.margin
-    this.qrdata = 'https://krungthon-air.web.app/booking/' + this.site.key;
+    this.qrdata = 'https://naikit-sticker.web.app/booking/' + this.site.key;
     this.scale = this.data_model.scale
     this.title = this.site.name
     this.width = this.data_model.width

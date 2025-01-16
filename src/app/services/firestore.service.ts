@@ -233,7 +233,7 @@ export class FirestoreService {
   }
 
   async fetchDataAllJob(project_id): Promise<any> {
-    const q = query(collection(db, "jobs"), where("project_id", "==", project_id));
+    const q = query(collection(db, "jobs"));
     if (this.subscriptionAllJobs) {
       this.subscriptionAllJobs();
     }

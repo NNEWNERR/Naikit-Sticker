@@ -178,7 +178,7 @@ export class DashboardComponent implements OnInit {
       //   }
       // },
       title: {
-        text: 'Krungthon Air',
+        text: 'Naikit Sticker',
         subtext: `งานทั้งหมด ${this.usageCount}`,
         left: 'center'
       },
