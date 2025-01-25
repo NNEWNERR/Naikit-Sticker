@@ -256,7 +256,7 @@ export class EditWorkSheetComponent implements OnInit {
       disabled: false
     }
   ]
-  // รอออกแบบ กำลังออกแบบ รอคอนเฟิร์มแบบ คอนเฟิร์มแล้ว รอผลิต กําลังผลิต รอส่งมอบ ส่งมอบแล้ว
+  // รอออกแบบ กำลังออกแบบ รอคอนเฟิร์มแบบ คอนเฟิร์มแล้ว รอผลิต กำลังผลิต รอส่งมอบ ส่งมอบแล้ว
   statuses = [
     {
       title: 'รอออกแบบ',
@@ -284,8 +284,8 @@ export class EditWorkSheetComponent implements OnInit {
       disabled: false
     },
     {
-      title: 'กําลังผลิต',
-      value: 'กําลังผลิต',
+      title: 'กำลังผลิต',
+      value: 'กำลังผลิต',
       disabled: false
     },
     {

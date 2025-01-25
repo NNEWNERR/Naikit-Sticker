@@ -522,7 +522,7 @@ export class FirestoreService {
     const formatQueryDate = new Date(querydate);
     formatQueryDate.setDate(formatQueryDate.getDate());
     const q = query(collection(db, "jobs"),
-      where("status", "in", ["กำลังออกแบบ", "รอออกแบบ", "รอคอนเฟิร์มแบบ", "คอนเฟิร์มแล้ว", "รอผลิต", "กําลังผลิต", "รอส่งมอบ", "ส่งมอบแล้ว"]),
+      where("status", "in", ["กำลังออกแบบ", "รอออกแบบ", "รอคอนเฟิร์มแบบ", "คอนเฟิร์มแล้ว", "รอผลิต", "กำลังผลิต", "รอส่งมอบ", "ส่งมอบแล้ว"]),
       // where("book.date", ">=", formatQueryDate)
     );
     return new Promise<any>((resolve) => {
@@ -551,7 +551,7 @@ export class FirestoreService {
   workSheetForProduction = [];
   fetchWorkSheetForAdmin() {
     const q = query(collection(db, "jobs"),
-      where("status", "in", ["กำลังออกแบบ", "รอออกแบบ", "รอคอนเฟิร์มแบบ", "คอนเฟิร์มแล้ว", "รอผลิต", "กําลังผลิต", "รอส่งมอบ", "ส่งมอบแล้ว"]),
+      where("status", "in", ["กำลังออกแบบ", "รอออกแบบ", "รอคอนเฟิร์มแบบ", "คอนเฟิร์มแล้ว", "รอผลิต", "กำลังผลิต", "รอส่งมอบ", "ส่งมอบแล้ว"]),
     );
     return new Promise<any>((resolve) => {
       const subscription = onSnapshot(q, { includeMetadataChanges: true }, async (querySnapshot) => {
@@ -568,7 +568,7 @@ export class FirestoreService {
 
   fetchWorkSheetForSeller() {
     const q = query(collection(db, "jobs"),
-      where("status", "in", ["กำลังออกแบบ", "รอออกแบบ", "รอคอนเฟิร์มแบบ", "คอนเฟิร์มแล้ว", "รอผลิต", "กําลังผลิต", "รอส่งมอบ"]),
+      where("status", "in", ["กำลังออกแบบ", "รอออกแบบ", "รอคอนเฟิร์มแบบ", "คอนเฟิร์มแล้ว", "รอผลิต", "กำลังผลิต", "รอส่งมอบ"]),
     );
     return new Promise<any>((resolve) => {
       const subscription = onSnapshot(q, { includeMetadataChanges: true }, async (querySnapshot) => {
@@ -606,7 +606,7 @@ export class FirestoreService {
 
   fetchWorkSheetForProduction() {
     const q = query(collection(db, "jobs"),
-      where("status", "in", ["รอผลิต", "กําลังผลิต"]),
+      where("status", "in", ["รอผลิต", "กำลังผลิต"]),
     );
     return new Promise<any>((resolve) => {
       const subscription = onSnapshot(q, { includeMetadataChanges: true }, async (querySnapshot) => {

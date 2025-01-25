@@ -56,6 +56,7 @@ export class ReportComponent implements OnInit {
   ) { }
 
   ngOnInit() {
+    this.serviceService.presentLoadingWithOutTime('Loading...');
     this.firestoreService.unsubscribeSubscriptions()
     this.initForm();
     this.firestoreService.fetchDataAllJob();
@@ -70,7 +71,6 @@ export class ReportComponent implements OnInit {
       }
     })
   }
-
 
   // ngOnDestroy() {
   //   this.firestoreService.unsubscribeSubscriptions()
@@ -142,7 +142,6 @@ export class ReportComponent implements OnInit {
 
 
   filteringWorkSheetBySeller(seller) {
-    // console.log('seller', seller.value);
     this.currentSeller = seller.value;
     this.currentStatus = 'ทั้งหมด';
     this.filteringWorkSheet('seller');
@@ -150,14 +149,11 @@ export class ReportComponent implements OnInit {
 
   filteringWorkSheet(by) {
     let filterWorkSheet = [];
-    // console.log('currentStatus', this.currentStatus);
-    // console.log('currentSeller', this.currentSeller);
-    // console.log('currentGraphic', this.currentGraphic);
-
     filterWorkSheet = this.workSheet.filter(workSheet => this.currentStatus === 'ทั้งหมด' ? true : workSheet.status === this.currentStatus);
     filterWorkSheet = filterWorkSheet.filter(workSheet => this.currentSeller === 'ทั้งหมด' ? true : workSheet.seller_name === this.currentSeller);
     filterWorkSheet = filterWorkSheet.filter(workSheet => this.currentGraphic === 'ทั้งหมด' ? true : workSheet.design_by === this.currentGraphic);
     this.filterWorkSheet = filterWorkSheet;
+    console.log('by', by);
     if (by !== 'status') {
       this.countStatuses(this.filterWorkSheet);
     }
@@ -183,7 +179,7 @@ export class ReportComponent implements OnInit {
           case 'รอผลิต':
             acc.inProduction++;
             break;
-          case 'กําลังผลิต':
+          case 'กำลังผลิต':
             acc.workingInProduction++;
             break;
           case 'รอส่งมอบ':
@@ -208,17 +204,16 @@ export class ReportComponent implements OnInit {
       }
     );
     this.statusCount = counts;
+    this.serviceService.dismissLoading();
   }
 
   filteringWorkSheetByGraphic(graphic) {
-    // console.log('graphic', graphic.value);
     this.currentGraphic = graphic.value;
     this.currentStatus = 'ทั้งหมด';
     this.filteringWorkSheet('graphic');
   }
 
   onWorkSheetSearchChange(event) {
-    console.log('event', event);
     this.currentSearch = event;
     this.filterWorkSheet = this.workSheet.filter(workSheet => workSheet.serial_number.toLowerCase().includes(this.currentSearch.toLowerCase()) ||
       workSheet.customer_name.toLowerCase().includes(this.currentSearch.toLowerCase()));
@@ -245,7 +240,7 @@ export class ReportComponent implements OnInit {
         this.currentStatus = 'รอผลิต';
         break;
       case 'workingInProduction':
-        this.currentStatus = 'กําลังผลิต';
+        this.currentStatus = 'กำลังผลิต';
         break;
       case 'inDelivery':
         this.currentStatus = 'รอส่งมอบ';
@@ -257,7 +252,6 @@ export class ReportComponent implements OnInit {
         this.currentStatus = 'ทั้งหมด';
         break;
     }
-    // this.currentStatus = status.value;
     this.filteringWorkSheet('status');
   }
 
@@ -278,9 +272,9 @@ export class ReportComponent implements OnInit {
       case 'workingInProduction':
         return 'กำลังผลิต';
       case 'inDelivery':
-        return 'รอจัดส่ง';
+        return 'รอส่งมอบ';
       case 'delivered':
-        return 'จัดส่งแล้ว';
+        return 'ส่งมอบแล้ว';
       default:
         return status;
     }

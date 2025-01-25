@@ -37,7 +37,8 @@ export class ProductionComponent implements OnInit {
     private firestoreService: FirestoreService,
     private modalController: ModalController,
     private storageService: StorageService,
-    private formBuilder: FormBuilder
+    private formBuilder: FormBuilder,
+    private serviceService: ServiceService
   ) { }
 
   get statusKeys() {
@@ -61,15 +62,16 @@ export class ProductionComponent implements OnInit {
       case 'workingInProduction':
         return 'กำลังผลิต';
       case 'inDelivery':
-        return 'รอจัดส่ง';
+        return 'รอส่งมอบ';
       case 'delivered':
-        return 'จัดส่งแล้ว';
+        return 'ส่งมอบแล้ว';
       default:
         return status;
     }
   }
 
   ngOnInit() {
+    this.serviceService.presentLoadingWithOutTime('Loading...');
     this.firestoreService.unsubscribeSubscriptions()
     this.firestoreService.fetchWorkSheetForProduction();
     this.initForm();
@@ -84,7 +86,7 @@ export class ProductionComponent implements OnInit {
       }
     })
   }
-
+  
   statusCount = {
     total: 0,
     // pending: 0,
@@ -117,7 +119,7 @@ export class ProductionComponent implements OnInit {
           case 'รอผลิต':
             acc.inProduction++;
             break;
-          case 'กําลังผลิต':
+          case 'กำลังผลิต':
             acc.workingInProduction++;
             break;
           case 'รอส่งมอบ':
@@ -142,6 +144,7 @@ export class ProductionComponent implements OnInit {
       }
     );
     this.statusCount = counts;
+    this.serviceService.dismissLoading();
   }
 
   initForm() {
@@ -199,7 +202,7 @@ export class ProductionComponent implements OnInit {
         this.currentStatus = 'รอผลิต';
         break;
       case 'workingInProduction':
-        this.currentStatus = 'กําลังผลิต';
+        this.currentStatus = 'กำลังผลิต';
         break;
       case 'inDelivery':
         this.currentStatus = 'รอส่งมอบ';
@@ -211,8 +214,6 @@ export class ProductionComponent implements OnInit {
         this.currentStatus = 'ทั้งหมด';
         break;
     }
-    // // console.log('status', status.value);
-    // this.currentStatus = status.value;
     this.filteringWorkSheet('status');
   }
 
@@ -232,14 +233,11 @@ export class ProductionComponent implements OnInit {
 
   filteringWorkSheet(by) {
     let filterWorkSheet = [];
-    // console.log('currentStatus', this.currentStatus);
-    // console.log('currentSeller', this.currentSeller);
-    // console.log('currentGraphic', this.currentGraphic);
-
     filterWorkSheet = this.workSheet.filter(workSheet => this.currentStatus === 'ทั้งหมด' ? true : workSheet.status === this.currentStatus);
     filterWorkSheet = filterWorkSheet.filter(workSheet => this.currentSeller === 'ทั้งหมด' ? true : workSheet.seller_name === this.currentSeller);
     filterWorkSheet = filterWorkSheet.filter(workSheet => this.currentGraphic === 'ทั้งหมด' ? true : workSheet.design_by === this.currentGraphic);
     this.filterWorkSheet = filterWorkSheet;
+    console.log('by', by);
     if (by !== 'status') {
       this.countStatuses(this.filterWorkSheet);
     }
@@ -360,7 +358,7 @@ export class ProductionComponent implements OnInit {
   productingWorkSheet(workSheet) {
     const docRef = doc(db, 'jobs', workSheet.key);
     const data = {
-      status: 'กําลังผลิต',
+      status: 'กำลังผลิต',
     }
     this.firestoreService.updateDatatoFirebase(docRef, data);
   }
@@ -385,7 +383,6 @@ export class ProductionComponent implements OnInit {
   }
 
   onWorkSheetSearchChange(event) {
-    console.log('event', event);
     this.currentSearch = event;
     this.filterWorkSheet = this.workSheet.filter(workSheet => workSheet.serial_number.toLowerCase().includes(this.currentSearch.toLowerCase()) ||
       workSheet.customer_name.toLowerCase().includes(this.currentSearch.toLowerCase()));

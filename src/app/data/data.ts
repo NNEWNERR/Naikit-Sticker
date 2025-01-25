@@ -53,8 +53,8 @@ export const STATUS_OPTION = [
         disabled: false
     },
     {
-        title: 'กําลังผลิต',
-        value: 'กําลังผลิต',
+        title: 'กำลังผลิต',
+        value: 'กำลังผลิต',
         disabled: false
     },
     {
