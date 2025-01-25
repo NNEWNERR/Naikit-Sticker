@@ -7,6 +7,7 @@ import { HomeComponent } from './pages/home/home.component';
 import { LoginComponent } from './pages/login/login.component';
 import { SettingComponent } from './pages/setting/setting.component';
 import { TestComponent } from './test/test.component';
+import { ReportComponent } from './pages/report/report.component';
 
 export const routes: Routes = [
   {
@@ -22,6 +23,10 @@ export const routes: Routes = [
       {
         path: 'home',
         component: HomeComponent
+      },
+      {
+        path: 'all',
+        component: ReportComponent
       },
       {
         path: 'setting',

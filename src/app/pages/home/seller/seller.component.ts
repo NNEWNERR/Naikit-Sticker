@@ -70,6 +70,7 @@ export class SellerComponent implements OnInit {
   }
 
   ngOnInit() {
+    this.firestoreService.unsubscribeSubscriptions()
     this.firestoreService.fetchWorkSheetForSeller();
     this.initForm();
     this.firestoreService.workSheetForSellerChange.subscribe((data) => {
@@ -84,9 +85,10 @@ export class SellerComponent implements OnInit {
     })
   }
 
-  ngOnDestroy() {
-    this.firestoreService.unsubscribeSubscriptions()
-  }
+  // async ngOnDestroy() {
+  //   console.log('app seller ngOnDestroy');
+  //   await this.firestoreService.unsubscribeSubscriptions()
+  // }
 
   statusCount = {
     total: 0,
@@ -214,7 +216,6 @@ export class SellerComponent implements OnInit {
         this.currentStatus = 'ทั้งหมด';
         break;
     }
-    // // console.log('status', status.value);
     // this.currentStatus = status.value;
     this.filteringWorkSheet('status');
   }

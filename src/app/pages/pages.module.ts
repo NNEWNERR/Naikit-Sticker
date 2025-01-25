@@ -27,6 +27,7 @@ import { UserComponent } from './setting/user/user.component';
 import { ShowQrCodeComponent } from './show-qr-code/show-qr-code.component';
 import { GraphicComponent } from './home/graphic/graphic.component';
 import { ProductionComponent } from './home/production/production.component';
+import { ReportComponent } from './report/report.component';
 
 
 
@@ -47,7 +48,8 @@ import { ProductionComponent } from './home/production/production.component';
     SellerComponent,
     SelectGraphicComponent,
     GraphicComponent,
-    ProductionComponent
+    ProductionComponent,
+    ReportComponent
   ],
   imports: [
     CommonModule,

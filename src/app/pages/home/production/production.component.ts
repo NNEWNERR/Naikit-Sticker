@@ -70,6 +70,7 @@ export class ProductionComponent implements OnInit {
   }
 
   ngOnInit() {
+    this.firestoreService.unsubscribeSubscriptions()
     this.firestoreService.fetchWorkSheetForProduction();
     this.initForm();
     this.firestoreService.workSheetForProductionChange.subscribe((data) => {
@@ -82,10 +83,6 @@ export class ProductionComponent implements OnInit {
         this.onWorkSheetSearchChange({ detail: { value: this.currentSearch } });
       }
     })
-  }
-
-  ngOnDestroy() {
-    this.firestoreService.unsubscribeSubscriptions()
   }
 
   statusCount = {

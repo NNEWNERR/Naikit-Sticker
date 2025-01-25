@@ -36,7 +36,7 @@ export class JobComponent implements OnInit {
       this.results = [...this.data];
     } else {
       this.serviceService.presentLoadingWithOutTime('กําลังโหลดข้อมูล...');
-      this.firestoreService.fetchDataAllJob(this.firestoreService.user[0].project_id)
+      this.firestoreService.fetchDataAllJob()
     }
 
     // this.serviceService.presentLoadingWithOutTime('กําลังโหลดข้อมูล...');

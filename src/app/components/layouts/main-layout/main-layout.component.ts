@@ -16,6 +16,7 @@ export class MainLayoutComponent implements OnInit {
     // { title: 'ประวัติการจอง', url: '/naikit-sticker/history', icon: 'book' },
     // { title: 'ตารางงาน', url: '/naikit-sticker/job-schedule', icon: 'calendar' },
     // { title: 'ทีมงาน', url: '/naikit-sticker/work-group', icon: 'people-circle' },
+    { title: 'งานทั้งหมด', url: '/naikit-sticker/all', icon: 'documents' },
     { title: 'ตั้งค่า', url: '/naikit-sticker/setting', icon: 'settings' },
   ];
   phone

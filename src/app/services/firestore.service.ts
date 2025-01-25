@@ -229,21 +229,21 @@ export class FirestoreService {
     });
   }
 
-  async fetchDataAllJob(project_id): Promise<any> {
-    const q = query(collection(db, "jobs"));
-    if (this.subscriptionAllJobs) {
-      this.subscriptionAllJobs();
-    }
-    return await new Promise<any>((resolve) => {
-      this.subscriptionAllJobs = onSnapshot(q, { includeMetadataChanges: true }, async (querySnapshot) => {
+  async fetchDataAllJob(): Promise<any> {
+    const q = query(collection(db, "jobs"),
+      // where("status", "in", ["รอออกแบบ", "กำลังออกแบบ", "รอคอนเฟิร์มแบบ", "คอนเฟิร์มแล้ว"]),
+    );
+    return new Promise<any>((resolve) => {
+      const subscription = onSnapshot(q, { includeMetadataChanges: true }, async (querySnapshot) => {
         const data: any = [];
         for (const docs of querySnapshot.docs) {
           data.push({ ...docs.data(), key: docs.id });
         }
         this.allJobs = data;
-        this.allJobsChange.next(this.allJobs);
+        this.allJobsChange.next(data);
         resolve(data);
-      });
+      })
+      this.subscriptions.push(subscription);
     });
   }
 
