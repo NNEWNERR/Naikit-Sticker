@@ -1,14 +1,10 @@
 import { Injectable } from '@angular/core';
-import { Unsubscribe } from 'firebase/auth';
 import { addDoc, collection, getDocs, onSnapshot, query, updateDoc, where } from 'firebase/firestore';
 import { Subject } from 'rxjs';
-import { AuthService } from './auth.service';
-import { ServiceService } from './service.service';
-import { Router } from '@angular/router';
 import { NoUserData } from '../common/constant/alert-messages';
 import { db } from './firebase-config';
+import { ServiceService } from './service.service';
 
-import * as dayjs from 'dayjs';
 @Injectable({
   providedIn: 'root'
 })
@@ -61,6 +57,7 @@ export class FirestoreService {
         for (const docs of querySnapshot.docs) {
           data.push({ ...docs.data(), key: docs.id });
         }
+        // console.log(data);
         this.user = data;
         this.userChange.next(this.user);
         resolve(this.user);
@@ -549,7 +546,9 @@ export class FirestoreService {
   workSheetForSellerChange = new Subject<any>();
   workSheetForGraphicChange = new Subject<any>();
   workSheetForProductionChange = new Subject<any>();
-
+  workSheetForSeller = [];
+  workSheetForGraphic = [];
+  workSheetForProduction = [];
   fetchWorkSheetForAdmin() {
     const q = query(collection(db, "jobs"),
       where("status", "in", ["กำลังออกแบบ", "รอออกแบบ", "รอคอนเฟิร์มแบบ", "คอนเฟิร์มแล้ว", "รอผลิต", "กําลังผลิต", "รอส่งมอบ", "ส่งมอบแล้ว"]),
@@ -577,6 +576,7 @@ export class FirestoreService {
         for (const docs of querySnapshot.docs) {
           data.push({ ...docs.data(), key: docs.id });
         }
+        this.workSheetForSeller = data;
         this.workSheetForSellerChange.next(data);
         resolve(data);
       })
@@ -586,6 +586,7 @@ export class FirestoreService {
 
 
   fetchWorkSheetForGraphic() {
+    // console.log('fetchWorkSheetForGraphic');
     const q = query(collection(db, "jobs"),
       where("status", "in", ["รอออกแบบ", "กำลังออกแบบ", "รอคอนเฟิร์มแบบ", "คอนเฟิร์มแล้ว"]),
     );
@@ -595,6 +596,7 @@ export class FirestoreService {
         for (const docs of querySnapshot.docs) {
           data.push({ ...docs.data(), key: docs.id });
         }
+        this.workSheetForGraphic = data;
         this.workSheetForGraphicChange.next(data);
         resolve(data);
       })
@@ -612,6 +614,7 @@ export class FirestoreService {
         for (const docs of querySnapshot.docs) {
           data.push({ ...docs.data(), key: docs.id });
         }
+        this.workSheetForProduction = data;
         this.workSheetForProductionChange.next(data);
         resolve(data);
       })

@@ -1,0 +1,35 @@
+.status-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, 100px);
+  gap: 10px;
+}
+
+.status-box {
+  width: 100px;
+  height: 100px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  font-size: 14px;
+  text-align: center;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.2s;
+}
+
+.status-box:hover {
+  background-color: #eaeaea;
+}
+
+.status-box.selected {
+  background-color: #007bff;
+  /* สีพื้นหลังสำหรับไฮไลต์ */
+  color: #fff;
+  /* สีตัวอักษร */
+  transform: scale(1.05);
+  /* ขยายเล็กน้อย */
+}

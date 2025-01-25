@@ -88,8 +88,8 @@ export class CreateWorkSheetComponent implements OnInit {
 
   // contacts = ['หน้าร้าน', 'โทรศัพท์', 'เฟสบุ๊ค', 'ไลน์', 'อีเมล']
   // sellers = นาเดียร์ แมว น้ำ ซัง ซิน
-  // designers = ฟุ๊ก ไนซ์ เลย์ เอก เยาว์
-  // printers = ฟุ๊ก ไนซ์ เลย์ เอก เยาว์ นิว ซี ฮอล อัน ดาว(พ) เลย์(ช)
+  // designers = ฟลุ๊ค ไนซ์ เลย์ เอก เยาว์
+  // printers = ฟลุ๊ค ไนซ์ เลย์ เอก เยาว์ นิว ซี ฮอล อัน ดาว(พ) เลย์(ช)
 
   sellers = [
     {
@@ -159,8 +159,8 @@ export class CreateWorkSheetComponent implements OnInit {
       disabled: false
     },
     {
-      title: 'ฟุ๊ก',
-      value: 'ฟุ๊ก',
+      title: 'ฟลุ๊ค',
+      value: 'ฟลุ๊ค',
       disabled: false
     },
     {
@@ -205,8 +205,8 @@ export class CreateWorkSheetComponent implements OnInit {
       disabled: false
     },
     {
-      title: 'ฟุ๊ก',
-      value: 'ฟุ๊ก',
+      title: 'ฟลุ๊ค',
+      value: 'ฟลุ๊ค',
       disabled: false
     },
     {
@@ -268,7 +268,7 @@ export class CreateWorkSheetComponent implements OnInit {
 
   initForm() {
     this.form = this.fb.group({
-      reference: [''],
+      reference: ['ม.ค.'],
       contact: [''],
       name: [''],
       phone: [''],
@@ -364,7 +364,6 @@ export class CreateWorkSheetComponent implements OnInit {
 
   onSubmit() {
     if (this.form.valid) {
-      console.log(this.form.value);
       const date = new Date();
       const newDate = new Date(date.setDate(date.getDate() + 1));
       const total = this.form.value.total || 0
@@ -424,14 +423,14 @@ export class CreateWorkSheetComponent implements OnInit {
         date_of_submission: "", // วันที่ส่งแบบ
         date_of_completion: "", // วันที่ส่งงาน
       }
-      console.log(data);
+      // console.log(data);
 
       const collectionRef = collection(db, "jobs");
       this.firestoreService.addDatatoFirebase(collectionRef, data).then(() => {
         this.modalController.dismiss();
         this.form.reset();
       }).catch((error) => {
-        console.log(error);
+        // console.log(error);
       })
     }
   }

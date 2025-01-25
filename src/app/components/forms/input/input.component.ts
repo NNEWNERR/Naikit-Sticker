@@ -1,4 +1,4 @@
-import { Component, ElementRef, Input, OnInit, ViewChild, forwardRef } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, OnInit, Output, ViewChild, forwardRef } from '@angular/core';
 import { FormControl, FormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 @Component({
@@ -15,8 +15,8 @@ import { FormControl, FormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
 })
 export class InputComponent implements OnInit {
   @ViewChild('childrenWrapper') content: ElementRef<HTMLElement>;
-
-  @Input() typeInput :string;
+  @Output() inputChange = new EventEmitter<string>();
+  @Input() typeInput: string;
   @Input() parentForm: FormGroup;
   @Input() formControlName: string;
   @Input() label: string;
@@ -31,11 +31,11 @@ export class InputComponent implements OnInit {
   touched: () => void;
 
   constructor() {
-   
+
   }
 
   ngOnInit() {
-    
+
   }
   // get styledLabel(): any {
   //   if (!this.label) {
@@ -79,6 +79,7 @@ export class InputComponent implements OnInit {
       (event.target as HTMLInputElement).value;
     this.touched();
     this.changed(value);
+    this.inputChange.emit(value);
   }
 
   public registerOnChange(fn: any): void {

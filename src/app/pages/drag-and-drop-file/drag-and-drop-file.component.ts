@@ -66,7 +66,7 @@ export class DragAndDropFileComponent implements OnInit {
     for (const item of files) {
       item.progress = 0;
       this.files.push(item);
-      console.log('Pasted files:', this.files);
+      // console.log('Pasted files:', this.files);
     }
     this.uploadFilesSimulator(0);
   }

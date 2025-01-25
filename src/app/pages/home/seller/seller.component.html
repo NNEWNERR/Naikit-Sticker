@@ -1,0 +1,74 @@
+<div class="p-4">
+    <form [formGroup]="form" class="grid md:grid-cols-3 grid-cols-1 gap-2">
+        <app-select [parentForm]="form" label="ผู้ขาย" formControlName="seller" placeholder="กรุณาเลือกผู้ขาย"
+            [multiple]="false" [options]="sellers" (selectChange)="filteringWorkSheetBySeller($event)"></app-select>
+        <app-select [parentForm]="form" label="ผู้ออกแบบ" formControlName="graphic" placeholder="กรุณาเลือกผู้ออกแบบ"
+            [multiple]="false" [options]="designers" (selectChange)="filteringWorkSheetByGraphic($event)"></app-select>
+        <app-input [parentForm]="form" label="ค้นหาใบงาน" formControlName="text_search"
+            placeholder="กรุณากรอกเลขที่ใบงาน" (inputChange)="onWorkSheetSearchChange($event)"></app-input>
+    </form>
+    <div class="status-container pt-4">
+        <div class="worksheet-add" (click)="createWorkSheet()">
+            <p class="text-white">เพิ่มใบงาน</p>
+            <!-- <p>{{ statusCount[status] }}</p> -->
+        </div>
+        <div *ngFor="let status of statusKeys" class="status-box"
+            [class.selected]="currentStatus === statusName(status)" (click)="filteringWorkSheetByStatus(status)">
+            <p>{{ statusName(status) }}</p>
+            <p>{{ statusCount[status] }}</p>
+        </div>
+    </div>
+</div>
+<div class="grid md:grid-cols-2 grid-cols-1">
+    <ion-card *ngFor="let workSheet of filterWorkSheet">
+        <ion-card-header>
+            <ion-card-title class="flex flex-row justify-between items-center">
+                <div class="flex items-center gap-2">{{workSheet.serial_number}} {{workSheet.customer_name}}
+                    <ion-icon class="text-2xl cursor-pointer" name="pencil-outline"
+                        (click)="editWorkSheet(workSheet)"></ion-icon>
+                </div>
+                <div class="flex items-center gap-2">
+                    <div *ngIf="workSheet.modify > 0" class="px-2 py-1 bg-red-500 rounded-md mr-2 text-white">
+                        แก้ครั้งที่
+                        {{workSheet.modify}}</div>
+                    <div class="px-2 py-1 bg-red-500 rounded-md mr-2 text-white">
+                        {{workSheet.status}}</div>
+                </div>
+            </ion-card-title>
+            <ion-card-subtitle>
+                <div class="flex flex-wrap gap-2">
+                    <div *ngIf="workSheet.is_urgent" class="px-2 py-1 bg-red-500 rounded-full text-white">
+                        ด่วน</div>
+                    <div class="px-2 py-1 bg-red-500 rounded-full text-white" *ngIf="workSheet.date_of_acceptance">
+                        นัดรับ {{formatTime(workSheet.date_of_acceptance)}}</div>
+                    <div class="px-2 py-1 bg-red-500 rounded-full text-white" *ngIf="workSheet.date_of_submission">
+                        วันส่งแบบ {{formatTime(workSheet.date_of_submission)}}</div>
+                    <div class="px-2 py-1 bg-red-500 rounded-full text-white" *ngIf="workSheet.print_date">
+                        วันพิมพ์ {{formatTime(workSheet.print_date)}}</div>
+                </div>
+            </ion-card-subtitle>
+        </ion-card-header>
+        <ion-card-content>
+            <div *ngFor="let job of workSheet.work, let i = index ;">
+                {{i+1}}. {{job.type}} {{job.width + ' x ' + job.height + ' ' + job.unit_of_length}}
+                {{job.option}} จำนวน
+                {{job.quantity}} แผ่น
+            </div>
+        </ion-card-content>
+        <div class="flex justify-between items-center py-2 px-3">
+            <!-- <ion-button (click)="acceptJob(workSheet)" color="success">รับงาน</ion-button> -->
+            <div class="flex flex-row">
+                <div>S.{{workSheet.seller_name}} G.{{workSheet.design_by || '-'}}</div>
+            </div>
+            <div>
+                <ion-button *ngIf="workSheet.status === 'รอคอนเฟิร์มแบบ'" color="danger"
+                    (click)="modifyWorkSheet(workSheet)">ส่งแก้ไข</ion-button>
+                <ion-button *ngIf="workSheet.status === 'รอคอนเฟิร์มแบบ'" color="success"
+                    (click)="confirmWorkSheet(workSheet)">คอนเฟิร์ม</ion-button>
+                <ion-button *ngIf="workSheet.status === 'รอส่งมอบ'" color="success"
+                    (click)="deliverWorkSheet(workSheet)">ส่งมอบ</ion-button>
+                <ion-button (click)="workSheetInfo(workSheet)">รายละเอียด</ion-button>
+            </div>
+        </div>
+    </ion-card>
+</div>

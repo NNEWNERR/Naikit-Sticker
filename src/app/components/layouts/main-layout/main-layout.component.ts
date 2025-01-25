@@ -26,18 +26,25 @@ export class MainLayoutComponent implements OnInit {
   ) { }
   async ngOnInit() {
     // await disableNetwork(db);
-    this.service.presentLoadingWithOutTime2('Loading...');
     const isLogedIn = await this.authService.SessionIsLogedIn();
     if (isLogedIn == true) {
-      const token = localStorage.getItem('token');
-      const user = JSON.parse(token);
-      this.firestoreService.fetchDataUser(user.phone).then(async (users) => {
-        this.service.dismissLoading2();
-        if (users.length > 0) {
-          const site = await this.firestoreService.fetchDataSite(users[0].project_id);
-          const group = await this.firestoreService.fetchDataGroup(users[0].project_id);
-        }
-      });
+      try {
+        // this.service.presentLoadingWithOutTime2('Loading...');
+        const token = localStorage.getItem('token');
+        const user = token ? JSON.parse(token) : null;
+        this.firestoreService.fetchDataUser(user.phone)
+      } catch (error) {
+      } finally {
+        // this.service.dismissLoading2();
+      }
+      // this.firestoreService.fetchDataUser(user.phone).then(async (users) => {
+      //   // console.log('dismissLoading2');
+
+      //   if (users.length > 0) {
+      //     const site = await this.firestoreService.fetchDataSite(users[0].project_id);
+      //     const group = await this.firestoreService.fetchDataGroup(users[0].project_id);
+      //   }
+      // });
       // await this.authService.checkAuth().then((res) => {
       //   if (res == true) {
       //     const UserFormAuth = this.authService.getUserFormAuth();

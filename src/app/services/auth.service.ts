@@ -63,7 +63,7 @@ export class AuthService {
       localStorage.removeItem('token');
       this.router.navigate(['/login']);
     }).catch((error) => {
-      // console.log(error);
+      // // console.log(error);
     });
   }
   signInAnonymously() {

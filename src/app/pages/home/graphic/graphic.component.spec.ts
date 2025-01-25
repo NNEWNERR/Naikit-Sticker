@@ -1,19 +1,19 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { IonicModule } from '@ionic/angular';
 
-import { SelectGraphicComponent } from './graphic.component';
+import { GraphicComponent } from './graphic.component';
 
-describe('SelectGraphicComponent', () => {
-  let component: SelectGraphicComponent;
-  let fixture: ComponentFixture<SelectGraphicComponent>;
+describe('GraphicComponent', () => {
+  let component: GraphicComponent;
+  let fixture: ComponentFixture<GraphicComponent>;
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      declarations: [ SelectGraphicComponent ],
+      declarations: [ GraphicComponent ],
       imports: [IonicModule.forRoot()]
     }).compileComponents();
 
-    fixture = TestBed.createComponent(SelectGraphicComponent);
+    fixture = TestBed.createComponent(GraphicComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   }));

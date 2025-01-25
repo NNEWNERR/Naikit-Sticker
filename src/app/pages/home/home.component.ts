@@ -7,15 +7,15 @@ import { Geographies } from 'src/app/common/constant/thai-data/thai_geographies'
 import { Provinces } from 'src/app/common/constant/thai-data/thai_provinces';
 import { Tambons } from 'src/app/common/constant/thai-data/thai_tambons';
 import { CreateWorkSheetComponent } from 'src/app/pages/create-work-sheet/create-work-sheet.component';
-import { JobInfoComponent } from 'src/app/components/modals/job-info/job-info.component';
 import { db } from 'src/app/services/firebase-config';
 import { FirestoreService } from 'src/app/services/firestore.service';
 import { ServiceService } from 'src/app/services/service.service';
 import { EditWorkSheetComponent } from '../edit-work-sheet/edit-work-sheet.component';
-import { GraphicComponent } from '../graphic/graphic.component';
+import { SelectGraphicComponent } from '../graphic/graphic.component';
 import { DragAndDropFileComponent } from '../drag-and-drop-file/drag-and-drop-file.component';
 import { v4 as uuidv4 } from 'uuid';
 import { StorageService } from 'src/app/services/storage.service';
+import { SEGMENT_OPTION, STATUS_OPTION, SELLER_OPTION, DESIGNER_OPTION } from 'src/app/data/data';
 
 @Component({
   selector: 'app-home',
@@ -37,136 +37,10 @@ export class HomeComponent implements OnInit {
   filterWorkSheetForGraphic = [];
   workSheetForProduction = [];
   segment = 'seller';
-  segment_option = [
-    {
-      title: 'ฝ่ายขาย',
-      value: 'seller'
-    },
-    {
-      title: 'กราฟิก',
-      value: 'graphic'
-    },
-    {
-      title: 'ผลิต',
-      value: 'production'
-    },
-    {
-      title: 'แอดมิน',
-      value: 'admin'
-    }
-  ]
-  statuses = [
-    {
-      title: 'ทั้งหมด',
-      value: 'ทั้งหมด',
-      disabled: false
-    },
-    {
-      title: 'รอออกแบบ',
-      value: 'รอออกแบบ',
-      disabled: false
-    },
-    {
-      title: 'กำลังออกแบบ',
-      value: 'กำลังออกแบบ',
-      disabled: false
-    },
-    {
-      title: 'รอคอนเฟิร์มแบบ',
-      value: 'รอคอนเฟิร์มแบบ',
-      disabled: false
-    },
-    {
-      title: 'คอนเฟิร์มแล้ว',
-      value: 'คอนเฟิร์มแล้ว',
-      disabled: false
-    },
-    {
-      title: 'รอผลิต',
-      value: 'รอผลิต',
-      disabled: false
-    },
-    {
-      title: 'กําลังผลิต',
-      value: 'กําลังผลิต',
-      disabled: false
-    },
-    {
-      title: 'รอส่งมอบ',
-      value: 'รอส่งมอบ',
-      disabled: false
-    },
-    {
-      title: 'ส่งมอบแล้ว',
-      value: 'ส่งมอบแล้ว',
-      disabled: false
-    }
-  ]
-  sellers = [
-    {
-      title: 'ทั้งหมด',
-      value: 'ทั้งหมด',
-      disabled: false
-    },
-    {
-      title: 'นาเดียร์',
-      value: 'นาเดียร์',
-      disabled: false
-    },
-    {
-      title: 'แมว',
-      value: 'แมว',
-      disabled: false
-    },
-    {
-      title: 'น้ำ',
-      value: 'น้ำ',
-      disabled: false
-    },
-    {
-      title: 'ซัง',
-      value: 'ซัง',
-      disabled: false
-    },
-    {
-      title: 'ซิน',
-      value: 'ซิน',
-      disabled: false
-    }
-  ]
-
-  designers = [
-    {
-      title: 'ทั้งหมด',
-      value: 'ทั้งหมด',
-      disabled: false
-    },
-    {
-      title: 'ฟุ๊ก',
-      value: 'ฟุ๊ก',
-      disabled: false
-    },
-    {
-      title: 'ไนซ์',
-      value: 'ไนซ์',
-      disabled: false
-    },
-    {
-      title: 'เลย์',
-      value: 'เลย์',
-      disabled: false
-    },
-    {
-      title: 'เอก',
-      value: 'เอก',
-      disabled: false
-    },
-    {
-      title: 'เยาว์',
-      value: 'เยาว์',
-      disabled: false
-    }
-  ]
+  segment_option = SEGMENT_OPTION;
+  statuses = STATUS_OPTION;
+  sellers = SELLER_OPTION;
+  designers = DESIGNER_OPTION;
   constructor(
     private route: ActivatedRoute,
     private firestoreService: FirestoreService,
@@ -176,37 +50,7 @@ export class HomeComponent implements OnInit {
   ) { }
 
   async ngOnInit() {
-    this.firestoreService.fetchWorkSheet();
-    this.firestoreService.fetchWorkSheetForAdmin();
-    this.firestoreService.fetchWorkSheetForSeller();
-    this.firestoreService.fetchWorkSheetForGraphic();
-    this.firestoreService.fetchWorkSheetForProduction();
-    this.firestoreService.fetchDataSite('1');
-    this.firestoreService.sitesChange.subscribe(sites => {
-      this.sites = sites;
-    })
-    this.firestoreService.workSheetChange.subscribe((data) => {
-      this.workSheets = data;
-      this.sortWorkSheet(this.workSheets);
-    })
-    this.firestoreService.workSheetForAdminChange.subscribe((data) => {
-      this.workSheetForAdmin = data;
-      this.sortWorkSheet(this.workSheetForAdmin);
-    })
-    this.firestoreService.workSheetForSellerChange.subscribe((data) => {
-      this.workSheetForSeller = data;
-      this.filterWorkSheetForSeller = data;
-      this.sortWorkSheet(this.workSheetForSeller);
-    })
-    this.firestoreService.workSheetForGraphicChange.subscribe((data) => {
-      this.workSheetForGraphic = data;
-      this.filterWorkSheetForGraphic = data;
-      this.sortWorkSheet(this.workSheetForGraphic);
-    })
-    this.firestoreService.workSheetForProductionChange.subscribe((data) => {
-      this.workSheetForProduction = data;
-      this.sortWorkSheet(this.workSheetForProduction);
-    })
+    
   }
 
   ngOnDestroy() {
@@ -259,22 +103,14 @@ export class HomeComponent implements OnInit {
     // this.firestoreService.reportJob(job);
   }
 
-  infoJob(job) {
-    this.modalController.create({
-      component: JobInfoComponent,
-      componentProps: {
-        job: job
-      },
-      cssClass: 'my-custom-class',
-    }).then(modal => modal.present());
-  }
-
   openJob(job) {
     // this.firestoreService.openJob(job);
   }
 
   segmentChanged(event) {
     this.segment = event.target.value;
+    // console.log(this.segment);
+    
   }
 
   formatTime(timestamp: Timestamp) {
@@ -349,32 +185,57 @@ export class HomeComponent implements OnInit {
     })
   }
 
-  filteringWorkSheetForSeller(status) {
-    this.filterWorkSheetForSeller = this.workSheetForSeller.filter(workSheet => status === 'ทั้งหมด' ? true : workSheet.status === status);
+  currentStatusForSeller = 'ทั้งหมด';
+  currentSellerForSeller = 'ทั้งหมด';
+  currentGraphicForSeller = 'ทั้งหมด';
+  currentStatusForGraphic = 'ทั้งหมด';
+  currentSellerForGraphic = 'ทั้งหมด';
+  currentGraphicForGraphic = 'ทั้งหมด';
+  filteringWorkSheetForSellerByStatus(status) {
+    this.currentStatusForSeller = status;
+    this.filteringWorkSheetForSeller();
   }
 
   filteringWorkSheetForSellerBySeller(seller) {
-    console.log(this.workSheetForSeller, seller);
-
-    this.filterWorkSheetForSeller = this.workSheetForSeller.filter(workSheet => seller === 'ทั้งหมด' ? true : workSheet.seller_name === seller);
+    this.currentSellerForSeller = seller;
+    this.filteringWorkSheetForSeller();
   }
 
   filteringWorkSheetForSellerByGraphic(graphic) {
-    console.log(this.workSheetForSeller, graphic);
-
-    this.filterWorkSheetForSeller = this.workSheetForSeller.filter(workSheet => graphic === 'ทั้งหมด' ? true : workSheet.design_by === graphic);
+    this.currentGraphicForSeller = graphic;
+    this.filteringWorkSheetForSeller();
   }
 
-  filteringWorkSheetForGraphic(status) {
-    this.filterWorkSheetForGraphic = this.workSheetForGraphic.filter(workSheet => status === 'ทั้งหมด' ? true : workSheet.status === status);
+  filteringWorkSheetForSeller() {
+    let filterWorkSheetForSeller = [];
+    filterWorkSheetForSeller = this.workSheetForSeller.filter(workSheet => this.currentStatusForSeller === 'ทั้งหมด' ? true : workSheet.status === this.currentStatusForSeller);
+    filterWorkSheetForSeller = filterWorkSheetForSeller.filter(workSheet => this.currentSellerForSeller === 'ทั้งหมด' ? true : workSheet.seller_name === this.currentSellerForSeller);
+    filterWorkSheetForSeller = filterWorkSheetForSeller.filter(workSheet => this.currentGraphicForSeller === 'ทั้งหมด' ? true : workSheet.design_by === this.currentGraphicForSeller);
+    this.filterWorkSheetForSeller = filterWorkSheetForSeller;
+  }
+
+
+  filteringWorkSheetForGraphicByStatus(status) {
+    this.currentStatusForGraphic = status
+    this.filteringWorkSheetForGraphic()
   }
 
   filteringWorkSheetForGraphicByGraphic(graphic) {
-    this.filterWorkSheetForGraphic = this.workSheetForGraphic.filter(workSheet => graphic === 'ทั้งหมด' ? true : workSheet.design_by === graphic);
+    this.currentGraphicForGraphic = graphic;
+    this.filteringWorkSheetForGraphic()
   }
 
   filteringWorkSheetForGraphicBySeller(seller) {
-    this.filterWorkSheetForGraphic = this.workSheetForGraphic.filter(workSheet => seller === 'ทั้งหมด' ? true : workSheet.seller_name === seller);
+    this.currentSellerForGraphic = seller;
+    this.filteringWorkSheetForGraphic()
+  }
+
+  filteringWorkSheetForGraphic() {
+    let filterWorkSheetForGraphic = [];
+    filterWorkSheetForGraphic = this.workSheetForGraphic.filter(workSheet => this.currentStatusForGraphic === 'ทั้งหมด' ? true : workSheet.status === this.currentStatusForGraphic);
+    filterWorkSheetForGraphic = filterWorkSheetForGraphic.filter(workSheet => this.currentGraphicForGraphic === 'ทั้งหมด' ? true : workSheet.design_by === this.currentGraphicForGraphic);
+    filterWorkSheetForGraphic = filterWorkSheetForGraphic.filter(workSheet => this.currentSellerForGraphic === 'ทั้งหมด' ? true : workSheet.seller_name === this.currentSellerForGraphic);
+    this.filterWorkSheetForGraphic = filterWorkSheetForGraphic;
   }
 
   editWorkSheet(workSheet) {
@@ -416,12 +277,12 @@ export class HomeComponent implements OnInit {
 
   async acceptWorkSheet(workSheet) {
     const modal = await this.modalController.create({
-      component: GraphicComponent,
+      component: SelectGraphicComponent,
       cssClass: 'my-custom-class',
     })
     await modal.present()
     const { role, data } = await modal.onWillDismiss();
-    console.log(role, data);
+    // console.log(role, data);
     if (role === 'confirm') {
       const docRef = doc(db, 'jobs', workSheet.key);
       const update = {
@@ -446,7 +307,7 @@ export class HomeComponent implements OnInit {
     })
     await modal.present()
     const { role, data } = await modal.onWillDismiss();
-    console.log(role, data);
+    // console.log(role, data);
     if (role === 'confirm') {
       const files = data;
       let imagePath = '';
@@ -462,7 +323,7 @@ export class HomeComponent implements OnInit {
             imageUrl = await this.storageService.uploadImage(file, imagePath);
             imageUrls.push(imageUrl);
           }
-          console.log('Image uploaded successfully');
+          // console.log('Image uploaded successfully');
           // create id for image
           let images = [];
           if (imageUrls.length > 0) {
@@ -531,15 +392,15 @@ export class HomeComponent implements OnInit {
     }).then(modal => modal.present());
   }
 
+  currentSearchForSeller = '';
+  currentSearchForGraphic = '';
   onWorkSheetForSellerSearchChange(event) {
-    console.log(event.detail.value)
-    this.filterWorkSheetForSeller = this.workSheetForSeller.filter(workSheet => workSheet.serial_number.toLowerCase().includes(event.detail.value.toLowerCase()));
-    console.log(this.filterWorkSheetForSeller);
+    this.currentSearchForSeller = event.detail.value;
+    this.filterWorkSheetForSeller = this.workSheetForSeller.filter(workSheet => workSheet.serial_number.toLowerCase().includes(this.currentSearchForSeller.toLowerCase()));
   }
 
   onWorkSheetForGraphicSearchChange(event) {
-    console.log(event.detail.value)
-    this.filterWorkSheetForGraphic = this.workSheetForGraphic.filter(workSheet => workSheet.serial_number.toLowerCase().includes(event.detail.value.toLowerCase()));
-    console.log(this.filterWorkSheetForGraphic);
+    this.currentSearchForGraphic = event.detail.value;
+    this.filterWorkSheetForGraphic = this.workSheetForGraphic.filter(workSheet => workSheet.serial_number.toLowerCase().includes(this.currentSearchForGraphic.toLowerCase()));
   }
 }

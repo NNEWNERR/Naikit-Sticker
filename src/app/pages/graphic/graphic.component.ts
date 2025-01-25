@@ -1,45 +1,14 @@
 import { ModalController } from '@ionic/angular';
 import { Component, OnInit } from '@angular/core';
+import { DESIGNER_OPTION } from 'src/app/data/data';
 
 @Component({
-  selector: 'app-graphic',
+  selector: 'app-select-graphic',
   templateUrl: './graphic.component.html',
   styleUrls: ['./graphic.component.scss'],
 })
-export class GraphicComponent implements OnInit {
-
-  designers = [
-    {
-      title: 'admin',
-      value: 'admin',
-      disabled: false
-    },
-    {
-      title: 'ฟุ๊ก',
-      value: 'ฟุ๊ก',
-      disabled: false
-    },
-    {
-      title: 'ไนซ์',
-      value: 'ไนซ์',
-      disabled: false
-    },
-    {
-      title: 'เลย์',
-      value: 'เลย์',
-      disabled: false
-    },
-    {
-      title: 'เอก',
-      value: 'เอก',
-      disabled: false
-    },
-    {
-      title: 'เยาว์',
-      value: 'เยาว์',
-      disabled: false
-    }
-  ]
+export class SelectGraphicComponent implements OnInit {
+  designers = DESIGNER_OPTION.slice(1);
   constructor(
     private modalController: ModalController
   ) { }

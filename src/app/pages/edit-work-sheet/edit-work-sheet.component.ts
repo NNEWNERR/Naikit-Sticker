@@ -89,8 +89,8 @@ export class EditWorkSheetComponent implements OnInit {
 
   // contacts = ['หน้าร้าน', 'โทรศัพท์', 'เฟสบุ๊ค', 'ไลน์', 'อีเมล']
   // sellers = นาเดียร์ แมว น้ำ ซัง ซิน
-  // designers = ฟุ๊ก ไนซ์ เลย์ เอก เยาว์
-  // printers = ฟุ๊ก ไนซ์ เลย์ เอก เยาว์ นิว ซี ฮอล อัน ดาว(พ) เลย์(ช)
+  // designers = ฟลุ๊ค ไนซ์ เลย์ เอก เยาว์
+  // printers = ฟลุ๊ค ไนซ์ เลย์ เอก เยาว์ นิว ซี ฮอล อัน ดาว(พ) เลย์(ช)
 
   sellers = [
     {
@@ -160,8 +160,8 @@ export class EditWorkSheetComponent implements OnInit {
       disabled: false
     },
     {
-      title: 'ฟุ๊ก',
-      value: 'ฟุ๊ก',
+      title: 'ฟลุ๊ค',
+      value: 'ฟลุ๊ค',
       disabled: false
     },
     {
@@ -206,8 +206,8 @@ export class EditWorkSheetComponent implements OnInit {
       disabled: false
     },
     {
-      title: 'ฟุ๊ก',
-      value: 'ฟุ๊ก',
+      title: 'ฟลุ๊ค',
+      value: 'ฟลุ๊ค',
       disabled: false
     },
     {
@@ -307,7 +307,7 @@ export class EditWorkSheetComponent implements OnInit {
   ) { }
 
   ngOnInit() {
-    console.log(this.workSheet);
+    // console.log(this.workSheet);
 
     this.initForm();
   }
@@ -332,12 +332,12 @@ export class EditWorkSheetComponent implements OnInit {
       is_urgent: [this.workSheet.is_urgent == true ? this.is_ergents.find(p => p.value === 'ด่วน') || '' : this.is_ergents.find(p => p.value === 'ไม่ด่วน') || ''],
       status: [this.workSheet.status ? this.statuses.find(s => s.value === this.workSheet.status) || '' : ''],
     })
-    console.log(this.form.value);
+    // console.log(this.form.value);
 
   }
   onSubmit() {
     if (this.form.valid) {
-      console.log(this.form.value);
+      // console.log(this.form.value);
       const date = new Date();
       const newDate = new Date(date.setDate(date.getDate() + 1));
       const total = this.form.value.total
@@ -397,13 +397,13 @@ export class EditWorkSheetComponent implements OnInit {
         date_of_submission: this.form.value.date_of_submission ? new Date(this.form.value.date_of_submission) : "", // วันที่ส่งแบบ
         date_of_completion: "", // วันที่ส่งมอบงาน
       }
-      console.log(data);
+      // console.log(data);
       const docRef = doc(db, "jobs", this.workSheet.key);
       this.firestoreService.updateDatatoFirebase(docRef, data).then(() => {
         this.modalController.dismiss();
         this.form.reset();
       }).catch((error) => {
-        console.log(error);
+        // console.log(error);
       })
     }
   }

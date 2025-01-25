@@ -68,7 +68,7 @@ export class JobComponent implements OnInit {
 
   onActivate(event) {
     if (event.type === "click") {
-      console.log(event.row)
+      // console.log(event.row)
     }
   }
 
