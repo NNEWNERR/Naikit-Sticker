@@ -9,6 +9,7 @@ import { EditWorkSheetComponent } from '../edit-work-sheet/edit-work-sheet.compo
 import { CreateWorkSheetComponent } from '../create-work-sheet/create-work-sheet.component';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { SEGMENT_OPTION, STATUS_OPTION, SELLER_OPTION, DESIGNER_OPTION } from 'src/app/data/data';
+import { WorksheetInfoComponent } from '../worksheet-info/worksheet-info.component';
 
 @Component({
   selector: 'app-report',
@@ -153,7 +154,7 @@ export class ReportComponent implements OnInit {
     filterWorkSheet = filterWorkSheet.filter(workSheet => this.currentSeller === 'ทั้งหมด' ? true : workSheet.seller_name === this.currentSeller);
     filterWorkSheet = filterWorkSheet.filter(workSheet => this.currentGraphic === 'ทั้งหมด' ? true : workSheet.design_by === this.currentGraphic);
     this.filterWorkSheet = filterWorkSheet;
-    console.log('by', by);
+    // console.log('by', by);
     if (by !== 'status') {
       this.countStatuses(this.filterWorkSheet);
     }
@@ -280,5 +281,23 @@ export class ReportComponent implements OnInit {
     }
   }
 
+  workSheetInfo(workSheet) {
+    this.modalController.create({
+      component: WorksheetInfoComponent,
+      componentProps: {
+        workSheet: workSheet
+      },
+      cssClass: 'modal-fullscreen',
+    }).then(modal => modal.present());
+  }
 
+  selectClass(status) {
+    let color = '';
+    this.statuses.forEach((s) => {
+      if (s.value === status) {
+        color = s.class;
+      }
+    });
+    return color;
+  }
 }

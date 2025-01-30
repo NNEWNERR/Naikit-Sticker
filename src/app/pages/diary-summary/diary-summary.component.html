@@ -1,0 +1,64 @@
+<ion-content class="ion-padding">
+  <div class="flex flex-row gap-2">
+    <form [formGroup]="form" class="w-40">
+      <app-select [parentForm]="form" label="ผู้ออกแบบ" formControlName="designer" placeholder="กรุณาเลือกผู้ออกแบบ"
+        [multiple]="false" [options]="designer" (selectChange)="search()"></app-select>
+    </form>
+    <mat-form-field class="w-full sm:w-80 p-2">
+      <mat-label>Choose a date</mat-label>
+      <input matInput [matDatepicker]="picker" [(ngModel)]="date" (dateChange)="search()">
+      <!-- <mat-hint>MM/DD/YYYY</mat-hint> -->
+      <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+      <mat-datepicker #picker></mat-datepicker>
+    </mat-form-field>
+  </div>
+  <div *ngIf="workSheets">
+    <div>{{form.value.designer.value}} คอนเฟิร์มแล้ว {{workSheets.length}} งาน</div>
+  </div>
+  <ngx-datatable class="flex w-full. material expandable" [columnMode]="'force'" [rows]="workSheets" [limit]="10"
+    rowHeight="auto" [headerHeight]="50" [footerHeight]="50" [scrollbarH]="true" (activate)="onActivate($event)"
+    [sorts]="[{prop: 'serial_number', dir: 'asc'}]" *ngIf="workSheets.length > 0">
+    <ngx-datatable-column name="Status" prop="status">
+      <ng-template let-row="row" ngx-datatable-cell-template>
+        {{row.status}}
+      </ng-template>
+    </ngx-datatable-column>
+    <ngx-datatable-column name="Serial Number" prop="serial_number">
+      <ng-template let-row="row" ngx-datatable-cell-template>
+        {{row.serial_number ||''}}
+      </ng-template>
+    </ngx-datatable-column>
+    <ngx-datatable-column name="ชื่อลูกค้า" prop="customer_name">
+      <ng-template let-row="row" ngx-datatable-cell-template>
+        {{row.customer_name ||''}}
+      </ng-template>
+    </ngx-datatable-column>
+    <ngx-datatable-column name="ชื่อผู้ขาย" prop="seller_name">
+      <ng-template let-row="row" ngx-datatable-cell-template>
+        {{row.seller_name ||''}}
+      </ng-template>
+    </ngx-datatable-column>
+    <ngx-datatable-column name="ผู้ออกแบบ" prop="design_by">
+      <ng-template let-row="row" ngx-datatable-cell-template>
+        {{row.design_by ||''}}
+      </ng-template>
+    </ngx-datatable-column>
+    <ngx-datatable-column name="วันที่รับแบบ" prop="date_of_acceptance">
+      <ng-template let-row="row" ngx-datatable-cell-template>
+        {{row.date_of_acceptance ? formatTime(row.date_of_acceptance) : ''}}
+      </ng-template>
+    </ngx-datatable-column>
+    <ngx-datatable-column name="วันที่ส่งแบบ" prop="date_of_submission">
+      <ng-template let-row="row" ngx-datatable-cell-template>
+        {{row.date_of_submission ? formatTime(row.date_of_submission) : ''}}
+      </ng-template>
+    </ngx-datatable-column>
+    <ngx-datatable-column name="ACTION">
+      <ng-template let-row="row" ngx-datatable-cell-template>
+        <ion-text (click)="workSheetInfo(row)" color="primary" class="cursor-pointer">
+          ดูรายละเอียด
+        </ion-text>
+      </ng-template>
+    </ngx-datatable-column>
+  </ngx-datatable>
+</ion-content>

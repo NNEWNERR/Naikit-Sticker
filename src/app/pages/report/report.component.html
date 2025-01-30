@@ -21,9 +21,7 @@
     [sorts]="[{prop: 'serial_number', dir: 'asc'}]" *ngIf="workSheet.length > 0">
     <ngx-datatable-column name="Status" prop="status">
       <ng-template let-row="row" ngx-datatable-cell-template>
-        {{row.status}}
-        <!-- <div class="w-full h-full text-white text-center rounded-md ">
-        </div> -->
+        <div [class]="'px-2 py-1 rounded-lg text-center ' + selectClass(row.status)">{{row.status}}</div>
       </ng-template>
     </ngx-datatable-column>
     <ngx-datatable-column name="Serial Number" prop="serial_number">
@@ -31,11 +29,6 @@
         {{row.serial_number ||''}}
       </ng-template>
     </ngx-datatable-column>
-    <!-- customer_name -->
-    <!-- seller_name -->
-    <!-- design_by -->
-    <!-- date_of_acceptance -->
-    <!-- data_of_submission -->
     <ngx-datatable-column name="ชื่อลูกค้า" prop="customer_name">
       <ng-template let-row="row" ngx-datatable-cell-template>
         {{row.customer_name ||''}}
@@ -51,20 +44,28 @@
         {{row.design_by ||''}}
       </ng-template>
     </ngx-datatable-column>
-    <ngx-datatable-column name="วันที่รับแบบ" prop="date_of_acceptance">
+    <ngx-datatable-column name="วันที่สั่ง" prop="created_at">
       <ng-template let-row="row" ngx-datatable-cell-template>
-        {{row.date_of_acceptance ? formatTime(row.date_of_acceptance) : ''}}
+        {{row.created_at ? formatTime(row.created_at) : ''}}
       </ng-template>
     </ngx-datatable-column>
-    <ngx-datatable-column name="วันที่ส่งแบบ" prop="data_of_submission">
+    <ngx-datatable-column name="วันที่ส่งแบบ" prop="date_of_submission">
       <ng-template let-row="row" ngx-datatable-cell-template>
-        {{row.data_of_submission ? formatTime(row.data_of_submission) : ''}}
+        {{row.date_of_submission ? formatTime(row.date_of_submission) : ''}}
+      </ng-template>
+    </ngx-datatable-column>
+    <ngx-datatable-column name="วันที่นัดรับแบบ" prop="date_of_acceptance">
+      <ng-template let-row="row" ngx-datatable-cell-template>
+        {{row.date_of_acceptance ? formatTime(row.date_of_acceptance) : ''}}
       </ng-template>
     </ngx-datatable-column>
     <ngx-datatable-column name="ACTION">
       <ng-template let-row="row" ngx-datatable-cell-template>
         <ion-text (click)="editWorkSheet(row)" color="danger" class="cursor-pointer">
           แก้ไข
+        </ion-text>
+        <ion-text (click)="workSheetInfo(row)" color="primary" class="cursor-pointer">
+          รายละเอียด
         </ion-text>
       </ng-template>
     </ngx-datatable-column>

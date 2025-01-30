@@ -65,8 +65,9 @@ $app-theme: mat.define-light-theme((color: (primary: $app-primary,
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@100..900&display=swap');
 
 * {
-    font-family: "Noto Sans Thai", sans-serif;
+  font-family: "Noto Sans Thai", sans-serif;
 }
+
 .ngx-datatable.material {
   box-shadow: none;
 
@@ -147,6 +148,11 @@ ion-modal .my-custom-class {
   // --min-height: 100%;
   // --min-width: 100%;
   --width: 500px;
+}
+
+.modal-fullscreen {
+  --height: 100% !important;
+  --width: 100% !important;
 }
 
 .item-radio-checked.sc-ion-select-popover-md {

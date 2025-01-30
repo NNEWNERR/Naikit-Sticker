@@ -13,6 +13,7 @@ import { SEGMENT_OPTION, STATUS_OPTION, SELLER_OPTION, DESIGNER_OPTION } from 's
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { SelectGraphicComponent } from '../../graphic/graphic.component';
 import { ServiceService } from 'src/app/services/service.service';
+import { WorksheetInfoComponent } from '../../worksheet-info/worksheet-info.component';
 @Component({
   selector: 'app-graphic',
   templateUrl: './graphic.component.html',
@@ -235,7 +236,7 @@ export class GraphicComponent implements OnInit {
     filterWorkSheet = filterWorkSheet.filter(workSheet => this.currentSeller === 'ทั้งหมด' ? true : workSheet.seller_name === this.currentSeller);
     filterWorkSheet = filterWorkSheet.filter(workSheet => this.currentGraphic === 'ทั้งหมด' ? true : workSheet.design_by === this.currentGraphic);
     this.filterWorkSheet = filterWorkSheet;
-    console.log('by', by);
+    // console.log('by', by);
     if (by !== 'status') {
       this.countStatuses(this.filterWorkSheet)
     }
@@ -298,6 +299,7 @@ export class GraphicComponent implements OnInit {
   }
 
   async offerWorkSheet(workSheet) {
+
     const modal = await this.modalController.create({
       component: DragAndDropFileComponent,
       cssClass: 'my-custom-class',
@@ -314,8 +316,10 @@ export class GraphicComponent implements OnInit {
         try {
           for (const file of files) {
             let date = new Date();
-            let format_date = date.getFullYear().toString();
-            imagePath = `images/${format_date}/${workSheet.serial_number}/${workSheet.customer_name}_${file.name}`;
+            let year = date.getFullYear().toString();
+            let month_name = date.toLocaleString('th-TH', { month: 'long' });
+            // let month_name = date.toLocaleString('th-TH', { month: 'short' });
+            imagePath = `images/${year}/${month_name}/${workSheet.serial_number}/${workSheet.customer_name}_${file.name}`;
             imageUrl = await this.storageService.uploadImage(file, imagePath);
             imageUrls.push(imageUrl);
           }
@@ -334,7 +338,7 @@ export class GraphicComponent implements OnInit {
           const update = {
             status: 'รอคอนเฟิร์มแบบ',
             date_of_submission: new Date(),
-            images: images.length > 0 ? arrayUnion(...images) : []
+            design_images: images.length > 0 ? arrayUnion(...images) : []
           }
           this.firestoreService.updateDatatoFirebase(docRef, update);
         } catch (error) {
@@ -372,7 +376,7 @@ export class GraphicComponent implements OnInit {
 
   workSheetInfo(workSheet) {
     this.modalController.create({
-      component: EditWorkSheetComponent,
+      component: WorksheetInfoComponent,
       componentProps: {
         workSheet: workSheet
       },
@@ -406,5 +410,15 @@ export class GraphicComponent implements OnInit {
     };
     const formattedDate = date.toLocaleDateString('th-TH', options);
     return formattedDate;
+  }
+
+  selectClass(status) {
+    let color = '';
+    this.statuses.forEach((s) => {
+      if (s.value === status) {
+        color = s.class;
+      }
+    });
+    return color;
   }
 }

@@ -138,29 +138,6 @@ export class FirestoreService {
     });
   }
 
-  fetchDataJobSchedules(date) {
-    let nextDay = new Date(date);
-    nextDay.setDate(nextDay.getDate() + 30);
-    const q = query(collection(db, "jobs"),
-      where("book.date", ">", date),
-      where("book.date", "<", nextDay),
-      where("status", "in", ["PENDING", "BOOKED", "COMPLETED"]),
-      where("project_id", "==", this.user[0].project_id));
-    if (this.subscriptionSchedules) {
-      this.subscriptionSchedules();
-    }
-    return new Promise<any>((resolve) => {
-      this.subscriptionSchedules = onSnapshot(q, { includeMetadataChanges: true }, async (querySnapshot) => {
-        const data: any = [];
-        for (const docs of querySnapshot.docs) {
-          data.push({ ...docs.data(), key: docs.id });
-        }
-        this.schedulesChange.next(data);
-        resolve(data);
-      });
-    });
-  }
-
   fetchDataJob(date) {
     let nextDay = new Date(date);
     nextDay.setDate(nextDay.getDate() + 1);
@@ -202,33 +179,6 @@ export class FirestoreService {
     });
   }
 
-  fetchDataJobByGroup(group) {
-    const querydate = new Date().setHours(0, 0, 0, 0);
-    const formatQueryDate = new Date(querydate);
-    formatQueryDate.setDate(formatQueryDate.getDate());
-    const q = query(collection(db, "jobs"),
-      where("group_id", "==", group.id),
-      where("book.date", ">=", formatQueryDate),
-      where("project_id", "==", group.project_id)
-    );
-    return new Promise<any>((resolve) => {
-      const snapshot = getDocs(q);
-      snapshot.then((querySnapshot) => {
-        const data: any = [];
-        for (const docs of querySnapshot.docs) {
-          data.push({
-            ...docs.data(),
-            key: docs.id,
-            time: docs.data().book.time[0],
-          });
-        }
-        this.jobs = data;
-        this.jobsChange.next(this.jobs);
-        resolve(data);
-      });
-    });
-  }
-
   async fetchDataAllJob(): Promise<any> {
     const q = query(collection(db, "jobs"),
       // where("status", "in", ["รอออกแบบ", "กำลังออกแบบ", "รอคอนเฟิร์มแบบ", "คอนเฟิร์มแล้ว"]),
@@ -244,107 +194,6 @@ export class FirestoreService {
         resolve(data);
       })
       this.subscriptions.push(subscription);
-    });
-  }
-
-  fetchJobPending() {
-    // const querydate = new Date()
-    const querydate = new Date().setHours(0, 0, 0, 0);
-    const formatQueryDate = new Date(querydate);
-    formatQueryDate.setDate(formatQueryDate.getDate());
-    const q = query(collection(db, "jobs"), where("status", "==", "PENDING"), where("book.date", ">=", formatQueryDate));
-    return new Promise<any>((resolve) => {
-      const subscription = onSnapshot(q, { includeMetadataChanges: true }, async (querySnapshot) => {
-        const data: any = [];
-        for (const docs of querySnapshot.docs) {
-          data.push({ ...docs.data(), key: docs.id });
-        }
-        this.jobPendingChange.next(data);
-        resolve(data);
-      })
-      this.subscriptions.push(subscription);
-    });
-  }
-
-  fetchJobBooked() {
-    // const querydate = new Date()
-    const querydate = new Date().setHours(0, 0, 0, 0);
-    const formatQueryDate = new Date(querydate);
-    formatQueryDate.setDate(formatQueryDate.getDate());
-    const q = query(collection(db, "jobs"), where("status", "==", "BOOKED"), where("book.date", ">=", formatQueryDate));
-    return new Promise<any>((resolve) => {
-      const subscription = onSnapshot(q, { includeMetadataChanges: true }, async (querySnapshot) => {
-        const data: any = [];
-        for (const docs of querySnapshot.docs) {
-          data.push({ ...docs.data(), key: docs.id });
-        }
-        this.jobBookedChange.next(data);
-        resolve(data);
-      })
-      this.subscriptions.push(subscription);
-    });
-  }
-
-  fetchJobCompleted() {
-    const querydate = new Date().setHours(0, 0, 0, 0);
-    const formatQueryDate = new Date(querydate);
-    formatQueryDate.setDate(formatQueryDate.getDate());
-    const q = query(collection(db, "jobs"),
-      where("status", "==", "COMPLETED"),
-      where("book.date", ">=", formatQueryDate));
-    return new Promise<any>((resolve) => {
-      const subscription = onSnapshot(q, { includeMetadataChanges: true }, async (querySnapshot) => {
-        const data: any = [];
-        for (const docs of querySnapshot.docs) {
-          data.push({ ...docs.data(), key: docs.id });
-        }
-        this.jobCompletedChange.next(data);
-        resolve(data);
-      })
-      this.subscriptions.push(subscription);
-    });
-  }
-
-  fetchJobRejectedCanceled() {
-    const querydate = new Date().setHours(0, 0, 0, 0);
-    const formatQueryDate = new Date(querydate);
-    formatQueryDate.setDate(formatQueryDate.getDate());
-    const q = query(collection(db, "jobs"),
-      where("status", "in", ["REJECTED", "CANCELED"]),
-      where("book.date", ">=", formatQueryDate));
-    return new Promise<any>((resolve) => {
-      const subscription = onSnapshot(q, { includeMetadataChanges: true }, async (querySnapshot) => {
-        const data: any = [];
-        for (const docs of querySnapshot.docs) {
-          data.push({ ...docs.data(), key: docs.id });
-        }
-        this.jobRejectedCanceledChange.next(data);
-        resolve(data);
-      })
-      this.subscriptions.push(subscription);
-    });
-  }
-
-  fetchDataDashboard(date) {
-    let nextDay = new Date(date);
-    nextDay.setDate(nextDay.getDate() + 1);
-    const q = query(collection(db, "jobs"),
-      where("book.date", ">", date),
-      where("book.date", "<", nextDay),
-      where("project_id", "==", '1')
-    );
-    if (this.subscriptionDashboard) {
-      this.subscriptionDashboard();
-    }
-    return new Promise<any>((resolve) => {
-      this.subscriptionDashboard = onSnapshot(q, { includeMetadataChanges: true }, async (querySnapshot) => {
-        const data: any = [];
-        for (const docs of querySnapshot.docs) {
-          data.push({ ...docs.data(), key: docs.id });
-        }
-        this.jobDashboardChange.next(data);
-        resolve(data);
-      });
     });
   }
 
@@ -422,7 +271,7 @@ export class FirestoreService {
       });
     });
   }
-  
+
   async CheckUserOnSite(phone: any) {
     const q = query(collection(db, "users"), where("phone", "==", phone));
     // const q = query(collection(db, "users"), where("user_phone", "==", phone), where("user_is_enabled", "==", true), where("user_is_deleted", "==", false));
@@ -622,5 +471,32 @@ export class FirestoreService {
     });
   }
 
+  summaryDiary = [];
+  summaryDiaryChange = new Subject<any>();
+
+  fetchWorkSheetSummaryDiary(date, design_by) {
+    const querydate = new Date(date).setHours(0, 0, 0, 0);
+    const dateCondition = new Date(querydate);
+    const formatQueryDate = new Date(querydate);
+    formatQueryDate.setDate(formatQueryDate.getDate() + 1);
+    // console.log(dateCondition, formatQueryDate, design_by);
+    const q = query(collection(db, "jobs"),
+      where("confirm_date", ">", dateCondition),
+      where("confirm_date", "<", formatQueryDate),
+      where("design_by", "==", design_by),
+    );
+    return new Promise<any>((resolve) => {
+      const subscription = onSnapshot(q, { includeMetadataChanges: true }, async (querySnapshot) => {
+        const data: any = [];
+        for (const docs of querySnapshot.docs) {
+          data.push({ ...docs.data(), key: docs.id });
+        }
+        this.summaryDiary = data;
+        this.summaryDiaryChange.next(data);
+        resolve(data);
+      })
+      this.subscriptions.push(subscription);
+    });
+  }
 }
 

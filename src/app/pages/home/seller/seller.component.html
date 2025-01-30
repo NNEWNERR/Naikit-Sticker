@@ -28,10 +28,10 @@
                         (click)="editWorkSheet(workSheet)"></ion-icon>
                 </div>
                 <div class="flex items-center gap-2">
-                    <div *ngIf="workSheet.modify > 0" class="px-2 py-1 bg-red-500 rounded-md mr-2 text-white">
+                    <div *ngIf="workSheet.modify > 0" class="px-2 py-1 rounded-lg bg-red-100 text-red-700">
                         แก้ครั้งที่
                         {{workSheet.modify}}</div>
-                    <div class="px-2 py-1 bg-red-500 rounded-md mr-2 text-white">
+                    <div [class]="'px-2 py-1 rounded-lg ' + selectClass(workSheet.status)">
                         {{workSheet.status}}</div>
                 </div>
             </ion-card-title>

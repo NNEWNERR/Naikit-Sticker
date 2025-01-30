@@ -15,6 +15,7 @@ import { CreateWorkSheetComponent } from '../../create-work-sheet/create-work-sh
 import { SEGMENT_OPTION, STATUS_OPTION, SELLER_OPTION, DESIGNER_OPTION } from 'src/app/data/data';
 import { FormGroup, FormBuilder } from '@angular/forms';
 import { GraphicComponent } from '../graphic/graphic.component';
+import { WorksheetInfoComponent } from '../../worksheet-info/worksheet-info.component';
 @Component({
   selector: 'app-seller',
   templateUrl: './seller.component.html',
@@ -242,7 +243,7 @@ export class SellerComponent implements OnInit {
     filterWorkSheet = filterWorkSheet.filter(workSheet => this.currentSeller === 'ทั้งหมด' ? true : workSheet.seller_name === this.currentSeller);
     filterWorkSheet = filterWorkSheet.filter(workSheet => this.currentGraphic === 'ทั้งหมด' ? true : workSheet.design_by === this.currentGraphic);
     this.filterWorkSheet = filterWorkSheet;
-    console.log('by', by);
+    // console.log('by', by);
     if (by !== 'status') {
       this.countStatuses(this.filterWorkSheet);
     }
@@ -379,11 +380,11 @@ export class SellerComponent implements OnInit {
 
   workSheetInfo(workSheet) {
     this.modalController.create({
-      component: EditWorkSheetComponent,
+      component: WorksheetInfoComponent,
       componentProps: {
         workSheet: workSheet
       },
-      cssClass: 'my-custom-class',
+      cssClass: 'modal-fullscreen',
     }).then(modal => modal.present());
   }
 
@@ -413,5 +414,15 @@ export class SellerComponent implements OnInit {
     };
     const formattedDate = date.toLocaleDateString('th-TH', options);
     return formattedDate;
+  }
+
+  selectClass(status) {
+    let color = '';
+    this.statuses.forEach((s) => {
+      if (s.value === status) {
+        color = s.class;
+      }
+    });
+    return color;
   }
 }

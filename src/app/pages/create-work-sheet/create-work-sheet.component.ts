@@ -419,7 +419,7 @@ export class CreateWorkSheetComponent implements OnInit {
         print_by: this.form.value.printer.value || "", // ผู้พิมพ์
         print_date: "", // วันที่พิมพ์
         is_urgent: this.form.value.is_urgent.value == 'ด่วน' ? true : false,  // เป็นงานด่วน
-        date_of_acceptance: this.form.value.date_of_acceptance ? new Date(this.form.value.date_of_acceptance) : "", // วันที่รับงาน
+        date_of_acceptance: this.form.value.date_of_acceptance ? new Date(this.form.value.date_of_acceptance).setHours(0, 0, 0, 0) : "", // วันที่รับงาน
         date_of_submission: "", // วันที่ส่งแบบ
         date_of_completion: "", // วันที่ส่งงาน
       }

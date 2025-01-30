@@ -8,6 +8,7 @@ import { LoginComponent } from './pages/login/login.component';
 import { SettingComponent } from './pages/setting/setting.component';
 import { TestComponent } from './test/test.component';
 import { ReportComponent } from './pages/report/report.component';
+import { DiarySummaryComponent } from './pages/diary-summary/diary-summary.component';
 
 export const routes: Routes = [
   {
@@ -32,6 +33,10 @@ export const routes: Routes = [
         path: 'setting',
         component: SettingComponent
       },
+      {
+        path: 'diary-summary',
+        component: DiarySummaryComponent
+      }
     ],
   },
   {

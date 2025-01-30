@@ -24,10 +24,10 @@
                         (click)="editWorkSheet(workSheet)"></ion-icon>
                 </div>
                 <div class="flex items-center gap-2">
-                    <div *ngIf="workSheet.modify > 0" class="px-2 py-1 bg-red-500 rounded-md mr-2 text-white">
+                    <div *ngIf="workSheet.modify > 0" class="px-2 py-1 rounded-lg bg-red-100 text-red-700">
                         แก้ครั้งที่
                         {{workSheet.modify}}</div>
-                    <div class="px-2 py-1 bg-red-500 rounded-md mr-2 text-white">
+                    <div [class]="'px-2 py-1 rounded-lg ' + selectClass(workSheet.status)">
                         {{workSheet.status}}</div>
                 </div>
             </ion-card-title>
@@ -57,13 +57,11 @@
                 <div>S.{{workSheet.seller_name}} G.{{workSheet.design_by || '-'}}</div>
             </div>
             <div>
-                <ion-button *ngIf="workSheet.status === 'รอคอนเฟิร์มแบบ'" color="danger"
-                    (click)="modifyWorkSheet(workSheet)">ส่งแก้ไข</ion-button>
-                <ion-button *ngIf="workSheet.status === 'รอคอนเฟิร์มแบบ'" color="success"
-                    (click)="confirmWorkSheet(workSheet)">คอนเฟิร์ม</ion-button>
-                <ion-button *ngIf="workSheet.status === 'รอส่งมอบ'" color="success"
-                    (click)="deliverWorkSheet(workSheet)">ส่งมอบ</ion-button>
-                <ion-button (click)="workSheetInfo(workSheet)">รายละเอียด</ion-button>
+                <ion-button *ngIf="workSheet.status === 'รอผลิต'" color="success"
+                    (click)="productingWorkSheet(workSheet)">ส่งผลิต</ion-button>
+                <ion-button *ngIf="workSheet.status === 'กำลังผลิต'" color="success"
+                    (click)="FinishProductWorkSheet(workSheet)">ส่งงาน</ion-button>
+                    <ion-button (click)="workSheetInfo(workSheet)">รายละเอียด</ion-button>
             </div>
         </div>
     </ion-card>

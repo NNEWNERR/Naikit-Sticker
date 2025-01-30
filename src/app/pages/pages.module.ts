@@ -28,6 +28,9 @@ import { ShowQrCodeComponent } from './show-qr-code/show-qr-code.component';
 import { GraphicComponent } from './home/graphic/graphic.component';
 import { ProductionComponent } from './home/production/production.component';
 import { ReportComponent } from './report/report.component';
+import { DiarySummaryComponent } from './diary-summary/diary-summary.component';
+import { WorksheetInfoComponent } from './worksheet-info/worksheet-info.component';
+import { ShowImageComponent } from './show-image/show-image.component';
 
 
 
@@ -49,7 +52,10 @@ import { ReportComponent } from './report/report.component';
     SelectGraphicComponent,
     GraphicComponent,
     ProductionComponent,
-    ReportComponent
+    ReportComponent,
+    DiarySummaryComponent,
+    WorksheetInfoComponent,
+    ShowImageComponent
   ],
   imports: [
     CommonModule,

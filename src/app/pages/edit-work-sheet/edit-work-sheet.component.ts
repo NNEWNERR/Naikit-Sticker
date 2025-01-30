@@ -338,22 +338,22 @@ export class EditWorkSheetComponent implements OnInit {
   onSubmit() {
     if (this.form.valid) {
       // console.log(this.form.value);
-      const date = new Date();
-      const newDate = new Date(date.setDate(date.getDate() + 1));
+      // const date = new Date();
+      // const newDate = new Date(date.setDate(date.getDate() + 1));
       const total = this.form.value.total
       const deposit = this.form.value.deposit
       const remaining = total - deposit
       const data = {
-        id: uuidv4(),  // รหัสงาน
+        // id: uuidv4(),  // รหัสงาน
         serial_number: this.form.value.reference || "", // หมายเลขงาน
         contact: this.form.value.contact.value || "", // ช่องทางการติดต่อ
         customer_name: this.form.value.name || "", // ชื่อลูกค้า
         phone: this.form.value.phone || "",  // เบอร์โทร 
         line_name: this.form.value.line || "", // ชื่อผู้ติดต่อ
-        created_at: new Date(),  // วันที่สร้าง
-        created_by: "admin",  // ผู้สร้าง
+        // created_at: new Date(),  // วันที่สร้าง
+        // created_by: "admin",  // ผู้สร้าง
         seller_name: this.form.value.seller.value || "", // ชื่อผู้ขาย
-        work: [
+        // work: [
           // {
           //   id: uuidv4(),
           //   type: "ไวนิล",  // ชนิดงาน
@@ -374,28 +374,28 @@ export class EditWorkSheetComponent implements OnInit {
           //   quantity: 2,  // จํานวน
           //   total: 500,  // ราคาต่อหน่วย
           // },
-        ],
-        other: "",  // งานอื่นๆ
+        // ],
+        // other: "",  // งานอื่นๆ
         payment: {
           total: total,  // ราคารวม
           deposit: deposit,   // เงินมัดจำ
-          date_of_payment: new Date(),   // วันที่ชําระ
+          // date_of_payment: new Date(),   // วันที่ชําระ
           payment_method: this.form.value.payment.value || "",  // วิธีการชําระ
           remaining: remaining || "",  // คงเหลือ
         },
         status: this.form.value.status.value || "",
         remark: this.form.value.remark || "",  // หมายเหตุ 
         design_by: this.form.value.designer.value || "",  // ผู้ออกแบบ 
-        design_date: "",  // วันที่รับแบบ
-        confirm_by: "",  // ผู้อนุมัติ
-        confirm_date: "",  // วันที่อนุมัติ
-        modify: 0,
+        // design_date: "",  // วันที่รับแบบ
+        // confirm_by: "",  // ผู้อนุมัติ
+        // confirm_date: "",  // วันที่อนุมัติ
+        // modify: 0,
         print_by: this.form.value.printer.value || "", // ผู้พิมพ์
         print_date: this.form.value.print_date ? new Date(this.form.value.print_date) : "", // วันที่พิมพ์
         is_urgent: this.form.value.is_urgent.value == 'ด่วน' ? true : false,  // เป็นงานด่วน
         date_of_acceptance: this.form.value.date_of_acceptance ? new Date(this.form.value.date_of_acceptance) : "", // วันที่รับงาน
         date_of_submission: this.form.value.date_of_submission ? new Date(this.form.value.date_of_submission) : "", // วันที่ส่งแบบ
-        date_of_completion: "", // วันที่ส่งมอบงาน
+        // date_of_completion: "", // วันที่ส่งมอบงาน
       }
       // console.log(data);
       const docRef = doc(db, "jobs", this.workSheet.key);

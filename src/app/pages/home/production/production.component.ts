@@ -15,6 +15,7 @@ import { CreateWorkSheetComponent } from '../../create-work-sheet/create-work-sh
 import { SEGMENT_OPTION, STATUS_OPTION, SELLER_OPTION, DESIGNER_OPTION } from 'src/app/data/data';
 import { FormGroup, FormBuilder } from '@angular/forms';
 import { GraphicComponent } from '../graphic/graphic.component';
+import { WorksheetInfoComponent } from '../../worksheet-info/worksheet-info.component';
 @Component({
   selector: 'app-production',
   templateUrl: './production.component.html',
@@ -237,7 +238,7 @@ export class ProductionComponent implements OnInit {
     filterWorkSheet = filterWorkSheet.filter(workSheet => this.currentSeller === 'ทั้งหมด' ? true : workSheet.seller_name === this.currentSeller);
     filterWorkSheet = filterWorkSheet.filter(workSheet => this.currentGraphic === 'ทั้งหมด' ? true : workSheet.design_by === this.currentGraphic);
     this.filterWorkSheet = filterWorkSheet;
-    console.log('by', by);
+    // console.log('by', by);
     if (by !== 'status') {
       this.countStatuses(this.filterWorkSheet);
     }
@@ -372,15 +373,15 @@ export class ProductionComponent implements OnInit {
     this.firestoreService.updateDatatoFirebase(docRef, data);
   }
 
-  workSheetInfo(workSheet) {
-    this.modalController.create({
-      component: EditWorkSheetComponent,
-      componentProps: {
-        workSheet: workSheet
-      },
-      cssClass: 'my-custom-class',
-    }).then(modal => modal.present());
-  }
+ workSheetInfo(workSheet) {
+     this.modalController.create({
+       component: WorksheetInfoComponent,
+       componentProps: {
+         workSheet: workSheet
+       },
+       cssClass: 'modal-fullscreen',
+     }).then(modal => modal.present());
+   }
 
   onWorkSheetSearchChange(event) {
     this.currentSearch = event;
@@ -410,4 +411,13 @@ export class ProductionComponent implements OnInit {
     return formattedDate;
   }
 
+  selectClass(status) {
+    let color = '';
+    this.statuses.forEach((s) => {
+      if (s.value === status) {
+        color = s.class;
+      }
+    });
+    return color;
+  }
 }

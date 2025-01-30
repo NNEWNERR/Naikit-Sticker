@@ -63,6 +63,8 @@ export class DragAndDropFileComponent implements OnInit {
    * @param files (Files List)
    */
   prepareFilesList(files: Array<any>) {
+    console.log('Files:', files);
+    
     for (const item of files) {
       item.progress = 0;
       this.files.push(item);
