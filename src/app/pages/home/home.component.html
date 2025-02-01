@@ -1,19 +1,22 @@
 <app-header title="Home"></app-header>
 <ion-content>
-    <ion-segment [value]="segment" mode="md" (ionChange)="segmentChanged($event)">
-        <ion-segment-button [value]="option.value" *ngFor="let option of segment_option">
-            <ion-label>{{option.title}}</ion-label>
-        </ion-segment-button>
-    </ion-segment>
-    <div [ngSwitch]="segment">
-        <div *ngSwitchCase="'seller'">
-            <app-seller></app-seller>
-        </div>
-        <div *ngSwitchCase="'graphic'">
-            <app-graphic></app-graphic>
-        </div>
-        <div *ngSwitchCase="'production'">
-            <app-production></app-production>
-        </div>
+  <ion-segment [value]="segment" mode="md" (ionChange)="segmentChanged($event)">
+    <ion-segment-button
+      [value]="option.value"
+      *ngFor="let option of segment_option"
+    >
+      <ion-label>{{ option.title }}</ion-label>
+    </ion-segment-button>
+  </ion-segment>
+  <div [ngSwitch]="segment">
+    <div *ngSwitchCase="'seller'">
+      <app-seller></app-seller>
     </div>
+    <div *ngSwitchCase="'graphic'">
+      <app-graphic></app-graphic>
+    </div>
+    <div *ngSwitchCase="'production'">
+      <app-production></app-production>
+    </div>
+  </div>
 </ion-content>

@@ -12,7 +12,12 @@ import { SelectGraphicComponent } from '../../graphic/graphic.component';
 
 import { v4 as uuidv4 } from 'uuid';
 import { CreateWorkSheetComponent } from '../../create-work-sheet/create-work-sheet.component';
-import { SEGMENT_OPTION, STATUS_OPTION, SELLER_OPTION, DESIGNER_OPTION } from 'src/app/data/data';
+import {
+  SEGMENT_OPTION,
+  STATUS_OPTION,
+  SELLER_OPTION,
+  DESIGNER_OPTION,
+} from 'src/app/data/data';
 import { FormGroup, FormBuilder } from '@angular/forms';
 import { GraphicComponent } from '../graphic/graphic.component';
 import { WorksheetInfoComponent } from '../../worksheet-info/worksheet-info.component';
@@ -39,8 +44,8 @@ export class SellerComponent implements OnInit {
     private modalController: ModalController,
     private storageService: StorageService,
     private formBuilder: FormBuilder,
-    private serviceService: ServiceService,
-  ) { }
+    private serviceService: ServiceService
+  ) {}
 
   get statusKeys() {
     return Object.keys(this.statusCount);
@@ -73,7 +78,7 @@ export class SellerComponent implements OnInit {
 
   ngOnInit() {
     this.serviceService.presentLoadingWithOutTime('Loading...');
-    this.firestoreService.unsubscribeSubscriptions()
+    this.firestoreService.unsubscribeSubscriptions();
     this.firestoreService.fetchWorkSheetForSeller();
     this.initForm();
     this.firestoreService.workSheetForSellerChange.subscribe((data) => {
@@ -85,7 +90,7 @@ export class SellerComponent implements OnInit {
       if (this.currentSearch) {
         this.onWorkSheetSearchChange({ detail: { value: this.currentSearch } });
       }
-    })
+    });
   }
 
   // async ngOnDestroy() {
@@ -158,33 +163,35 @@ export class SellerComponent implements OnInit {
       text_search: [''],
       status: [this.statuses ? this.statuses[0] : ''],
       seller: [this.sellers ? this.sellers[0] : ''],
-      graphic: [this.designers ? this.designers[0] : '']
-    })
+      graphic: [this.designers ? this.designers[0] : ''],
+    });
   }
 
   createWorkSheet() {
-    this.modalController.create({
-      component: CreateWorkSheetComponent,
-      cssClass: 'my-custom-class',
-    }).then(modal => modal.present());
+    this.modalController
+      .create({
+        component: CreateWorkSheetComponent,
+        cssClass: 'modal-fullscreen',
+      })
+      .then((modal) => modal.present());
   }
 
   sortWorkSheet(workSheets) {
     workSheets.sort((a, b) => {
       if (a.is_urgent) {
-        return -1
+        return -1;
       } else if (b.is_urgent) {
-        return 1
+        return 1;
       } else {
         if (a.serial_number < b.serial_number) {
-          return -1
+          return -1;
         } else if (a.serial_number > b.serial_number) {
-          return 1
+          return 1;
         } else {
-          return 0
+          return 0;
         }
       }
-    })
+    });
   }
 
   filteringWorkSheetByStatus(status) {
@@ -239,9 +246,21 @@ export class SellerComponent implements OnInit {
 
   filteringWorkSheet(by) {
     let filterWorkSheet = [];
-    filterWorkSheet = this.workSheet.filter(workSheet => this.currentStatus === 'ทั้งหมด' ? true : workSheet.status === this.currentStatus);
-    filterWorkSheet = filterWorkSheet.filter(workSheet => this.currentSeller === 'ทั้งหมด' ? true : workSheet.seller_name === this.currentSeller);
-    filterWorkSheet = filterWorkSheet.filter(workSheet => this.currentGraphic === 'ทั้งหมด' ? true : workSheet.design_by === this.currentGraphic);
+    filterWorkSheet = this.workSheet.filter((workSheet) =>
+      this.currentStatus === 'ทั้งหมด'
+        ? true
+        : workSheet.status === this.currentStatus
+    );
+    filterWorkSheet = filterWorkSheet.filter((workSheet) =>
+      this.currentSeller === 'ทั้งหมด'
+        ? true
+        : workSheet.seller_name === this.currentSeller
+    );
+    filterWorkSheet = filterWorkSheet.filter((workSheet) =>
+      this.currentGraphic === 'ทั้งหมด'
+        ? true
+        : workSheet.design_by === this.currentGraphic
+    );
     this.filterWorkSheet = filterWorkSheet;
     // console.log('by', by);
     if (by !== 'status') {
@@ -250,21 +269,23 @@ export class SellerComponent implements OnInit {
   }
 
   editWorkSheet(workSheet) {
-    this.modalController.create({
-      component: EditWorkSheetComponent,
-      componentProps: {
-        workSheet: workSheet
-      },
-      cssClass: 'my-custom-class',
-    }).then(modal => modal.present());
+    this.modalController
+      .create({
+        component: EditWorkSheetComponent,
+        componentProps: {
+          workSheet: workSheet,
+        },
+        cssClass: 'my-custom-class',
+      })
+      .then((modal) => modal.present());
   }
 
   modifyWorkSheet(workSheet) {
     const docRef = doc(db, 'jobs', workSheet.key);
     const data = {
       status: 'กำลังออกแบบ',
-      modify: workSheet.modify + 1
-    }
+      modify: workSheet.modify + 1,
+    };
     this.firestoreService.updateDatatoFirebase(docRef, data);
   }
 
@@ -273,7 +294,7 @@ export class SellerComponent implements OnInit {
     const data = {
       status: 'คอนเฟิร์มแล้ว',
       confirm_date: new Date(),
-    }
+    };
     this.firestoreService.updateDatatoFirebase(docRef, data);
   }
 
@@ -282,7 +303,7 @@ export class SellerComponent implements OnInit {
     const data = {
       status: 'ส่งมอบแล้ว',
       date_of_completion: new Date(),
-    }
+    };
     this.firestoreService.updateDatatoFirebase(docRef, data);
   }
 
@@ -290,8 +311,8 @@ export class SellerComponent implements OnInit {
     const modal = await this.modalController.create({
       component: SelectGraphicComponent,
       cssClass: 'my-custom-class',
-    })
-    await modal.present()
+    });
+    await modal.present();
     const { role, data } = await modal.onWillDismiss();
     // console.log(role, data);
     if (role === 'confirm') {
@@ -300,7 +321,7 @@ export class SellerComponent implements OnInit {
         status: 'กำลังออกแบบ',
         design_by: data,
         design_date: new Date(),
-      }
+      };
       this.firestoreService.updateDatatoFirebase(docRef, update);
     }
   }
@@ -309,8 +330,8 @@ export class SellerComponent implements OnInit {
     const modal = await this.modalController.create({
       component: DragAndDropFileComponent,
       cssClass: 'my-custom-class',
-    })
-    await modal.present()
+    });
+    await modal.present();
     const { role, data } = await modal.onWillDismiss();
     // console.log(role, data);
     if (role === 'confirm') {
@@ -334,16 +355,16 @@ export class SellerComponent implements OnInit {
               return {
                 id: uuidv4(),
                 url: url,
-                date: new Date()
-              }
-            })
+                date: new Date(),
+              };
+            });
           }
           const docRef = doc(db, 'jobs', workSheet.key);
           const update = {
             status: 'รอคอนเฟิร์มแบบ',
             date_of_submission: new Date(),
-            images: images.length > 0 ? arrayUnion(...images) : []
-          }
+            images: images.length > 0 ? arrayUnion(...images) : [],
+          };
           this.firestoreService.updateDatatoFirebase(docRef, update);
         } catch (error) {
           console.error('failed:', error);
@@ -357,7 +378,7 @@ export class SellerComponent implements OnInit {
     const data = {
       status: 'รอผลิต',
       date_of_submission: new Date(),
-    }
+    };
     this.firestoreService.updateDatatoFirebase(docRef, data);
   }
 
@@ -365,7 +386,7 @@ export class SellerComponent implements OnInit {
     const docRef = doc(db, 'jobs', workSheet.key);
     const data = {
       status: 'กำลังผลิต',
-    }
+    };
     this.firestoreService.updateDatatoFirebase(docRef, data);
   }
 
@@ -374,26 +395,34 @@ export class SellerComponent implements OnInit {
     const data = {
       status: 'รอส่งมอบ',
       print_date: new Date(),
-    }
+    };
     this.firestoreService.updateDatatoFirebase(docRef, data);
   }
 
   workSheetInfo(workSheet) {
-    this.modalController.create({
-      component: WorksheetInfoComponent,
-      componentProps: {
-        workSheet: workSheet
-      },
-      cssClass: 'modal-fullscreen',
-    }).then(modal => modal.present());
+    this.modalController
+      .create({
+        component: WorksheetInfoComponent,
+        componentProps: {
+          workSheet: workSheet,
+        },
+        cssClass: 'modal-fullscreen',
+      })
+      .then((modal) => modal.present());
   }
 
   onWorkSheetSearchChange(event) {
     this.currentSearch = event;
-    this.filterWorkSheet = this.workSheet.filter(workSheet => workSheet.serial_number.toLowerCase().includes(this.currentSearch.toLowerCase()) ||
-      workSheet.customer_name.toLowerCase().includes(this.currentSearch.toLowerCase()));
+    this.filterWorkSheet = this.workSheet.filter(
+      (workSheet) =>
+        workSheet.serial_number
+          .toLowerCase()
+          .includes(this.currentSearch.toLowerCase()) ||
+        workSheet.customer_name
+          .toLowerCase()
+          .includes(this.currentSearch.toLowerCase())
+    );
   }
-
 
   formatTime(timestamp: Timestamp) {
     const date = new Date(timestamp.seconds * 1000);

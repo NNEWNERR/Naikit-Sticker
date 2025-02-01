@@ -1,55 +1,338 @@
 <app-header title="ใบสั่งงาน" [modal]="true"></app-header>
 <ion-content class="ion-padding">
-    <form [formGroup]="form">
-        <app-select [parentForm]="form" label="ด่วน" formControlName="is_urgent" placeholder="กรุณาเลือก"
-            [multiple]="false" [options]="is_ergents"></app-select>
-        <!-- เลขที่อ้างอิง -->
-        <app-input [parentForm]="form" label="เลขที่อ้างอิง" typeInput="text" formControlName="reference"
-            placeholder="กรุณากรอกเลขที่อ้างอิง"></app-input>
-        <!-- ช่องทางติดต่อ -->
-        <app-select [parentForm]="form" label="ช่องทางติดต่อ" formControlName="contact"
-            placeholder="กรุณาเลือกช่องทางติดต่อ" [multiple]="false" [options]="contacts"></app-select>
-        <!-- ชื่อ -->
-        <app-input [parentForm]="form" label="ชื่อ" typeInput="text" formControlName="name"
-            placeholder="กรุณาระบุชื่อ"></app-input>
-        <!-- เบอร์โทรศัพท์ -->
-        <app-input [parentForm]="form" label="เบอร์โทรศัพท์" typeInput="text" formControlName="phone"
-            placeholder="กรุณากรอกเบอร์โทรศัพท์"></app-input>
-        <!-- ไลน์ -->
-        <app-input [parentForm]="form" label="ไลน์" typeInput="text" formControlName="line"
-            placeholder="กรุณากรอกไลน์"></app-input>
-        <!-- seller -->
-        <app-select [parentForm]="form" label="ผู้ขาย" formControlName="seller" placeholder="กรุณาเลือกผู้ขาย"
-            [multiple]="false" [options]="sellers"></app-select>
-        <!-- ยอดรวม -->
-        <app-input [parentForm]="form" label="ยอดรวม" typeInput="text" formControlName="total"
-            placeholder="กรุณากรอกยอดรวม"></app-input>
-        <!-- เงินมัดจำ -->
-        <app-input [parentForm]="form" label="เงินมัดจำ" typeInput="text" formControlName="deposit"
-            placeholder="กรุณากรอกเงินมัดจำ"></app-input>
-        <!-- payment -->
-        <!-- <app-select [parentForm]="form" label="การชําระเงิน" formControlName="payment"
-            placeholder="กรุณาเลือกการชําระเงิน" [multiple]="false" [options]="payments"></app-select> -->
-        <!-- วันนัดรับ -->
-        <app-input [parentForm]="form" label="วันนัดรับ" typeInput="date" formControlName="date_of_acceptance"
-            placeholder="กรุณากรอกวันนัดรับ"></app-input>
-        <!-- ผู้ออกแบบ -->
-        <!-- <app-select [parentForm]="form" label="ผู้ออกแบบ" formControlName="designer" placeholder="กรุณาเลือกผู้ออกแบบ"
-            [multiple]="false" [options]="designers"></app-select> -->
-        <!-- วันที่ส่งแบบ -->
-        <!-- <app-input [parentForm]="form" label="วันที่ส่งแบบ" typeInput="date" formControlName="date_of_submission"
-            placeholder="กรุณากรอกวันที่ส่งแบบ"></app-input> -->
-        <!-- ผู้พิมพ์งาน -->
-        <!-- <app-select [parentForm]="form" label="ผู้พิมพ์งาน" formControlName="printer"
-            placeholder="กรุณาเลือกผู้พิมพ์งาน" [multiple]="false" [options]="printers"></app-select> -->
-        <!-- วันที่พิมพ์ -->
-        <!-- <app-input [parentForm]="form" label="วันที่พิมพ์" typeInput="date" formControlName="print_date"
-            placeholder="กรุณากรอกวันที่พิมพ์"></app-input> -->
-        <!-- หมายเหตุ -->
-        <!-- <app-input [parentForm]="form" label="หมายเหตุ" typeInput="text" formControlName="remark"
-            placeholder="หมายเหตุ"></app-input> -->
-        <ion-button (click)="onSubmit()" expand="block">
-            onSubmit
-        </ion-button>
+  <div class="container mx-auto p-6 text-black bg-white">
+    <form [formGroup]="worksheetForm" class="space-y-6">
+      <!-- Contact Method -->
+      <div class="space-y-2">
+        <h3 class="text-lg font-semibold">ช่องทางการติดต่อ</h3>
+        <div class="flex space-x-4">
+          <label class="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              formControlName="inStore"
+              class="form-checkbox"
+            />
+            <span>หน้าร้าน</span>
+          </label>
+
+          <label class="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              formControlName="line"
+              class="form-checkbox"
+            />
+            <span>ไลน์</span>
+          </label>
+          <label class="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              formControlName="email"
+              class="form-checkbox"
+            />
+            <span>อีเมล</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Customer Information -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <label class="block text-sm font-medium">ชื่อผู้สั่งงาน</label>
+          <input
+            type="text"
+            formControlName="customerName"
+            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+          />
+        </div>
+        <div>
+          <label class="block text-sm font-medium">ไลน์/อีเมล</label>
+          <input
+            type="text"
+            formControlName="contactInfo"
+            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+          />
+        </div>
+        <div>
+          <label class="block text-sm font-medium">เบอร์โทรศัพท์</label>
+          <input
+            type="tel"
+            formControlName="phone"
+            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+          />
+        </div>
+      </div>
+
+      <!-- Work Items Table -->
+      <div class="space-y-2 overflow-y-auto">
+        <h3 class="text-lg font-semibold">ประเภทงาน</h3>
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead>
+            <tr>
+              <th class="px-4 py-2 bg-gray-200">ลบ</th>
+              <th class="px-4 py-2 bg-gray-200">ลำดับ</th>
+              <th class="px-4 py-2 bg-gray-200">ประเภท</th>
+              <th class="px-4 py-2 bg-gray-200">สูง</th>
+              <th class="px-4 py-2 bg-gray-200">ยาว</th>
+              <th class="px-4 py-2 bg-gray-200">หน่วย</th>
+              <th class="px-4 py-2 bg-gray-200">ราคา</th>
+              <th class="px-4 py-2 bg-gray-200">ดูตัวอย่าง</th>
+              <th class="px-4 py-2 bg-gray-200">หมายเหตุ</th>
+            </tr>
+          </thead>
+          <tbody formArrayName="workItems">
+            <tr
+              *ngFor="let item of workItems.controls; let i = index"
+              [formGroupName]="i"
+            >
+              <td class="px-4 py-2">
+                <button
+                  type="button"
+                  (click)="removeWorkItem(i)"
+                  class="px-4 py-2 bg-red-500 text-white rounded"
+                >
+                  ลบรายการ
+                </button>
+              </td>
+              <td class="px-4 py-2">{{ i + 1 }}</td>
+              <td class="px-4 py-2">
+                <input
+                  type="text"
+                  formControlName="type"
+                  class="w-full rounded"
+                />
+              </td>
+              <td class="px-4 py-2">
+                <input
+                  type="number"
+                  formControlName="height"
+                  class="w-20 rounded"
+                />
+              </td>
+              <td class="px-4 py-2">
+                <input
+                  type="number"
+                  formControlName="width"
+                  class="w-20 rounded"
+                />
+              </td>
+              <td class="px-4 py-2">
+                <input
+                  type="text"
+                  formControlName="unit"
+                  class="w-20 rounded"
+                />
+              </td>
+              <td class="px-4 py-2">
+                <input
+                  type="number"
+                  formControlName="price"
+                  class="w-24 rounded"
+                />
+              </td>
+              <td class="px-4 py-2">
+                <button
+                  type="button"
+                  class="px-3 py-1 bg-blue-500 text-white rounded"
+                >
+                  ดู
+                </button>
+              </td>
+              <td class="px-4 py-2">
+                <input
+                  type="text"
+                  formControlName="notes"
+                  class="w-full rounded"
+                />
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <button
+          type="button"
+          (click)="addWorkItem()"
+          class="px-4 py-2 bg-green-500 text-white rounded"
+        >
+          เพิ่มรายการ
+        </button>
+      </div>
+
+      <!-- Payment Information -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <label class="block text-sm font-medium">ยอดรวม</label>
+          <input
+            type="number"
+            formControlName="totalAmount"
+            class="mt-1 block w-full rounded-md"
+          />
+        </div>
+        <div>
+          <label class="block text-sm font-medium">ช่องทางการชำระเงิน</label>
+          <select
+            formControlName="paymentMethod"
+            class="mt-1 block w-full rounded-md"
+          >
+            <option value="cash">เงินสด</option>
+            <option value="transfer">โอนเงิน</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium">วันที่รับงาน</label>
+          <input
+            type="date"
+            formControlName="dueDate"
+            class="mt-1 block w-full rounded-md"
+          />
+        </div>
+      </div>
+
+      <!-- File Attachments -->
+      <div class="space-y-2">
+        <h3 class="text-lg font-semibold">แนบไฟล์</h3>
+        <div class="flex space-x-4">
+          <input
+            type="file"
+            multiple
+            (change)="onFileSelected($event)"
+            class="block w-full"
+          />
+        </div>
+        <!-- Preview Section -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+          <div *ngFor="let preview of filePreviews" class="relative">
+            <img [src]="preview" class="w-full h-32 object-cover rounded" />
+            <button
+              type="button"
+              class="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full"
+              (click)="removeFile(preview)"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex justify-end space-x-4">
+        <button
+          type="button"
+          class="px-6 py-2 bg-red-500 text-white rounded"
+          (click)="cancel()"
+        >
+          ยกเลิก
+        </button>
+        <button
+          type="submit"
+          class="px-6 py-2 bg-green-500 text-white rounded"
+          (click)="submit()"
+        >
+          สร้างงาน
+        </button>
+      </div>
     </form>
+  </div>
+
+  <form [formGroup]="form">
+    <app-select
+      [parentForm]="form"
+      label="ด่วน"
+      formControlName="is_urgent"
+      placeholder="กรุณาเลือก"
+      [multiple]="false"
+      [options]="is_ergents"
+    ></app-select>
+    <!-- เลขที่อ้างอิง -->
+    <app-input
+      [parentForm]="form"
+      label="เลขที่อ้างอิง"
+      typeInput="text"
+      formControlName="reference"
+      placeholder="กรุณากรอกเลขที่อ้างอิง"
+    ></app-input>
+    <!-- ช่องทางติดต่อ -->
+    <app-select
+      [parentForm]="form"
+      label="ช่องทางติดต่อ"
+      formControlName="contact"
+      placeholder="กรุณาเลือกช่องทางติดต่อ"
+      [multiple]="false"
+      [options]="contacts"
+    ></app-select>
+    <!-- ชื่อ -->
+    <app-input
+      [parentForm]="form"
+      label="ชื่อ"
+      typeInput="text"
+      formControlName="name"
+      placeholder="กรุณาระบุชื่อ"
+    ></app-input>
+    <!-- เบอร์โทรศัพท์ -->
+    <app-input
+      [parentForm]="form"
+      label="เบอร์โทรศัพท์"
+      typeInput="text"
+      formControlName="phone"
+      placeholder="กรุณากรอกเบอร์โทรศัพท์"
+    ></app-input>
+    <!-- ไลน์ -->
+    <app-input
+      [parentForm]="form"
+      label="ไลน์"
+      typeInput="text"
+      formControlName="line"
+      placeholder="กรุณากรอกไลน์"
+    ></app-input>
+    <!-- seller -->
+    <app-select
+      [parentForm]="form"
+      label="ผู้ขาย"
+      formControlName="seller"
+      placeholder="กรุณาเลือกผู้ขาย"
+      [multiple]="false"
+      [options]="sellers"
+    ></app-select>
+    <!-- ยอดรวม -->
+    <app-input
+      [parentForm]="form"
+      label="ยอดรวม"
+      typeInput="text"
+      formControlName="total"
+      placeholder="กรุณากรอกยอดรวม"
+    ></app-input>
+    <!-- เงินมัดจำ -->
+    <app-input
+      [parentForm]="form"
+      label="เงินมัดจำ"
+      typeInput="text"
+      formControlName="deposit"
+      placeholder="กรุณากรอกเงินมัดจำ"
+    ></app-input>
+    <!-- payment -->
+    <!-- <app-select [parentForm]="form" label="การชําระเงิน" formControlName="payment"
+            placeholder="กรุณาเลือกการชําระเงิน" [multiple]="false" [options]="payments"></app-select> -->
+    <!-- วันนัดรับ -->
+    <app-input
+      [parentForm]="form"
+      label="วันนัดรับ"
+      typeInput="date"
+      formControlName="date_of_acceptance"
+      placeholder="กรุณากรอกวันนัดรับ"
+    ></app-input>
+    <!-- ผู้ออกแบบ -->
+    <!-- <app-select [parentForm]="form" label="ผู้ออกแบบ" formControlName="designer" placeholder="กรุณาเลือกผู้ออกแบบ"
+            [multiple]="false" [options]="designers"></app-select> -->
+    <!-- วันที่ส่งแบบ -->
+    <!-- <app-input [parentForm]="form" label="วันที่ส่งแบบ" typeInput="date" formControlName="date_of_submission"
+            placeholder="กรุณากรอกวันที่ส่งแบบ"></app-input> -->
+    <!-- ผู้พิมพ์งาน -->
+    <!-- <app-select [parentForm]="form" label="ผู้พิมพ์งาน" formControlName="printer"
+            placeholder="กรุณาเลือกผู้พิมพ์งาน" [multiple]="false" [options]="printers"></app-select> -->
+    <!-- วันที่พิมพ์ -->
+    <!-- <app-input [parentForm]="form" label="วันที่พิมพ์" typeInput="date" formControlName="print_date"
+            placeholder="กรุณากรอกวันที่พิมพ์"></app-input> -->
+    <!-- หมายเหตุ -->
+    <!-- <app-input [parentForm]="form" label="หมายเหตุ" typeInput="text" formControlName="remark"
+            placeholder="หมายเหตุ"></app-input> -->
+    <ion-button (click)="onSubmit()" expand="block"> onSubmit </ion-button>
+  </form>
 </ion-content>
