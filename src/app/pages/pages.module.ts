@@ -31,6 +31,7 @@ import { ReportComponent } from './report/report.component';
 import { DiarySummaryComponent } from './diary-summary/diary-summary.component';
 import { WorksheetInfoComponent } from './worksheet-info/worksheet-info.component';
 import { ShowImageComponent } from './show-image/show-image.component';
+import { HorizontalStepProgressBarComponent } from './worksheet-info/horizontal-step-progress-bar/horizontal-step-progress-bar.component';
 
 
 
@@ -55,7 +56,8 @@ import { ShowImageComponent } from './show-image/show-image.component';
     ReportComponent,
     DiarySummaryComponent,
     WorksheetInfoComponent,
-    ShowImageComponent
+    ShowImageComponent,
+    HorizontalStepProgressBarComponent
   ],
   imports: [
     CommonModule,

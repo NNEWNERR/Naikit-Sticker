@@ -1,5 +1,5 @@
 import { ModalController } from '@ionic/angular';
-import { Component, OnInit } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { DESIGNER_OPTION } from 'src/app/data/data';
 
 @Component({
@@ -8,6 +8,7 @@ import { DESIGNER_OPTION } from 'src/app/data/data';
   styleUrls: ['./graphic.component.scss'],
 })
 export class SelectGraphicComponent implements OnInit {
+  @Input() option: any;
   designers = DESIGNER_OPTION.slice(1);
   constructor(
     private modalController: ModalController
@@ -15,7 +16,7 @@ export class SelectGraphicComponent implements OnInit {
 
   ngOnInit() { }
 
-  onClickDesigner(designer) {
-    this.modalController.dismiss(designer.value, 'confirm');
+  onClickDesigner(employee) {
+    this.modalController.dismiss(employee.value, 'confirm');
   }
 }

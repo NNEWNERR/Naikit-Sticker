@@ -147,3 +147,66 @@ export const DESIGNER_OPTION = [
         disabled: false
     },
 ]
+
+export const PRINTER_OPTION = [
+    {
+        title: 'admin',
+        value: 'admin',
+        disabled: false
+    },
+    {
+        title: 'ฟลุ๊ค',
+        value: 'ฟลุ๊ค',
+        disabled: false
+    },
+    {
+        title: 'ไนท์',
+        value: 'ไนท์',
+        disabled: false
+    },
+    {
+        title: 'ไนซ์',
+        value: 'ไนซ์',
+        disabled: false
+    },
+    {
+        title: 'เลย์',
+        value: 'เลย์',
+        disabled: false
+    },
+    {
+        title: 'เอก',
+        value: 'เอก',
+        disabled: false
+    },
+    {
+        title: 'เยาว์',
+        value: 'เยาว์',
+        disabled: false
+    },
+    {
+        title: 'นิว',
+        value: 'นิว',
+        disabled: false
+    },
+    {
+        title: 'ซี',
+        value: 'ซี',
+        disabled: false
+    },
+    {
+        title: 'ฮอล',
+        value: 'ฮอล',
+        disabled: false
+    },
+    {
+        title: 'อัน',
+        value: 'อัน',
+        disabled: false
+    },
+    {
+        title: 'ดาว',
+        value: 'ดาว',
+        disabled: false
+    },
+]

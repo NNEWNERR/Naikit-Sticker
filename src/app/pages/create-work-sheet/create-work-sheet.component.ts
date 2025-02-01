@@ -268,7 +268,7 @@ export class CreateWorkSheetComponent implements OnInit {
 
   initForm() {
     this.form = this.fb.group({
-      reference: ['ม.ค.'],
+      reference: ['ก.พ.'],
       contact: [''],
       name: [''],
       phone: [''],
@@ -412,16 +412,22 @@ export class CreateWorkSheetComponent implements OnInit {
         status: "รอออกแบบ",
         remark: this.form.value.remark || "",  // หมายเหตุ 
         design_by: this.form.value.designer.value || "",  // ผู้ออกแบบ 
-        design_date: this.form.value.date_of_submission || "",  // วันที่ส่งแบบ
+        design_date: "",  // วันที่ส่งแบบ
         modify: 0,
         confirm_by: "",  // ผู้อนุมัติ
         confirm_date: "",  // วันที่อนุมัติ
         print_by: this.form.value.printer.value || "", // ผู้พิมพ์
         print_date: "", // วันที่พิมพ์
         is_urgent: this.form.value.is_urgent.value == 'ด่วน' ? true : false,  // เป็นงานด่วน
-        date_of_acceptance: this.form.value.date_of_acceptance ? new Date(this.form.value.date_of_acceptance).setHours(0, 0, 0, 0) : "", // วันที่รับงาน
+        date_of_acceptance: this.form.value.date_of_acceptance ? new Date(this.form.value.date_of_acceptance) : "", // วันที่รับงาน
         date_of_submission: "", // วันที่ส่งแบบ
+        date_of_send_production: "", // วันที่พิมพ์
         date_of_completion: "", // วันที่ส่งงาน
+        worksheet_image: "", // รูปใบงาน
+        reference_images: [], // รูปอ้างอิง
+        design_images: [], // รูปแบบงาน
+        print_images: [], // รูปที่พิมพ์
+
       }
       // console.log(data);
 

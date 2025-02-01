@@ -1,7 +1,8 @@
-<app-header [title]="'ใบงาน ' + workSheet.serial_number + ' ' + workSheet.customer_name" [modal]="true">
-</app-header>
+<app-header [title]="'ใบงาน ' + workSheet.serial_number + ' ' + workSheet.customer_name" [modal]="true"></app-header>
 <ion-content class="ion-padding">
-  <div class="w-full h-full flex flex-col lg:flex-row gap-2">
+  <app-horizontal-step-progress-bar [currentStatus]="workSheet.status"
+    class="lg:hidden"></app-horizontal-step-progress-bar>
+  <div class="w-full lg:h-full flex flex-col lg:flex-row gap-2">
     <div class="w-full lg:w-1/3 h-full border rounded-lg p-4">
       <div class="text-2xl">💼 ฝ่ายขาย</div>
       <div class="text-lg flex flex-row justify-between items-center gap-4">
@@ -46,18 +47,22 @@
         <span>{{workSheet.payment.total || 0}}</span>
       </div>
       <div class="text-lg flex flex-row justify-between gap-4">
-        <span>จ่ายแล้ว : </span>
+        <div>
+          <span>มัดจํา : </span> <span class="text-red-600" *ngIf="!workSheet.payment.deposit">เครดิต
+            {{workSheet.seller_name}}</span>
+        </div>
         <span>{{workSheet.payment.deposit || 0}}</span>
       </div>
       <div class="text-lg flex flex-row justify-between gap-4">
         <span>คงเหลือ : </span>
-        <span>{{workSheet.payment.remaining ||0}}</span>
+        <span>{{workSheet.payment.total - workSheet.payment.deposit || 0}}</span>
       </div>
       <hr class="my-2 ">
       <div>
         <span>รูปใบงาน : </span><br>
         <img [src]="workSheet.worksheet_image || 'https://placehold.co/300x300?text=No+Image'" alt="WorkSheet Image"
-          class="w-40 h-40 object-cover border rounded-lg" (click)="openImage(workSheet.worksheet_image)">
+          class="w-40 h-40 object-cover border rounded-lg"
+          (click)="workSheet.worksheet_image ? openImage(workSheet.worksheet_image): ''">
       </div>
       <span>รูปอ้างอิง : </span><br>
       <div class="flex overflow-x-auto space-x-4 scrollbar-hide">
@@ -68,7 +73,7 @@
       </div>
       <div *ngIf="!workSheet.reference_images">
         <img src="https://placehold.co/300x300?text=No+Image" alt="Reference Image"
-          class="w-40 h-40 object-cover border rounded-lg" >
+          class="w-40 h-40 object-cover border rounded-lg">
       </div>
     </div>
     <div class="w-full lg:w-1/3 h-full border rounded-lg p-4">
@@ -108,7 +113,7 @@
                 <th class="py-2 px-4 text-center">ลําดับ</th>
                 <th class="py-2 px-4 text-center">ประเภท</th>
                 <th class="py-2 px-4 text-center">ความสูง</th>
-                <th class="py-2 px-4 text-center">ความกว้า</th>
+                <th class="py-2 px-4 text-center">ความกว้าง</th>
                 <th class="py-2 px-4 text-center">หน่วย</th>
                 <th class="py-2 px-4 text-center">ตัวเลือก</th>
                 <th class="py-2 px-4 text-center">จำนวน</th>
@@ -139,37 +144,98 @@
       <hr class="my-2">
       <span>รูปที่ออกแบบ : </span><br>
       <div class="flex overflow-x-auto space-x-4 scrollbar-hide">
-        <div *ngFor="let image of workSheet.reference_images" class="flex-shrink-0">
-          <img [src]="image || 'https://placehold.co/300x300?text=No+Image'" alt="Reference Image"
-            class="w-40 h-40 object-cover border rounded-lg" (click)="openImage(workSheet.worksheet_image)">
+        <div *ngFor="let image of workSheet.design_images" class="flex-shrink-0">
+          <img [src]="image.url || 'https://placehold.co/300x300?text=No+Image'" alt="Reference Image"
+            class="w-40 h-40 object-cover border rounded-lg" (click)="openImage(image.url)">
         </div>
       </div>
-      <div *ngIf="!workSheet.reference_images">
+      <div *ngIf="!workSheet.design_images">
         <img src="https://placehold.co/300x300?text=No+Image" alt="Reference Image"
           class="w-40 h-40 object-cover border rounded-lg">
       </div>
     </div>
-    <div class="w-full lg:w-1/3 h-full border rounded-lg p-4">
-      <div class="text-2xl">📦 ฝ่ายผลิต</div>
-      <div class="text-lg flex flex-row justify-between gap-4">
-        <span>ผู้พิมพ์งาน : </span>
-        <span>{{workSheet.print_by || '-'}}</span>
-      </div>
-      <div class="text-lg flex flex-row justify-between gap-4">
-        <span>วันที่พิมพ์ : </span>
-        <span>{{workSheet.print_date ? formatTimeFull(workSheet.print_date) : '-'}}</span>
-      </div>
-      <hr class="my-2">
-      <span>รูปที่พิมพ์ : </span><br>
-      <div class="flex overflow-x-auto space-x-4 scrollbar-hide">
-        <div *ngFor="let image of workSheet.print_images" class="flex-shrink-0">
-          <img [src]="image || 'https://placehold.co/300x300?text=No+Image'" alt="Reference Image"
-            class="w-40 h-40 object-cover border rounded-lg" (click)="openImage(workSheet.worksheet_image)">
+    <div class="w-full lg:w-1/3 h-full flex flex-col justify-between gap-2">
+      <div class="border rounded-lg p-4">
+        <div class="text-2xl">📦 ฝ่ายผลิต</div>
+        <div class="text-lg flex flex-row justify-between gap-4">
+          <span>วันที่ส่งพิมพ์ : </span>
+          <span>{{workSheet.print_by || '-'}}</span>
+        </div>
+        <div class="text-lg flex flex-row justify-between gap-4">
+          <span>ผู้พิมพ์งาน : </span>
+          <span>{{workSheet.print_by || '-'}}</span>
+        </div>
+        <div class="text-lg flex flex-row justify-between gap-4">
+          <span>วันที่พิมพ์ : </span>
+          <span>{{workSheet.print_date ? formatTimeFull(workSheet.print_date) : '-'}}</span>
+        </div>
+        <hr class="my-2">
+        <span>รูปที่พิมพ์ : </span><br>
+        <div class="flex overflow-x-auto space-x-4 scrollbar-hide">
+          <div *ngFor="let image of workSheet.print_images" class="flex-shrink-0">
+            <img [src]="image || 'https://placehold.co/300x300?text=No+Image'" alt="Reference Image"
+              class="w-40 h-40 object-cover border rounded-lg" (click)="openImage(image)">
+          </div>
+        </div>
+        <div *ngIf="!workSheet.print_images">
+          <img src="https://placehold.co/300x300?text=No+Image" alt="Reference Image"
+            class="w-40 h-40 object-cover border rounded-lg">
         </div>
       </div>
-      <div *ngIf="!workSheet.print_images">
-        <img src="https://placehold.co/300x300?text=No+Image" alt="Reference Image"
-          class="w-40 h-40 object-cover border rounded-lg">
+      <div class="grow border rounded-lg p-4 overflow-y-auto">
+        <div class="text-2xl pb-2 flex flex-row justify-between items-center">
+          <div>📝 หมายเหตุ</div>
+          <ion-button fill="solid" color="primary" (click)="addComment()">
+            เพิ่มหมายเหตุ
+          </ion-button>
+        </div>
+        <div class="max-w-xl mx-auto">
+
+          <!-- <h2 class="text-lg font-bold mb-4">หมายเหตุ</h2> -->
+
+          <!-- กล่องป้อนหมายเหตุ -->
+          <!-- <div class="bg-white p-4 rounded-lg shadow mb-4">
+              <ion-item class="border border-gray-300 rounded-lg">
+                <ion-textarea [(ngModel)]="newComment" placeholder="เพิ่มหมายเหตุ..." rows="2"
+                  class="w-full p-2"></ion-textarea>
+              </ion-item>
+              <div class="flex justify-end mt-2">
+                <ion-button fill="solid" color="primary" (click)="addComment()">
+                  ส่ง
+                </ion-button>
+              </div>
+            </div> -->
+
+          <!-- รายการหมายเหตุ -->
+          <div *ngFor="let comment of comments" class="bg-white p-4 rounded-lg shadow mb-2">
+            <div class="flex items-start">
+              <!-- Avatar -->
+              <img src="https://placehold.co/300x300?text=U" alt="User Avatar" class="w-10 h-10 rounded-full mr-3" />
+
+              <div class="flex-1">
+                <div class="flex justify-between items-center">
+                  <h4 class="font-semibold">{{ comment.user }}</h4>
+                  <span class="text-xs text-gray-500">{{ formatDate(comment.date) }}</span>
+                </div>
+                <p class="text-gray-700 mt-1">{{ comment.text }}</p>
+
+                <!-- ปุ่มแอคชั่น -->
+                <div class="flex items-center mt-2 space-x-2 text-sm text-blue-500">
+                  <button (click)="likeComment(comment)" class="hover:underline">👍 {{comment.likes}} ถูกใจ</button>
+                  <button (click)="replyComment(comment)" class="hover:underline">💬 {{comment.replies.length}}
+                    ตอบกลับ</button>
+                  <button (click)="deleteComment(comment)" class="text-red-500 hover:underline">🗑️ ลบ</button>
+                </div>
+              </div>
+            </div>
+            <div *ngFor="let reply of comment.replies || []" class="ml-8 mt-2 p-2 bg-gray-200 rounded-lg">
+              <h5 class="font-semibold text-sm">{{ reply.user }}
+                <span class="text-xs text-gray-500">{{formatDate(reply.date) }}</span>
+              </h5>
+              <p class="text-gray-700 text-sm">{{ reply.text }}</p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>

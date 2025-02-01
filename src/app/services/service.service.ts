@@ -21,7 +21,7 @@ export class ServiceService {
     if (this.loading) {
       await this.loading.dismiss();
     }
-  } 
+  }
   async presentLoadingWithOutTime2(massage: string) {
     this.loading2 = await this.loadingController.create({
       message: massage,
@@ -93,5 +93,34 @@ export class ServiceService {
     });
     await alert.present();
     return (await alert.onDidDismiss()).role === 'confirm';
+  }
+
+  async presentRemarkAlert(header, handlerConfirm) {
+    const alert = await this.alert.create({
+      header: header,
+      inputs: [
+        {
+          name: 'remark',
+          type: 'textarea',
+          placeholder: '',
+        },
+      ],
+      buttons: [
+        {
+          text: 'ยกเลิก',
+          role: 'cancel',
+          handler: () => { },
+        },
+        {
+          text: 'บันทึก',
+          role: 'confirm',
+          handler: (data) => {
+            handlerConfirm(data.remark);
+          },
+        },
+      ],
+    });
+
+    await alert.present();
   }
 }

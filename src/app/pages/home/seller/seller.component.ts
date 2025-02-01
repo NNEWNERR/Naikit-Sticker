@@ -176,9 +176,9 @@ export class SellerComponent implements OnInit {
       } else if (b.is_urgent) {
         return 1
       } else {
-        if (a.date_of_acceptance < b.date_of_acceptance) {
+        if (a.serial_number < b.serial_number) {
           return -1
-        } else if (a.date_of_acceptance > b.date_of_acceptance) {
+        } else if (a.serial_number > b.serial_number) {
           return 1
         } else {
           return 0

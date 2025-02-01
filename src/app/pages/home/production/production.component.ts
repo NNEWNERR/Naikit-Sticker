@@ -12,7 +12,7 @@ import { SelectGraphicComponent } from '../../graphic/graphic.component';
 
 import { v4 as uuidv4 } from 'uuid';
 import { CreateWorkSheetComponent } from '../../create-work-sheet/create-work-sheet.component';
-import { SEGMENT_OPTION, STATUS_OPTION, SELLER_OPTION, DESIGNER_OPTION } from 'src/app/data/data';
+import { SEGMENT_OPTION, STATUS_OPTION, SELLER_OPTION, DESIGNER_OPTION, PRINTER_OPTION } from 'src/app/data/data';
 import { FormGroup, FormBuilder } from '@angular/forms';
 import { GraphicComponent } from '../graphic/graphic.component';
 import { WorksheetInfoComponent } from '../../worksheet-info/worksheet-info.component';
@@ -26,6 +26,7 @@ export class ProductionComponent implements OnInit {
   statuses = STATUS_OPTION;
   sellers = SELLER_OPTION;
   designers = DESIGNER_OPTION;
+  printers = PRINTER_OPTION;
   workSheet = [];
   filterWorkSheet = [];
   currentSearch = '';
@@ -87,7 +88,7 @@ export class ProductionComponent implements OnInit {
       }
     })
   }
-  
+
   statusCount = {
     total: 0,
     // pending: 0,
@@ -356,32 +357,71 @@ export class ProductionComponent implements OnInit {
     this.firestoreService.updateDatatoFirebase(docRef, data);
   }
 
-  productingWorkSheet(workSheet) {
-    const docRef = doc(db, 'jobs', workSheet.key);
-    const data = {
-      status: 'กำลังผลิต',
+  async productingWorkSheet(workSheet) {
+    // const docRef = doc(db, 'jobs', workSheet.key);
+    // const data = {
+    //   status: 'กำลังผลิต',
+    // }
+    // this.firestoreService.updateDatatoFirebase(docRef, data);
+    const modal = await this.modalController.create({
+      component: SelectGraphicComponent,
+      componentProps: {
+        option: this.printers
+      },
+      cssClass: 'my-custom-class',
+    })
+    await modal.present()
+    const { role, data } = await modal.onWillDismiss();
+    // console.log(role, data);
+    if (role === 'confirm') {
+      const docRef = doc(db, 'jobs', workSheet.key);
+      const update = {
+        status: 'กำลังผลิต',
+        confirm_print_by: data,
+        confirm_print_date: new Date(),
+      }
+      this.firestoreService.updateDatatoFirebase(docRef, update);
     }
-    this.firestoreService.updateDatatoFirebase(docRef, data);
   }
 
-  FinishProductWorkSheet(workSheet) {
-    const docRef = doc(db, 'jobs', workSheet.key);
-    const data = {
-      status: 'รอส่งมอบ',
-      print_date: new Date(),
+
+  async FinishProductWorkSheet(workSheet) {
+    // const docRef = doc(db, 'jobs', workSheet.key);
+    // const data = {
+    //   status: 'รอส่งมอบ',
+    //   print_date: new Date(),
+    // }
+    // this.firestoreService.updateDatatoFirebase(docRef, data);
+    const modal = await this.modalController.create({
+      component: SelectGraphicComponent,
+      componentProps: {
+        option: this.printers
+      },
+      cssClass: 'my-custom-class',
+    })
+    await modal.present()
+    const { role, data } = await modal.onWillDismiss();
+    // console.log(role, data);
+    if (role === 'confirm') {
+      const docRef = doc(db, 'jobs', workSheet.key);
+      const update = {
+        status: 'รอส่งมอบ',
+        print_by: data,
+        print_date: new Date(),
+      }
+      this.firestoreService.updateDatatoFirebase(docRef, update);
     }
-    this.firestoreService.updateDatatoFirebase(docRef, data);
   }
 
- workSheetInfo(workSheet) {
-     this.modalController.create({
-       component: WorksheetInfoComponent,
-       componentProps: {
-         workSheet: workSheet
-       },
-       cssClass: 'modal-fullscreen',
-     }).then(modal => modal.present());
-   }
+  workSheetInfo(workSheet) {
+    this.modalController.create({
+      component: WorksheetInfoComponent,
+      componentProps: {
+        workSheet: workSheet
+      },
+      cssClass: 'modal-fullscreen',
+    }).then(modal => modal.present());
+  }
 
   onWorkSheetSearchChange(event) {
     this.currentSearch = event;

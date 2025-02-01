@@ -169,9 +169,9 @@ export class GraphicComponent implements OnInit {
       } else if (b.is_urgent) {
         return 1
       } else {
-        if (a.date_of_acceptance < b.date_of_acceptance) {
+        if (a.serial_number < b.serial_number) {
           return -1
-        } else if (a.date_of_acceptance > b.date_of_acceptance) {
+        } else if (a.serial_number > b.serial_number) {
           return 1
         } else {
           return 0
@@ -282,6 +282,9 @@ export class GraphicComponent implements OnInit {
   async acceptWorkSheet(workSheet) {
     const modal = await this.modalController.create({
       component: SelectGraphicComponent,
+      componentProps: {
+        option: this.designers
+      },
       cssClass: 'my-custom-class',
     })
     await modal.present()
@@ -352,7 +355,8 @@ export class GraphicComponent implements OnInit {
     const docRef = doc(db, 'jobs', workSheet.key);
     const data = {
       status: 'รอผลิต',
-      date_of_submission: new Date(),
+      // วันที่ส่งไฟล์ผลิต
+      date_of_send_production: new Date(),
     }
     this.firestoreService.updateDatatoFirebase(docRef, data);
   }

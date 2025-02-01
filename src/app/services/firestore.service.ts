@@ -498,5 +498,35 @@ export class FirestoreService {
       this.subscriptions.push(subscription);
     });
   }
+  comments = [];
+  commentsChange = new Subject<any>();
+  fetchCommentById(id) {
+    const q = query(collection(db, "comments"),
+      where("worksheet_id", "==", id),
+      where("is_deleted", "==", false)
+    );
+    return new Promise<any>((resolve) => {
+      const subscription = onSnapshot(q, { includeMetadataChanges: true }, async (querySnapshot) => {
+        const data: any = [];
+        for (const docs of querySnapshot.docs) {
+          data.push({ ...docs.data(), key: docs.id });
+        }
+        this.comments = data;
+        this.commentsChange.next(data);
+        resolve(data);
+      })
+      this.subscriptions.push(subscription);
+    });
+    // const q = query(collection(db, "comments"), where("worksheet_id", "==", id));
+    // return new Promise<any>((resolve) => {
+    //   const snapshot = getDocs(q);
+    //   snapshot.then((querySnapshot) => {
+    //     const data: any = [];
+    //     for (const docs of querySnapshot.docs) {
+    //       data.push({ ...docs.data(), key: docs.id });
+    //     }
+    //     resolve(data);
+    //   });
+    // });
+  }
 }
-

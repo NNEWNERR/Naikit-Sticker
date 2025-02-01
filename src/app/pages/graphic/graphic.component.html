@@ -1,8 +1,8 @@
 <app-header title="Designer" [modal]="true"></app-header>
 <ion-content class="ion-padding">
   <div class="grid grid-cols-3 gap-4">
-    <div class="h-40 w-full rounded-xl flex justify-center items-center col-span-1 bg-blue-200 text-blue-500 border-2 border-blue-500 cursor-pointer" *ngFor="let designer of designers" (click)="onClickDesigner(designer)">
-      {{designer.title}}
+    <div class="h-40 w-full rounded-xl flex justify-center items-center col-span-1 bg-blue-200 text-blue-500 border-2 border-blue-500 cursor-pointer" *ngFor="let employee of option" (click)="onClickDesigner(employee)">
+      {{employee.title}}
     </div>
   </div>
 </ion-content>

@@ -120,7 +120,7 @@ export class ReportComponent implements OnInit {
     }).then(modal => modal.present());
   }
 
-  formatTime(timestamp: Timestamp) {
+  formatTimeFull(timestamp: Timestamp) {
     const date = new Date(timestamp.seconds * 1000);
     const options: Intl.DateTimeFormatOptions = {
       // year: 'numeric',
@@ -135,7 +135,28 @@ export class ReportComponent implements OnInit {
       day: '2-digit',
       hour: '2-digit',
       minute: '2-digit',
-      second: '2-digit'
+      // second: '2-digit'
+    };
+    const formattedDate = date.toLocaleDateString('th-TH', options);
+    return formattedDate;
+  }
+
+  formatTime(timestamp: Timestamp) {
+    const date = new Date(timestamp.seconds * 1000);
+    const options: Intl.DateTimeFormatOptions = {
+      // year: 'numeric',
+      // month: 'long',
+      // day: 'numeric',
+      // hour: 'numeric',
+      // minute: 'numeric',
+      // second: 'numeric',
+      // timeZoneName: 'short'
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      // hour: '2-digit',
+      // minute: '2-digit',
+      // second: '2-digit'
     };
     const formattedDate = date.toLocaleDateString('th-TH', options);
     return formattedDate;

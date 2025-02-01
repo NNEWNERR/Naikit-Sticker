@@ -44,17 +44,22 @@
         {{row.design_by ||''}}
       </ng-template>
     </ngx-datatable-column>
-    <ngx-datatable-column name="วันที่สั่ง" prop="created_at">
+    <ngx-datatable-column name="วันที่ลูกค้าสั่ง" prop="created_at">
       <ng-template let-row="row" ngx-datatable-cell-template>
-        {{row.created_at ? formatTime(row.created_at) : ''}}
+        {{row.created_at ? formatTimeFull(row.created_at) : ''}}
       </ng-template>
     </ngx-datatable-column>
     <ngx-datatable-column name="วันที่ส่งแบบ" prop="date_of_submission">
       <ng-template let-row="row" ngx-datatable-cell-template>
-        {{row.date_of_submission ? formatTime(row.date_of_submission) : ''}}
+        {{row.date_of_submission ? formatTimeFull(row.date_of_submission) : ''}}
       </ng-template>
     </ngx-datatable-column>
-    <ngx-datatable-column name="วันที่นัดรับแบบ" prop="date_of_acceptance">
+    <ngx-datatable-column name="วันที่ส่งผลิต" prop="date_of_send_production">
+      <ng-template let-row="row" ngx-datatable-cell-template>
+        {{row.date_of_send_production ? formatTimeFull(row.date_of_send_production) : ''}}
+      </ng-template>
+    </ngx-datatable-column>
+    <ngx-datatable-column name="วันที่นัดรับงาน'" prop="date_of_acceptance">
       <ng-template let-row="row" ngx-datatable-cell-template>
         {{row.date_of_acceptance ? formatTime(row.date_of_acceptance) : ''}}
       </ng-template>

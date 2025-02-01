@@ -1,0 +1,27 @@
+<!-- <div class="w-full flex items-center justify-center py-6">
+  <div class="flex items-center w-full max-w-4xl">
+    <ng-container *ngFor="let status of statusOptions; let i = index">
+      <div class="flex-1 flex items-center">
+        <div class="relative flex items-center justify-center w-10 h-10 rounded-full" [ngClass]="{
+            'bg-green-500 text-white': i <= getStatusIndex(currentStatus),
+            'bg-gray-300 text-gray-500': i > getStatusIndex(currentStatus)
+          }">
+          {{ i + 1 }}
+        </div>
+        <div *ngIf="i !== statusOptions.length - 1" class="flex-1 h-1" [ngClass]="{
+            'bg-green-500': i < getStatusIndex(currentStatus),
+            'bg-gray-300': i >= getStatusIndex(currentStatus)
+          }"></div>
+      </div>
+    </ng-container>
+  </div>
+</div> -->
+<div class="stepper-wrapper">
+  <div class="stepper-item" *ngFor="let status of statusOptions; let i = index" [ngClass]="{
+    'completed': i <= getStatusIndex(currentStatus),
+    'active': i === getStatusIndex(currentStatus)
+    }">
+    <div class="step-counter">{{i+1}}</div>
+    <div class="step-name">{{status.title}}</div>
+  </div>
+</div>
