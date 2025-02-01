@@ -51,6 +51,16 @@ export class SellerComponent implements OnInit {
     return Object.keys(this.statusCount);
   }
 
+  getStatusColor(status: string): string {
+    const statusColors = {
+      รอคอนเฟิร์มแบบ: 'warning',
+      รอส่งมอบ: 'primary',
+      ส่งมอบแล้ว: 'success',
+      // Add other statuses as needed
+    };
+    return statusColors[status] || 'medium';
+  }
+
   statusName(status) {
     switch (status) {
       case 'total':
@@ -453,5 +463,27 @@ export class SellerComponent implements OnInit {
       }
     });
     return color;
+  }
+
+  getStatusDetailIcon(status: string): string {
+    const iconMap = {
+      รอคอนเฟิร์มแบบ: 'time',
+      รอส่งมอบ: 'archive',
+      ส่งมอบแล้ว: 'checkmark-circle',
+      กำลังดำเนินการ: 'hammer',
+      ยกเลิก: 'close-circle',
+    };
+    return iconMap[status] || 'help-circle';
+  }
+
+  getStatusIcon(status: string): string {
+    const iconMap = {
+      รอคอนเฟิร์มแบบ: 'hourglass-outline',
+      รอส่งมอบ: 'cube-outline',
+      ส่งมอบแล้ว: 'checkmark-circle-outline',
+      กำลังดำเนินการ: 'construct-outline',
+      ยกเลิก: 'close-circle-outline',
+    };
+    return iconMap[status] || 'help-circle-outline';
   }
 }
