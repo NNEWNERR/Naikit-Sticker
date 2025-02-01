@@ -1,235 +1,505 @@
 <app-header title="ใบสั่งงาน" [modal]="true"></app-header>
 <ion-content class="ion-padding">
-  <div class="container mx-auto p-6 text-black bg-white">
-    <form [formGroup]="worksheetForm" class="space-y-6">
-      <!-- Contact Method -->
-      <div class="space-y-2">
-        <h3 class="text-lg font-semibold">ช่องทางการติดต่อ</h3>
-        <div class="flex space-x-4">
-          <label class="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              formControlName="inStore"
-              class="form-checkbox"
-            />
-            <span>หน้าร้าน</span>
-          </label>
-
-          <label class="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              formControlName="line"
-              class="form-checkbox"
-            />
-            <span>ไลน์</span>
-          </label>
-          <label class="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              formControlName="email"
-              class="form-checkbox"
-            />
-            <span>อีเมล</span>
-          </label>
-        </div>
+  <div class="min-h-screen bg-gray-50">
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+      <!-- Header -->
+      <div class="mb-6">
+        <h1 class="text-2xl font-bold text-gray-900">ใบสั่งงานสติกเกอร์</h1>
+        <p class="text-sm text-gray-600">กรุณากรอกข้อมูลให้ครบถ้วน</p>
       </div>
 
-      <!-- Customer Information -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div>
-          <label class="block text-sm font-medium">ชื่อผู้สั่งงาน</label>
-          <input
-            type="text"
-            formControlName="customerName"
-            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
-          />
-        </div>
-        <div>
-          <label class="block text-sm font-medium">ไลน์/อีเมล</label>
-          <input
-            type="text"
-            formControlName="contactInfo"
-            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
-          />
-        </div>
-        <div>
-          <label class="block text-sm font-medium">เบอร์โทรศัพท์</label>
-          <input
-            type="tel"
-            formControlName="phone"
-            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
-          />
-        </div>
-      </div>
-
-      <!-- Work Items Table -->
-      <div class="space-y-2 overflow-y-auto">
-        <h3 class="text-lg font-semibold">ประเภทงาน</h3>
-        <table class="min-w-full divide-y divide-gray-200">
-          <thead>
-            <tr>
-              <th class="px-4 py-2 bg-gray-200">ลบ</th>
-              <th class="px-4 py-2 bg-gray-200">ลำดับ</th>
-              <th class="px-4 py-2 bg-gray-200">ประเภท</th>
-              <th class="px-4 py-2 bg-gray-200">สูง</th>
-              <th class="px-4 py-2 bg-gray-200">ยาว</th>
-              <th class="px-4 py-2 bg-gray-200">หน่วย</th>
-              <th class="px-4 py-2 bg-gray-200">ราคา</th>
-              <th class="px-4 py-2 bg-gray-200">ดูตัวอย่าง</th>
-              <th class="px-4 py-2 bg-gray-200">หมายเหตุ</th>
-            </tr>
-          </thead>
-          <tbody formArrayName="workItems">
-            <tr
-              *ngFor="let item of workItems.controls; let i = index"
-              [formGroupName]="i"
-            >
-              <td class="px-4 py-2">
-                <button
-                  type="button"
-                  (click)="removeWorkItem(i)"
-                  class="px-4 py-2 bg-red-500 text-white rounded"
-                >
-                  ลบรายการ
-                </button>
-              </td>
-              <td class="px-4 py-2">{{ i + 1 }}</td>
-              <td class="px-4 py-2">
-                <input
-                  type="text"
-                  formControlName="type"
-                  class="w-full rounded"
-                />
-              </td>
-              <td class="px-4 py-2">
-                <input
-                  type="number"
-                  formControlName="height"
-                  class="w-20 rounded"
-                />
-              </td>
-              <td class="px-4 py-2">
-                <input
-                  type="number"
-                  formControlName="width"
-                  class="w-20 rounded"
-                />
-              </td>
-              <td class="px-4 py-2">
-                <input
-                  type="text"
-                  formControlName="unit"
-                  class="w-20 rounded"
-                />
-              </td>
-              <td class="px-4 py-2">
-                <input
-                  type="number"
-                  formControlName="price"
-                  class="w-24 rounded"
-                />
-              </td>
-              <td class="px-4 py-2">
-                <button
-                  type="button"
-                  class="px-3 py-1 bg-blue-500 text-white rounded"
-                >
-                  ดู
-                </button>
-              </td>
-              <td class="px-4 py-2">
-                <input
-                  type="text"
-                  formControlName="notes"
-                  class="w-full rounded"
-                />
-              </td>
-            </tr>
-          </tbody>
-        </table>
-        <button
-          type="button"
-          (click)="addWorkItem()"
-          class="px-4 py-2 bg-green-500 text-white rounded"
-        >
-          เพิ่มรายการ
-        </button>
-      </div>
-
-      <!-- Payment Information -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div>
-          <label class="block text-sm font-medium">ยอดรวม</label>
-          <input
-            type="number"
-            formControlName="totalAmount"
-            class="mt-1 block w-full rounded-md"
-          />
-        </div>
-        <div>
-          <label class="block text-sm font-medium">ช่องทางการชำระเงิน</label>
-          <select
-            formControlName="paymentMethod"
-            class="mt-1 block w-full rounded-md"
-          >
-            <option value="cash">เงินสด</option>
-            <option value="transfer">โอนเงิน</option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-sm font-medium">วันที่รับงาน</label>
-          <input
-            type="date"
-            formControlName="dueDate"
-            class="mt-1 block w-full rounded-md"
-          />
-        </div>
-      </div>
-
-      <!-- File Attachments -->
-      <div class="space-y-2">
-        <h3 class="text-lg font-semibold">แนบไฟล์</h3>
-        <div class="flex space-x-4">
-          <input
-            type="file"
-            multiple
-            (change)="onFileSelected($event)"
-            class="block w-full"
-          />
-        </div>
-        <!-- Preview Section -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-          <div *ngFor="let preview of filePreviews" class="relative">
-            <img [src]="preview" class="w-full h-32 object-cover rounded" />
-            <button
-              type="button"
-              class="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full"
-              (click)="removeFile(preview)"
-            >
-              ×
-            </button>
+      <form
+        [formGroup]="worksheetForm"
+        class="space-y-8 bg-white rounded-lg shadow-sm p-6"
+      >
+        <!-- Contact Method with better visual feedback -->
+        <div class="space-y-3">
+          <h3 class="text-lg font-semibold text-gray-900 border-b pb-2">
+            ช่องทางการติดต่อ
+          </h3>
+          <div class="flex flex-wrap gap-6">
+            <label class="relative flex items-center group cursor-pointer">
+              <input
+                type="checkbox"
+                formControlName="inStore"
+                class="peer sr-only"
+              />
+              <div
+                class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-blue-600 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"
+              ></div>
+              <span class="ml-3 text-gray-700 group-hover:text-gray-900"
+                >หน้าร้าน</span
+              >
+            </label>
+            <label class="relative flex items-center group cursor-pointer">
+              <input
+                type="checkbox"
+                formControlName="line"
+                class="peer sr-only"
+              />
+              <div
+                class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-green-600 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"
+              ></div>
+              <span class="ml-3 text-gray-700 group-hover:text-gray-900"
+                >ไลน์</span
+              >
+            </label>
+            <label class="relative flex items-center group cursor-pointer">
+              <input
+                type="checkbox"
+                formControlName="email"
+                class="peer sr-only"
+              />
+              <div
+                class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-purple-600 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"
+              ></div>
+              <span class="ml-3 text-gray-700 group-hover:text-gray-900"
+                >อีเมล</span
+              >
+            </label>
           </div>
         </div>
-      </div>
 
-      <!-- Action Buttons -->
-      <div class="flex justify-end space-x-4">
-        <button
-          type="button"
-          class="px-6 py-2 bg-red-500 text-white rounded"
-          (click)="cancel()"
+        <!-- Customer Information with improved validation -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-gray-700">
+              ชื่อผู้สั่งงาน <span class="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              formControlName="customerName"
+              class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-500 transition duration-200"
+              [class.border-red-500]="isFieldInvalid('customerName')"
+              placeholder="กรุณาใส่ชื่อ"
+            />
+            <p
+              *ngIf="isFieldInvalid('customerName')"
+              class="text-sm text-red-500"
+            >
+              กรุณากรอกชื่อผู้สั่งงาน
+            </p>
+          </div>
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-gray-700">
+              ไลน์/อีเมล <span class="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              formControlName="contactInfo"
+              class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-500 transition duration-200"
+              [class.border-red-500]="isFieldInvalid('contactInfo')"
+              placeholder="ID Line หรือ อีเมล"
+            />
+          </div>
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-gray-700">
+              เบอร์โทรศัพท์ <span class="text-red-500">*</span>
+            </label>
+            <input
+              type="tel"
+              formControlName="phone"
+              class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-500 transition duration-200"
+              [class.border-red-500]="isFieldInvalid('phone')"
+              placeholder="0x-xxxx-xxxx"
+            />
+          </div>
+        </div>
+
+        <!-- Work Items Table with better organization -->
+        <div class="space-y-4">
+          <div class="flex justify-between items-center border-b pb-2">
+            <h3 class="text-lg font-semibold text-gray-900">ประเภทงาน</h3>
+            <button
+              type="button"
+              (click)="addWorkItem()"
+              class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-200"
+            >
+              <svg
+                class="w-5 h-5 mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                />
+              </svg>
+              เพิ่มรายการ
+            </button>
+          </div>
+
+          <div class="overflow-x-auto rounded-lg border">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th
+                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    ลำดับ
+                  </th>
+                  <th
+                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    ประเภท
+                  </th>
+                  <th
+                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    ขนาด (กว้าง × ยาว)
+                  </th>
+                  <th
+                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    หน่วย
+                  </th>
+                  <th
+                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    ราคา
+                  </th>
+                  <th
+                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    ตัวอย่าง
+                  </th>
+                  <th
+                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  >
+                    หมายเหตุ
+                  </th>
+                  <th class="px-4 py-3"></th>
+                </tr>
+              </thead>
+              <tbody
+                formArrayName="workItems"
+                class="bg-white divide-y divide-gray-200"
+              >
+                <tr
+                  *ngFor="let item of workItems.controls; let i = index"
+                  [formGroupName]="i"
+                  class="hover:bg-gray-50 transition duration-150"
+                >
+                  <td class="px-4 py-3 text-sm text-gray-500">{{ i + 1 }}</td>
+                  <td class="px-4 py-3">
+                    <input
+                      type="text"
+                      formControlName="type"
+                      class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-500 transition duration-200"
+                      placeholder="ประเภทสติกเกอร์"
+                    />
+                  </td>
+                  <td class="px-4 py-3">
+                    <div class="flex space-x-2 items-center">
+                      <input
+                        type="number"
+                        formControlName="width"
+                        class="w-20 rounded-lg border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-500 transition duration-200"
+                        placeholder="กว้าง"
+                      />
+                      <span>×</span>
+                      <input
+                        type="number"
+                        formControlName="height"
+                        class="w-20 rounded-lg border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-500 transition duration-200"
+                        placeholder="ยาว"
+                      />
+                    </div>
+                  </td>
+                  <td class="px-4 py-3">
+                    <select
+                      formControlName="unit"
+                      class="w-24 rounded-lg border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-500 transition duration-200"
+                    >
+                      <option value="cm">ซม.</option>
+                      <option value="inch">นิ้ว</option>
+                    </select>
+                  </td>
+                  <td class="px-4 py-3">
+                    <input
+                      type="number"
+                      formControlName="price"
+                      class="w-24 rounded-lg border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-500 transition duration-200"
+                      placeholder="0.00"
+                    />
+                  </td>
+                  <td class="px-4 py-3">
+                    <button
+                      type="button"
+                      (click)="previewItem(i)"
+                      class="inline-flex items-center px-3 py-1 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition duration-200"
+                    >
+                      <svg
+                        class="w-4 h-4 mr-1"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                        />
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                        />
+                      </svg>
+                      ดู
+                    </button>
+                  </td>
+                  <td class="px-4 py-3">
+                    <input
+                      type="text"
+                      formControlName="notes"
+                      class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-500 transition duration-200"
+                      placeholder="เพิ่มหมายเหตุ"
+                    />
+                  </td>
+                  <td class="px-4 py-3">
+                    <button
+                      type="button"
+                      (click)="removeWorkItem(i)"
+                      class="text-red-600 hover:text-red-800 transition duration-200"
+                    >
+                      <svg
+                        class="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                        />
+                      </svg>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Payment Information with better organization -->
+        <div
+          class="grid grid-cols-1 md:grid-cols-3 gap-6 p-4 bg-gray-50 rounded-lg"
         >
-          ยกเลิก
-        </button>
-        <button
-          type="submit"
-          class="px-6 py-2 bg-green-500 text-white rounded"
-          (click)="submit()"
-        >
-          สร้างงาน
-        </button>
-      </div>
-    </form>
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-gray-700"
+              >ยอดรวม</label
+            >
+            <div class="relative">
+              <input
+                type="number"
+                formControlName="totalAmount"
+                class="w-full pl-8 rounded-lg border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-500 transition duration-200"
+                placeholder="0.00"
+              />
+              <span
+                class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"
+                >฿</span
+              >
+            </div>
+          </div>
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-gray-700"
+              >ช่องทางการชำระเงิน</label
+            >
+            <select
+              formControlName="paymentMethod"
+              class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-500 transition duration-200"
+            >
+              <option value="">เลือกช่องทางการชำระเงิน</option>
+              <option value="cash">เงินสด</option>
+              <option value="transfer">โอนเงิน</option>
+              <option value="promptpay">พร้อมเพย์</option>
+              <option value="creditcard">บัตรเครดิต</option>
+            </select>
+          </div>
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-gray-700"
+              >วันที่รับงาน</label
+            >
+            <div class="relative">
+              <input
+                type="date"
+                formControlName="dueDate"
+                class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-500 transition duration-200 pr-10"
+              />
+              <svg
+                class="w-5 h-5 absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- File Attachments with drag and drop -->
+        <div class="space-y-4">
+          <h3 class="text-lg font-semibold text-gray-900 border-b pb-2">
+            แนบไฟล์
+          </h3>
+          <div class="relative">
+            <div
+              class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center"
+              [class.border-blue-500]="isDragging"
+              (dragover)="onDragOver($event)"
+              (dragleave)="onDragLeave($event)"
+              (drop)="onDrop($event)"
+            >
+              <input
+                type="file"
+                multiple
+                (change)="onFileSelected($event)"
+                class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              />
+              <div class="space-y-2">
+                <svg
+                  class="mx-auto h-12 w-12 text-gray-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                  />
+                </svg>
+                <div class="text-sm text-gray-600">
+                  <label
+                    class="relative cursor-pointer text-blue-600 hover:text-blue-700"
+                  >
+                    <span>อัพโหลดไฟล์</span>
+                  </label>
+                  <p class="text-xs text-gray-500 mt-1">
+                    PNG, JPG, PDF ขนาดไม่เกิน 10MB
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Preview Section with better organization -->
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+            <div
+              *ngFor="let preview of filePreviews; let i = index"
+              class="relative group rounded-lg overflow-hidden"
+            >
+              <img [src]="preview" class="w-full h-32 object-cover" />
+              <div
+                class="absolute inset-0 bg-black bg-opacity-40 opacity-0 group-hover:opacity-100 transition duration-200 flex items-center justify-center space-x-2"
+              >
+                <button
+                  type="button"
+                  (click)="previewFile(preview)"
+                  class="p-1.5 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition duration-200"
+                >
+                  <svg
+                    class="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                    />
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                    />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  (click)="removeFile(preview)"
+                  class="p-1.5 bg-red-500 text-white rounded-full hover:bg-red-600 transition duration-200"
+                >
+                  <svg
+                    class="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Buttons with better visual feedback -->
+        <div class="flex justify-end space-x-4 pt-6 border-t">
+          <button
+            type="button"
+            (click)="cancel()"
+            class="px-6 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 transition duration-200"
+          >
+            ยกเลิก
+          </button>
+          <button
+            type="submit"
+            (click)="submit()"
+            class="px-6 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 transition duration-200 disabled:opacity-50"
+            [disabled]="!worksheetForm.valid || isSubmitting"
+          >
+            <span class="flex items-center">
+              <svg
+                *ngIf="isSubmitting"
+                class="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  class="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  stroke-width="4"
+                />
+                <path
+                  class="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                />
+              </svg>
+              {{ isSubmitting ? "กำลังบันทึก..." : "บันทึก" }}
+            </span>
+          </button>
+        </div>
+      </form>
+    </div>
   </div>
 
   <form [formGroup]="form">

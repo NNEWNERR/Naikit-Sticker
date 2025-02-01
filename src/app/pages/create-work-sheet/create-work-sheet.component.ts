@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { FormArray, FormBuilder, FormGroup } from '@angular/forms';
+import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ModalController } from '@ionic/angular';
 import { collection } from 'firebase/firestore';
 import { db } from 'src/app/services/firebase-config';
@@ -265,6 +265,7 @@ export class CreateWorkSheetComponent implements OnInit {
 
   ngOnInit() {
     this.initForm();
+    this.calculateTotal();
   }
 
   initForm() {
@@ -451,20 +452,25 @@ export class CreateWorkSheetComponent implements OnInit {
 
   worksheetForm: FormGroup;
   filePreviews: string[] = [];
+  isDragging = false;
+  isSubmitting = false;
 
-  initNewForm() {
+  private initNewForm() {
     this.worksheetForm = this.fb.group({
       inStore: [false],
       line: [false],
       email: [false],
-      customerName: [''],
-      contactInfo: [''],
-      phone: [''],
+      customerName: ['', [Validators.required]],
+      contactInfo: ['', [Validators.required]],
+      phone: ['', [Validators.required, Validators.pattern(/^[0-9-]+$/)]],
       workItems: this.fb.array([]),
       totalAmount: [0],
-      paymentMethod: ['cash'],
-      dueDate: [''],
+      paymentMethod: ['', Validators.required],
+      dueDate: ['', Validators.required],
     });
+
+    // Add initial work item
+    this.addWorkItem();
   }
 
   get workItems() {
@@ -473,29 +479,76 @@ export class CreateWorkSheetComponent implements OnInit {
 
   addWorkItem() {
     const workItem = this.fb.group({
-      type: [''],
-      height: [''],
-      width: [''],
-      unit: [''],
-      price: [''],
+      type: ['', Validators.required],
+      width: ['', [Validators.required, Validators.min(0)]],
+      height: ['', [Validators.required, Validators.min(0)]],
+      unit: ['cm', Validators.required],
+      price: ['', [Validators.required, Validators.min(0)]],
       notes: [''],
     });
+
+    workItem.valueChanges.subscribe(() => this.calculateTotal());
     this.workItems.push(workItem);
   }
 
   removeWorkItem(index: number) {
     this.workItems.removeAt(index);
+    this.calculateTotal();
+  }
+
+  private calculateTotal() {
+    const total = this.workItems.controls.reduce((sum, item) => {
+      const price = item.get('price')?.value || 0;
+      return sum + parseFloat(price);
+    }, 0);
+    this.worksheetForm.patchValue({ totalAmount: total }, { emitEvent: false });
   }
 
   onFileSelected(event: any) {
-    const files = event.target.files;
-    for (let file of files) {
-      const reader = new FileReader();
-      reader.onload = (e: any) => {
-        this.filePreviews.push(e.target.result);
-      };
-      reader.readAsDataURL(file);
+    this.handleFiles(event.target.files);
+  }
+
+  onDragOver(event: DragEvent) {
+    event.preventDefault();
+    this.isDragging = true;
+  }
+
+  onDragLeave(event: DragEvent) {
+    event.preventDefault();
+    this.isDragging = false;
+  }
+
+  onDrop(event: DragEvent) {
+    event.preventDefault();
+    this.isDragging = false;
+    const files = event.dataTransfer?.files;
+    if (files) {
+      this.handleFiles(files);
     }
+  }
+
+  private handleFiles(files: FileList) {
+    Array.from(files).forEach((file) => {
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = (e: any) => {
+          this.filePreviews.push(e.target.result);
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+  }
+
+  previewItem(index: number) {
+    const workItem = this.workItems.controls[index];
+    const preview = workItem.get('preview')?.value;
+    if (preview) {
+      this.previewFile(preview);
+    }
+  }
+
+  previewFile(preview: string) {
+    // Implement preview logic
   }
 
   removeFile(preview: string) {
@@ -505,17 +558,42 @@ export class CreateWorkSheetComponent implements OnInit {
     }
   }
 
-  submit() {
+  isFieldInvalid(fieldName: string): boolean {
+    const field = this.worksheetForm.get(fieldName);
+    return field ? field.invalid && (field.dirty || field.touched) : false;
+  }
+
+  async submit() {
     if (this.worksheetForm.valid) {
-      console.log(this.worksheetForm.value);
-      // Add your submission logic here
+      this.isSubmitting = true;
+      try {
+        // Implement submission logic here
+        await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulated API call
+        console.log(this.worksheetForm.value);
+        // Show success message
+      } catch (error) {
+        // Handle error
+      } finally {
+        this.isSubmitting = false;
+      }
+    } else {
+      this.markFormGroupTouched(this.worksheetForm);
     }
+  }
+
+  private markFormGroupTouched(formGroup: FormGroup) {
+    Object.values(formGroup.controls).forEach((control) => {
+      control.markAsTouched();
+      if (control instanceof FormGroup) {
+        this.markFormGroupTouched(control);
+      }
+    });
   }
 
   cancel() {
     this.worksheetForm.reset();
     this.filePreviews = [];
+    this.initForm();
   }
-
   //#endregion
 }
