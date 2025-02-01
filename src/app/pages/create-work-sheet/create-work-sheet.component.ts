@@ -265,7 +265,7 @@ export class CreateWorkSheetComponent implements OnInit {
 
   ngOnInit() {
     this.initForm();
-    this.calculateTotal();
+    // this.calculateTotal();
   }
 
   initForm() {
@@ -455,17 +455,21 @@ export class CreateWorkSheetComponent implements OnInit {
   isDragging = false;
   isSubmitting = false;
 
+  getMounthName(): string {
+    const date = new Date();
+    return date.toLocaleString('th-TH', { month: 'short' });
+  }
   private initNewForm() {
     this.worksheetForm = this.fb.group({
-      inStore: [false],
-      line: [false],
-      email: [false],
-      customerName: ['', [Validators.required]],
-      contactInfo: ['', [Validators.required]],
-      phone: ['', [Validators.required, Validators.pattern(/^[0-9-]+$/)]],
+      serialNumber: [this.getMounthName(), Validators.required],
+      contactMethod: ['', Validators.required],
+      customerName: ['', Validators.required],
+      contactInfo: [''],
+      phone: [''],
       workItems: this.fb.array([]),
-      totalAmount: [0],
-      paymentMethod: ['', Validators.required],
+      totalAmount: [''],
+      deposit: [''],
+      paymentMethod: [''],
       dueDate: ['', Validators.required],
     });
 
@@ -483,26 +487,28 @@ export class CreateWorkSheetComponent implements OnInit {
       width: ['', [Validators.required, Validators.min(0)]],
       height: ['', [Validators.required, Validators.min(0)]],
       unit: ['cm', Validators.required],
+      quantity: ['', [Validators.required, Validators.min(0)]],
+      option: [''],
       price: ['', [Validators.required, Validators.min(0)]],
       notes: [''],
     });
 
-    workItem.valueChanges.subscribe(() => this.calculateTotal());
+    // workItem.valueChanges.subscribe(() => this.calculateTotal());
     this.workItems.push(workItem);
   }
 
   removeWorkItem(index: number) {
     this.workItems.removeAt(index);
-    this.calculateTotal();
+    // this.calculateTotal();
   }
 
-  private calculateTotal() {
-    const total = this.workItems.controls.reduce((sum, item) => {
-      const price = item.get('price')?.value || 0;
-      return sum + parseFloat(price);
-    }, 0);
-    this.worksheetForm.patchValue({ totalAmount: total }, { emitEvent: false });
-  }
+  // private calculateTotal() {
+  //   const total = this.workItems.controls.reduce((sum, item) => {
+  //     const price = item.get('price')?.value || 0;
+  //     return sum + parseFloat(price);
+  //   }, 0);
+  //   this.worksheetForm.patchValue({ totalAmount: total }, { emitEvent: false });
+  // }
 
   onFileSelected(event: any) {
     this.handleFiles(event.target.files);

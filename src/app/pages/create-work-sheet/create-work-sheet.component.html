@@ -8,10 +8,19 @@
         <p class="text-sm text-gray-600">กรุณากรอกข้อมูลให้ครบถ้วน</p>
       </div>
 
-      <form
-        [formGroup]="worksheetForm"
-        class="space-y-8 bg-white rounded-lg shadow-sm p-6"
-      >
+      <form [formGroup]="worksheetForm" class="space-y-8 bg-white rounded-lg shadow-sm p-6">
+        <div class="space-y-2 lg:max-w-xs max-w-full">
+          <label class="block text-sm font-medium text-gray-700">
+            เลขที่ใบงาน <span class="text-red-500">*</span>
+          </label>
+          <input type="text" formControlName="serialNumber"
+            class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-500 transition duration-200"
+            [class.border-red-500]="isFieldInvalid('serialNumber')" placeholder="กรุณากรอกเลขที่ใบงาน" />
+          <p *ngIf="isFieldInvalid('serialNumber')" class="text-sm text-red-500">
+            กรุณากรอกเลขที่ใบงาน
+          </p>
+        </div>
+
         <!-- Contact Method with better visual feedback -->
         <div class="space-y-3">
           <h3 class="text-lg font-semibold text-gray-900 border-b pb-2">
@@ -19,46 +28,43 @@
           </h3>
           <div class="flex flex-wrap gap-6">
             <label class="relative flex items-center group cursor-pointer">
-              <input
-                type="checkbox"
-                formControlName="inStore"
-                class="peer sr-only"
-              />
+              <input type="radio" name="contactMethod" formControlName="contactMethod" value="inStore"
+                class="peer sr-only" />
               <div
-                class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-blue-600 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"
-              ></div>
-              <span class="ml-3 text-gray-700 group-hover:text-gray-900"
-                >หน้าร้าน</span
-              >
+                class="w-11 h-6 bg-gray-200 rounded-full peer-checked:bg-yellow-600 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all">
+              </div>
+              <span class="ml-3 text-gray-700 group-hover:text-gray-900">หน้าร้าน</span>
             </label>
+
             <label class="relative flex items-center group cursor-pointer">
-              <input
-                type="checkbox"
-                formControlName="line"
-                class="peer sr-only"
-              />
+              <input type="radio" name="contactMethod" formControlName="contactMethod" value="facebook"
+                class="peer sr-only" />
               <div
-                class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-green-600 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"
-              ></div>
-              <span class="ml-3 text-gray-700 group-hover:text-gray-900"
-                >ไลน์</span
-              >
+                class="w-11 h-6 bg-gray-200 rounded-full peer-checked:bg-blue-600 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all">
+              </div>
+              <span class="ml-3 text-gray-700 group-hover:text-gray-900">เฟสบุ๊ค</span>
             </label>
+
             <label class="relative flex items-center group cursor-pointer">
-              <input
-                type="checkbox"
-                formControlName="email"
-                class="peer sr-only"
-              />
+              <input type="radio" name="contactMethod" formControlName="contactMethod" value="line"
+                class="peer sr-only" />
               <div
-                class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-purple-600 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"
-              ></div>
-              <span class="ml-3 text-gray-700 group-hover:text-gray-900"
-                >อีเมล</span
-              >
+                class="w-11 h-6 bg-gray-200 rounded-full peer-checked:bg-green-600 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all">
+              </div>
+              <span class="ml-3 text-gray-700 group-hover:text-gray-900">ไลน์</span>
+            </label>
+
+            <label class="relative flex items-center group cursor-pointer">
+              <input type="radio" name="contactMethod" formControlName="contactMethod" value="email"
+                class="peer sr-only" />
+              <div
+                class="w-11 h-6 bg-gray-200 rounded-full peer-checked:bg-purple-600 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all">
+              </div>
+              <span class="ml-3 text-gray-700 group-hover:text-gray-900">อีเมล</span>
             </label>
           </div>
         </div>
+
 
         <!-- Customer Information with improved validation -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -66,43 +72,28 @@
             <label class="block text-sm font-medium text-gray-700">
               ชื่อผู้สั่งงาน <span class="text-red-500">*</span>
             </label>
-            <input
-              type="text"
-              formControlName="customerName"
+            <input type="text" formControlName="customerName"
               class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-500 transition duration-200"
-              [class.border-red-500]="isFieldInvalid('customerName')"
-              placeholder="กรุณาใส่ชื่อ"
-            />
-            <p
-              *ngIf="isFieldInvalid('customerName')"
-              class="text-sm text-red-500"
-            >
+              [class.border-red-500]="isFieldInvalid('customerName')" placeholder="กรุณาใส่ชื่อ" />
+            <p *ngIf="isFieldInvalid('customerName')" class="text-sm text-red-500">
               กรุณากรอกชื่อผู้สั่งงาน
             </p>
           </div>
           <div class="space-y-2">
             <label class="block text-sm font-medium text-gray-700">
-              ไลน์/อีเมล <span class="text-red-500">*</span>
+              ไลน์/อีเมล
             </label>
-            <input
-              type="text"
-              formControlName="contactInfo"
+            <input type="text" formControlName="contactInfo"
               class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-500 transition duration-200"
-              [class.border-red-500]="isFieldInvalid('contactInfo')"
-              placeholder="ID Line หรือ อีเมล"
-            />
+              [class.border-red-500]="isFieldInvalid('contactInfo')" placeholder="ID Line หรือ อีเมล" />
           </div>
           <div class="space-y-2">
             <label class="block text-sm font-medium text-gray-700">
-              เบอร์โทรศัพท์ <span class="text-red-500">*</span>
+              เบอร์โทรศัพท์
             </label>
-            <input
-              type="tel"
-              formControlName="phone"
+            <input type="tel" formControlName="phone"
               class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-500 transition duration-200"
-              [class.border-red-500]="isFieldInvalid('phone')"
-              placeholder="0x-xxxx-xxxx"
-            />
+              [class.border-red-500]="isFieldInvalid('phone')" placeholder="0x-xxxx-xxxx" />
           </div>
         </div>
 
@@ -110,23 +101,10 @@
         <div class="space-y-4">
           <div class="flex justify-between items-center border-b pb-2">
             <h3 class="text-lg font-semibold text-gray-900">ประเภทงาน</h3>
-            <button
-              type="button"
-              (click)="addWorkItem()"
-              class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-200"
-            >
-              <svg
-                class="w-5 h-5 mr-2"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                />
+            <button type="button" (click)="addWorkItem()"
+              class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-200">
+              <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
               </svg>
               เพิ่มรายการ
             </button>
@@ -136,150 +114,92 @@
             <table class="min-w-full divide-y divide-gray-200">
               <thead class="bg-gray-50">
                 <tr>
-                  <th
-                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     ลำดับ
                   </th>
-                  <th
-                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     ประเภท
                   </th>
-                  <th
-                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     ขนาด (กว้าง × ยาว)
                   </th>
-                  <th
-                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     หน่วย
                   </th>
-                  <th
-                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    จำนวน
+                  </th>
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     ราคา
                   </th>
-                  <th
-                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    ตัวอย่าง
-                  </th>
-                  <th
-                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     หมายเหตุ
                   </th>
                   <th class="px-4 py-3"></th>
                 </tr>
               </thead>
-              <tbody
-                formArrayName="workItems"
-                class="bg-white divide-y divide-gray-200"
-              >
-                <tr
-                  *ngFor="let item of workItems.controls; let i = index"
-                  [formGroupName]="i"
-                  class="hover:bg-gray-50 transition duration-150"
-                >
+              <tbody formArrayName="workItems" class="bg-white divide-y divide-gray-200">
+                <tr *ngFor="let item of workItems.controls; let i = index" [formGroupName]="i"
+                  class="hover:bg-gray-50 transition duration-150">
                   <td class="px-4 py-3 text-sm text-gray-500">{{ i + 1 }}</td>
                   <td class="px-4 py-3">
-                    <input
-                      type="text"
-                      formControlName="type"
+                    <input type="text" formControlName="type"
                       class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-500 transition duration-200"
-                      placeholder="ประเภทสติกเกอร์"
-                    />
+                      placeholder="ประเภท" />
                   </td>
                   <td class="px-4 py-3">
                     <div class="flex space-x-2 items-center">
-                      <input
-                        type="number"
-                        formControlName="width"
+                      <input type="number" formControlName="width"
                         class="w-20 rounded-lg border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-500 transition duration-200"
-                        placeholder="กว้าง"
-                      />
+                        placeholder="กว้าง" />
                       <span>×</span>
-                      <input
-                        type="number"
-                        formControlName="height"
+                      <input type="number" formControlName="height"
                         class="w-20 rounded-lg border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-500 transition duration-200"
-                        placeholder="ยาว"
-                      />
+                        placeholder="ยาว" />
                     </div>
                   </td>
                   <td class="px-4 py-3">
-                    <select
-                      formControlName="unit"
-                      class="w-24 rounded-lg border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-500 transition duration-200"
-                    >
+                    <select formControlName="unit"
+                      class="w-24 rounded-lg border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-500 transition duration-200">
+                      <option value="mm">มม.</option>
                       <option value="cm">ซม.</option>
+                      <option value="meter">ตรม.</option>
                       <option value="inch">นิ้ว</option>
                     </select>
                   </td>
                   <td class="px-4 py-3">
-                    <input
-                      type="number"
-                      formControlName="price"
+                    <input type="number" formControlName="quantity"
                       class="w-24 rounded-lg border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-500 transition duration-200"
-                      placeholder="0.00"
-                    />
+                      placeholder="0" />
                   </td>
                   <td class="px-4 py-3">
-                    <button
-                      type="button"
-                      (click)="previewItem(i)"
-                      class="inline-flex items-center px-3 py-1 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition duration-200"
-                    >
-                      <svg
-                        class="w-4 h-4 mr-1"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                        />
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                        />
+                    <input type="number" formControlName="price"
+                      class="w-24 rounded-lg border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-500 transition duration-200"
+                      placeholder="0" />
+                  </td>
+                  <!-- <td class="px-4 py-3">
+                    <button type="button" (click)="previewItem(i)"
+                      class="inline-flex items-center px-3 py-1 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition duration-200">
+                      <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                       </svg>
                       ดู
                     </button>
-                  </td>
+                  </td> -->
                   <td class="px-4 py-3">
-                    <input
-                      type="text"
-                      formControlName="notes"
+                    <input type="text" formControlName="notes"
                       class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-500 transition duration-200"
-                      placeholder="เพิ่มหมายเหตุ"
-                    />
+                      placeholder="เพิ่มหมายเหตุ" />
                   </td>
                   <td class="px-4 py-3">
-                    <button
-                      type="button"
-                      (click)="removeWorkItem(i)"
-                      class="text-red-600 hover:text-red-800 transition duration-200"
-                    >
-                      <svg
-                        class="w-5 h-5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                        />
+                    <button type="button" (click)="removeWorkItem(i)"
+                      class="text-red-600 hover:text-red-800 transition duration-200">
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                       </svg>
                     </button>
                   </td>
@@ -290,34 +210,29 @@
         </div>
 
         <!-- Payment Information with better organization -->
-        <div
-          class="grid grid-cols-1 md:grid-cols-3 gap-6 p-4 bg-gray-50 rounded-lg"
-        >
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 p-4 bg-gray-50 rounded-lg">
           <div class="space-y-2">
-            <label class="block text-sm font-medium text-gray-700"
-              >ยอดรวม</label
-            >
+            <label class="block text-sm font-medium text-gray-700">ยอดรวม</label>
             <div class="relative">
-              <input
-                type="number"
-                formControlName="totalAmount"
+              <input type="number" formControlName="totalAmount"
                 class="w-full pl-8 rounded-lg border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-500 transition duration-200"
-                placeholder="0.00"
-              />
-              <span
-                class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"
-                >฿</span
-              >
+                placeholder="0" />
+              <!-- <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"></span> -->
             </div>
           </div>
           <div class="space-y-2">
-            <label class="block text-sm font-medium text-gray-700"
-              >ช่องทางการชำระเงิน</label
-            >
-            <select
-              formControlName="paymentMethod"
-              class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-500 transition duration-200"
-            >
+            <label class="block text-sm font-medium text-gray-700">มัดจํา</label>
+            <div class="relative">
+              <input type="number" formControlName="deposit"
+                class="w-full pl-8 rounded-lg border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-500 transition duration-200"
+                placeholder="0" />
+              <!-- <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"></span> -->
+            </div>
+          </div>
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-gray-700">ช่องทางการชำระเงิน</label>
+            <select formControlName="paymentMethod"
+              class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-500 transition duration-200">
               <option value="">เลือกช่องทางการชำระเงิน</option>
               <option value="cash">เงินสด</option>
               <option value="transfer">โอนเงิน</option>
@@ -326,15 +241,9 @@
             </select>
           </div>
           <div class="space-y-2">
-            <label class="block text-sm font-medium text-gray-700"
-              >วันที่รับงาน</label
-            >
+            <label class="block text-sm font-medium text-gray-700">วันที่รับงาน</label>
             <div class="relative">
-              <input
-                type="date"
-                formControlName="dueDate"
-                class="mt-1 block w-full rounded-md"
-              />
+              <input type="date" formControlName="dueDate" class="mt-1 block w-full rounded-md" />
             </div>
           </div>
         </div>
@@ -345,37 +254,18 @@
             แนบไฟล์
           </h3>
           <div class="relative">
-            <div
-              class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center"
-              [class.border-blue-500]="isDragging"
-              (dragover)="onDragOver($event)"
-              (dragleave)="onDragLeave($event)"
-              (drop)="onDrop($event)"
-            >
-              <input
-                type="file"
-                multiple
-                (change)="onFileSelected($event)"
-                class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-              />
+            <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center"
+              [class.border-blue-500]="isDragging" (dragover)="onDragOver($event)" (dragleave)="onDragLeave($event)"
+              (drop)="onDrop($event)">
+              <input type="file" multiple (change)="onFileSelected($event)"
+                class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
               <div class="space-y-2">
-                <svg
-                  class="mx-auto h-12 w-12 text-gray-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                  />
+                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                 </svg>
                 <div class="text-sm text-gray-600">
-                  <label
-                    class="relative cursor-pointer text-blue-600 hover:text-blue-700"
-                  >
+                  <label class="relative cursor-pointer text-blue-600 hover:text-blue-700">
                     <span>อัพโหลดไฟล์</span>
                   </label>
                   <p class="text-xs text-gray-500 mt-1">
@@ -388,56 +278,24 @@
 
           <!-- Preview Section with better organization -->
           <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-            <div
-              *ngFor="let preview of filePreviews; let i = index"
-              class="relative group rounded-lg overflow-hidden"
-            >
+            <div *ngFor="let preview of filePreviews; let i = index" class="relative group rounded-lg overflow-hidden">
               <img [src]="preview" class="w-full h-32 object-cover" />
               <div
-                class="absolute inset-0 bg-black bg-opacity-40 opacity-0 group-hover:opacity-100 transition duration-200 flex items-center justify-center space-x-2"
-              >
-                <button
-                  type="button"
-                  (click)="previewFile(preview)"
-                  class="p-1.5 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition duration-200"
-                >
-                  <svg
-                    class="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                    />
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                    />
+                class="absolute inset-0 bg-black bg-opacity-40 opacity-0 group-hover:opacity-100 transition duration-200 flex items-center justify-center space-x-2">
+                <button type="button" (click)="previewFile(preview)"
+                  class="p-1.5 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition duration-200">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                   </svg>
                 </button>
-                <button
-                  type="button"
-                  (click)="removeFile(preview)"
-                  class="p-1.5 bg-red-500 text-white rounded-full hover:bg-red-600 transition duration-200"
-                >
-                  <svg
-                    class="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                    />
+                <button type="button" (click)="removeFile(preview)"
+                  class="p-1.5 bg-red-500 text-white rounded-full hover:bg-red-600 transition duration-200">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                   </svg>
                 </button>
               </div>
@@ -447,39 +305,19 @@
 
         <!-- Action Buttons with better visual feedback -->
         <div class="flex justify-end space-x-4 pt-6 border-t">
-          <button
-            type="button"
-            (click)="cancel()"
-            class="px-6 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 transition duration-200"
-          >
+          <button type="button" (click)="cancel()"
+            class="px-6 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 transition duration-200">
             ยกเลิก
           </button>
-          <button
-            type="submit"
-            (click)="submit()"
+          <button type="submit" (click)="submit()"
             class="px-6 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 transition duration-200 disabled:opacity-50"
-            [disabled]="!worksheetForm.valid || isSubmitting"
-          >
+            [disabled]="!worksheetForm.valid || isSubmitting">
             <span class="flex items-center">
-              <svg
-                *ngIf="isSubmitting"
-                class="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <circle
-                  class="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  stroke-width="4"
-                />
-                <path
-                  class="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                />
+              <svg *ngIf="isSubmitting" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none"
+                viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                <path class="opacity-75" fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
               </svg>
               {{ isSubmitting ? "กำลังบันทึก..." : "บันทึก" }}
             </span>
@@ -489,107 +327,39 @@
     </div>
   </div>
 
-  <form [formGroup]="form">
-    <app-select
-      [parentForm]="form"
-      label="ด่วน"
-      formControlName="is_urgent"
-      placeholder="กรุณาเลือก"
-      [multiple]="false"
-      [options]="is_ergents"
-    ></app-select>
-    <!-- เลขที่อ้างอิง -->
-    <app-input
-      [parentForm]="form"
-      label="เลขที่อ้างอิง"
-      typeInput="text"
-      formControlName="reference"
-      placeholder="กรุณากรอกเลขที่อ้างอิง"
-    ></app-input>
-    <!-- ช่องทางติดต่อ -->
-    <app-select
-      [parentForm]="form"
-      label="ช่องทางติดต่อ"
-      formControlName="contact"
-      placeholder="กรุณาเลือกช่องทางติดต่อ"
-      [multiple]="false"
-      [options]="contacts"
-    ></app-select>
-    <!-- ชื่อ -->
-    <app-input
-      [parentForm]="form"
-      label="ชื่อ"
-      typeInput="text"
-      formControlName="name"
-      placeholder="กรุณาระบุชื่อ"
-    ></app-input>
-    <!-- เบอร์โทรศัพท์ -->
-    <app-input
-      [parentForm]="form"
-      label="เบอร์โทรศัพท์"
-      typeInput="text"
-      formControlName="phone"
-      placeholder="กรุณากรอกเบอร์โทรศัพท์"
-    ></app-input>
-    <!-- ไลน์ -->
-    <app-input
-      [parentForm]="form"
-      label="ไลน์"
-      typeInput="text"
-      formControlName="line"
-      placeholder="กรุณากรอกไลน์"
-    ></app-input>
-    <!-- seller -->
-    <app-select
-      [parentForm]="form"
-      label="ผู้ขาย"
-      formControlName="seller"
-      placeholder="กรุณาเลือกผู้ขาย"
-      [multiple]="false"
-      [options]="sellers"
-    ></app-select>
-    <!-- ยอดรวม -->
-    <app-input
-      [parentForm]="form"
-      label="ยอดรวม"
-      typeInput="text"
-      formControlName="total"
-      placeholder="กรุณากรอกยอดรวม"
-    ></app-input>
-    <!-- เงินมัดจำ -->
-    <app-input
-      [parentForm]="form"
-      label="เงินมัดจำ"
-      typeInput="text"
-      formControlName="deposit"
-      placeholder="กรุณากรอกเงินมัดจำ"
-    ></app-input>
-    <!-- payment -->
-    <!-- <app-select [parentForm]="form" label="การชําระเงิน" formControlName="payment"
-            placeholder="กรุณาเลือกการชําระเงิน" [multiple]="false" [options]="payments"></app-select> -->
-    <!-- วันนัดรับ -->
-    <app-input
-      [parentForm]="form"
-      label="วันนัดรับ"
-      typeInput="date"
-      formControlName="date_of_acceptance"
-      placeholder="กรุณากรอกวันนัดรับ"
-    ></app-input>
-    <!-- ผู้ออกแบบ -->
-    <!-- <app-select [parentForm]="form" label="ผู้ออกแบบ" formControlName="designer" placeholder="กรุณาเลือกผู้ออกแบบ"
-            [multiple]="false" [options]="designers"></app-select> -->
-    <!-- วันที่ส่งแบบ -->
-    <!-- <app-input [parentForm]="form" label="วันที่ส่งแบบ" typeInput="date" formControlName="date_of_submission"
-            placeholder="กรุณากรอกวันที่ส่งแบบ"></app-input> -->
-    <!-- ผู้พิมพ์งาน -->
-    <!-- <app-select [parentForm]="form" label="ผู้พิมพ์งาน" formControlName="printer"
-            placeholder="กรุณาเลือกผู้พิมพ์งาน" [multiple]="false" [options]="printers"></app-select> -->
-    <!-- วันที่พิมพ์ -->
-    <!-- <app-input [parentForm]="form" label="วันที่พิมพ์" typeInput="date" formControlName="print_date"
-            placeholder="กรุณากรอกวันที่พิมพ์"></app-input> -->
-    <!-- หมายเหตุ -->
-    <!-- <app-input [parentForm]="form" label="หมายเหตุ" typeInput="text" formControlName="remark"
-            placeholder="หมายเหตุ"></app-input> -->
+  <!-- <form [formGroup]="form">
+    <app-select [parentForm]="form" label="ด่วน" formControlName="is_urgent" placeholder="กรุณาเลือก" [multiple]="false"
+      [options]="is_ergents"></app-select>
+    <app-input [parentForm]="form" label="เลขที่อ้างอิง" typeInput="text" formControlName="reference"
+      placeholder="กรุณากรอกเลขที่อ้างอิง"></app-input>
+    <app-select [parentForm]="form" label="ช่องทางติดต่อ" formControlName="contact"
+      placeholder="กรุณาเลือกช่องทางติดต่อ" [multiple]="false" [options]="contacts"></app-select>
+    <app-input [parentForm]="form" label="ชื่อ" typeInput="text" formControlName="name"
+      placeholder="กรุณาระบุชื่อ"></app-input>
+    <app-input [parentForm]="form" label="เบอร์โทรศัพท์" typeInput="text" formControlName="phone"
+      placeholder="กรุณากรอกเบอร์โทรศัพท์"></app-input>
+    <app-input [parentForm]="form" label="ไลน์" typeInput="text" formControlName="line"
+      placeholder="กรุณากรอกไลน์"></app-input>
+    <app-select [parentForm]="form" label="ผู้ขาย" formControlName="seller" placeholder="กรุณาเลือกผู้ขาย"
+      [multiple]="false" [options]="sellers"></app-select>
+    <app-input [parentForm]="form" label="ยอดรวม" typeInput="text" formControlName="total"
+      placeholder="กรุณากรอกยอดรวม"></app-input>
+    <app-input [parentForm]="form" label="เงินมัดจำ" typeInput="text" formControlName="deposit"
+      placeholder="กรุณากรอกเงินมัดจำ"></app-input>
+    <app-select [parentForm]="form" label="การชําระเงิน" formControlName="payment" placeholder="กรุณาเลือกการชําระเงิน"
+      [multiple]="false" [options]="payments"></app-select>
+    <app-input [parentForm]="form" label="วันนัดรับ" typeInput="date" formControlName="date_of_acceptance"
+      placeholder="กรุณากรอกวันนัดรับ"></app-input>
+    <app-select [parentForm]="form" label="ผู้ออกแบบ" formControlName="designer" placeholder="กรุณาเลือกผู้ออกแบบ"
+      [multiple]="false" [options]="designers"></app-select>
+    <app-input [parentForm]="form" label="วันที่ส่งแบบ" typeInput="date" formControlName="date_of_submission"
+      placeholder="กรุณากรอกวันที่ส่งแบบ"></app-input>
+    <app-select [parentForm]="form" label="ผู้พิมพ์งาน" formControlName="printer" placeholder="กรุณาเลือกผู้พิมพ์งาน"
+      [multiple]="false" [options]="printers"></app-select>
+    <app-input [parentForm]="form" label="วันที่พิมพ์" typeInput="date" formControlName="print_date"
+      placeholder="กรุณากรอกวันที่พิมพ์"></app-input>
+    <app-input [parentForm]="form" label="หมายเหตุ" typeInput="text" formControlName="remark"
+      placeholder="หมายเหตุ"></app-input>
     <ion-button (click)="onSubmit()" expand="block"> onSubmit </ion-button>
-  </form>
+  </form> -->
 </ion-content>

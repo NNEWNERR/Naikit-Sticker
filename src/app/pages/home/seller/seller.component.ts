@@ -53,13 +53,20 @@ export class SellerComponent implements OnInit {
 
   getStatusColor(status: string): string {
     const statusColors = {
-      รอคอนเฟิร์มแบบ: 'warning',
+      รอออกแบบ: 'danger',
+      กำลังออกแบบ: 'warning',
+      รอคอนเฟิร์มแบบ: 'primary',
+      คอนเฟิร์มแล้ว: 'success',
+      รอผลิต: 'danger',
+      กำลังผลิต: 'warning',
       รอส่งมอบ: 'primary',
       ส่งมอบแล้ว: 'success',
       // Add other statuses as needed
     };
     return statusColors[status] || 'medium';
   }
+
+  
 
   statusName(status) {
     switch (status) {
