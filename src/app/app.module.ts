@@ -17,6 +17,7 @@ import { MyDateAdapter, MY_DATE_FORMATS } from './common/constant/date-format';
 import { NgxEchartsModule } from 'ngx-echarts';
 import * as echarts from 'echarts';
 import { QRCodeModule } from 'angularx-qrcode';
+import { DragDropModule } from '@angular/cdk/drag-drop';
 
 
 @NgModule({
@@ -36,6 +37,7 @@ import { QRCodeModule } from 'angularx-qrcode';
     MatDatepickerModule,
     LayoutsModule,
     PagesModule,
+    DragDropModule,
     QRCodeModule,
     NgxEchartsModule.forRoot({
       echarts

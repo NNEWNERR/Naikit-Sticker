@@ -121,7 +121,8 @@
               </tr>
             </thead>
             <tbody class="text-gray-600 text-sm overflow-y-auto">
-              <tr class="border-b border-gray-300 hover:bg-gray-100" *ngFor="let work of workSheet.work; let i = index">
+              <tr class="border-b border-gray-300 hover:bg-gray-100"
+                *ngFor="let work of workSheet.workItems; let i = index">
                 <td class="py-2 px-4 text-center">{{i+1}}</td>
                 <td class="py-2 px-4 text-center">{{work.type}}</td>
                 <td class="py-2 px-4 text-center">{{work.height}}</td>
@@ -134,7 +135,8 @@
             </tbody>
             <tfoot class="w-full text-sm ">
               <td class="py-2 px-4 text-center whitespace-nowrap">รวมทั้งหมด</td>
-              <td class="py-2 px-4 text-center whitespace-nowrap">{{workSheet.work.length}}</td>
+              <td class="py-2 px-4 text-center whitespace-nowrap">{{workSheet.workItems ? workSheet.workItems.length: 0}}
+              </td>
               <td class="py-2 px-4 text-center whitespace-nowrap">รายการ</td>
             </tfoot>
           </table>

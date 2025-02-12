@@ -9,6 +9,7 @@ import { SettingComponent } from './pages/setting/setting.component';
 import { TestComponent } from './test/test.component';
 import { ReportComponent } from './pages/report/report.component';
 import { DiarySummaryComponent } from './pages/diary-summary/diary-summary.component';
+import { CreateWorkSheetComponent } from './pages/create-work-sheet/create-work-sheet.component';
 
 export const routes: Routes = [
   {
@@ -36,6 +37,10 @@ export const routes: Routes = [
       {
         path: 'diary-summary',
         component: DiarySummaryComponent
+      },
+      {
+        path: 'create-work-sheet',
+        component: CreateWorkSheetComponent 
       }
     ],
   },

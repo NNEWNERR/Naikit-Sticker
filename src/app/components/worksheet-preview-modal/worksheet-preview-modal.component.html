@@ -1,0 +1,202 @@
+<app-header title="ตรวจสอบ" [modal]="true"></app-header>
+
+<ion-content class="ion-padding">
+  <div class="a4-container" id="content-to-export">
+    <!-- 1. หัวข้อใบสั่งงาน -->
+    <div class="header-section">
+      <h1 class="title">ใบสั่งงาน</h1>
+      <div class="order-info">
+        <div class="info-row">
+          <span>เลขที่: {{ worksheetData.serial_number }}</span>
+          <span>วันที่: {{ worksheetData.created_at | date:'dd/MM/yyyy' }}</span>
+        </div>
+        <div class="info-row">
+          <span>ผู้ขาย: {{ worksheetData.seller }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. ข้อมูลลูกค้า -->
+    <div class="section customer-section">
+      <h2 class="section-title">ข้อมูลลูกค้า</h2>
+      <div class="info-grid">
+        <div class="info-item">
+          <span class="label">ชื่อลูกค้า:</span>
+          <span class="value">{{ worksheetData.customer_name }}</span>
+        </div>
+        <div class="info-item">
+          <span class="label">เบอร์โทร:</span>
+          <span class="value">{{ worksheetData.phone }}</span>
+        </div>
+        <div class="info-item">
+          <span class="label">ช่องทางติดต่อ:</span>
+          <span class="value">{{ worksheetData.contact }}</span>
+        </div>
+        <div class="info-item">
+          <span class="label">ไลน์:</span>
+          <span class="value">{{ worksheetData.line_name }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. รายการสินค้า -->
+    <div class="section items-section">
+      <h2 class="section-title">รายการสินค้า</h2>
+      <table class="items-table">
+        <thead>
+          <tr>
+            <th>ลำดับ</th>
+            <th>รายการ</th>
+            <th>ขนาด</th>
+            <th>จำนวน</th>
+            <th>ราคา</th>
+            <th>ตัวเลือก</th>
+            <th>หมายเหตุ</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of worksheetData.workItems; let i = index">
+            <td>{{ i + 1 }}</td>
+            <td>{{ item.type }}</td>
+            <td>{{ item.height }} × {{ item.width }} {{ item.unit_of_length }}</td>
+            <td>{{ item.quantity }}</td>
+            <td class="price">{{ item.total | number:'1.2-2' }}</td>
+            <td>{{ item.option }}</td>
+            <td>{{ item.remark }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 4. การชำระเงิน -->
+    <div class="section payment-section">
+      <h2 class="section-title">การชำระเงิน</h2>
+      <div class="payment-info">
+        <div class="payment-row">
+          <span class="label">ยอดรวม:</span>
+          <span class="value">{{ worksheetData.payment?.total | number:'1.2-2' }} บาท</span>
+        </div>
+        <div class="payment-row">
+          <span class="label">มัดจำ:</span>
+          <span class="value">{{ worksheetData.payment?.deposit | number:'1.2-2' }} บาท</span>
+        </div>
+        <div class="payment-row">
+          <span class="label">คงเหลือ:</span>
+          <span class="value">{{ worksheetData.payment?.remaining | number:'1.2-2' }} บาท</span>
+        </div>
+        <div class="payment-row">
+          <span class="label">วันที่นัดรับงาน:</span>
+          <span class="value">{{ worksheetData.date_of_acceptance | date:'dd/MM/yyyy' }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. พื้นที่สำหรับวาดรูป -->
+    <div class="section drawing-section">
+      <h2 class="section-title">แบบร่าง / รูปอ้างอิง</h2>
+      <div class="drawing-area">
+        <!-- แสดงรูปใบงาน -->
+        <div class="image-container worksheet-image" *ngIf="worksheetData.worksheet_preview">
+          <div cdkDrag
+               (cdkDragEnded)="onDragEnded($event, 'worksheet')"
+               (wheel)="onWheel($event, 'worksheet')"
+               class="draggable-image">
+            <img [src]="worksheetData.worksheet_preview" 
+                 [style.transform]="getImageTransform('worksheet')"
+                 alt="รูปใบงาน">
+          </div>
+        </div>
+        
+        <!-- แสดงรูปอ้างอิง -->
+        <ng-container *ngIf="worksheetData.reference_previews?.length">
+          <div class="image-container reference-image" 
+               *ngFor="let preview of worksheetData.reference_previews; let i = index">
+            <div cdkDrag
+                 (cdkDragEnded)="onDragEnded($event, 'ref_' + i)"
+                 (wheel)="onWheel($event, 'ref_' + i)"
+                 class="draggable-image">
+              <img [src]="preview" 
+                   [style.transform]="getImageTransform('ref_' + i)"
+                   alt="รูปอ้างอิง">
+            </div>
+          </div>
+        </ng-container>
+        
+        <!-- กรณีไม่มีรูป -->
+        <div *ngIf="!worksheetData.worksheet_preview && !worksheetData.reference_previews?.length" 
+             class="empty-drawing-area">
+          พื้นที่สำหรับวาดแบบ
+        </div>
+      </div>
+    </div>
+
+    <!-- 6. ลายเซ็นและวันที่ -->
+    <div class="section signature-section">
+      <div class="signature-grid">
+        <div class="signature-item">
+          <div class="signature-line">
+            <span>ผู้ออกแบบ:</span>
+            <div class="line"></div>
+          </div>
+          <div class="date-line">
+            <span>วันที่:</span>
+            <div class="line"></div>
+          </div>
+        </div>
+        <div class="signature-item">
+          <div class="signature-line">
+            <span>ผู้พิมพ์งาน:</span>
+            <div class="line"></div>
+          </div>
+          <div class="date-line">
+            <span>วันที่:</span>
+            <div class="line"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- เพิ่มส่วนฉีกด้านล่าง -->
+    <div class="tear-off-section">
+      <div class="dotted-line"></div>
+      <div class="tear-off-content">
+        <!-- ส่วนข้อมูลบริษัท -->
+        <div class="company-info">
+          <div>บจก.ป้ายหมายกฤษติ์เกอร์ (สติ๊กเกอร์แม่กลอง) ในกรณีขอออกแบบฟรีแก้ไขได้ 2 ชุด ชุดต่อไปคิดชุดละ 50 บาท
+            เวลาทำการ จันทร์-เสาร์ เวลา 09.00น.-18.00 น.</div>
+          <div>งานป้าย โทร. 084-5584238 งานสติ๊กเกอร์(ตัด) โทร. 064-9426989 E-mail: {{'Kitsikkermaklong@gmail.com'}}
+            Line ID: {{'@386cuukl'}}</div>
+        </div>
+
+        <!-- ส่วนสรุปรายการ -->
+        <div class="order-details">
+          <div class="order-row">
+            <span>ป้ายไวนิล จำนวน............... ราคา...............บาท ฉลาก จำนวน............... ราคา...............บาท หมายบัตร จำนวน............... ราคา...............บาท</span>
+          </div>
+          <div class="order-row">
+            <span>อื่นๆ ............................................................... ยอดรวม ...............บาท มัดจำ...............บาท คงเหลือ...............บาท</span>
+          </div>
+          <div class="order-row">
+            <span>ชื่องาน...............................................................</span>
+            <span>ผู้รับงาน..............................................................</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</ion-content>
+
+<ion-footer class="ion-no-border">
+  <ion-toolbar>
+    <div class="footer-buttons">
+      <ion-button color="medium" (click)="dismiss()" expand="block" fill="outline">
+        <ion-icon name="close-outline" slot="start"></ion-icon>
+        ยกเลิก
+      </ion-button>
+      <ion-button color="primary" (click)="confirmSave()" expand="block">
+        <ion-icon name="checkmark-outline" slot="start"></ion-icon>
+        ยืนยันการบันทึก
+      </ion-button>
+    </div>
+  </ion-toolbar>
+</ion-footer>

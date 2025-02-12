@@ -1,64 +1,173 @@
+<app-header title="สรุปงานที่คอนเฟิร์มแล้ว"></app-header>
+
 <ion-content class="ion-padding">
-  <div class="flex flex-row gap-2">
-    <form [formGroup]="form" class="w-40">
-      <app-select [parentForm]="form" label="ผู้ออกแบบ" formControlName="designer" placeholder="กรุณาเลือกผู้ออกแบบ"
-        [multiple]="false" [options]="designer" (selectChange)="search()"></app-select>
-    </form>
-    <mat-form-field class="w-full sm:w-80 p-2">
-      <mat-label>Choose a date</mat-label>
-      <input matInput [matDatepicker]="picker" [(ngModel)]="date" (dateChange)="search()">
-      <!-- <mat-hint>MM/DD/YYYY</mat-hint> -->
-      <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
-      <mat-datepicker #picker></mat-datepicker>
-    </mat-form-field>
+  <div class="min-h-screen bg-gray-50">
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+      <!-- Header with Search -->
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
+        <div class="mb-4 md:mb-0">
+          <h1 class="text-2xl font-bold text-gray-900">สรุปงานที่คอนเฟิร์มแล้ว</h1>
+          <p class="text-sm text-gray-600">รายการงานที่คอนเฟิร์มแล้วทั้งหมด</p>
+        </div>
+
+        <!-- Export Excel -->
+        <div>
+          <button (click)="exportToExcel()"
+            class="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 transition duration-200">
+            <ion-icon name="document-text-outline" class="text-xl mr-2"></ion-icon>
+            ออกรายงาน Excel
+          </button>
+        </div>
+      </div>
+
+      <!-- Advanced Filters -->
+      <div class="bg-white rounded-lg shadow-sm p-4 mb-6">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-semibold text-gray-900">ตัวกรองขั้นสูง</h2>
+          <button (click)="resetFilters()" class="text-sm text-gray-600 hover:text-gray-900 flex items-center">
+            <ion-icon name="refresh-outline" class="mr-1"></ion-icon>
+            รีเซ็ตตัวกรอง
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Designer Filter -->
+          <div class="space-y-2">
+            <form [formGroup]="form">
+              <app-select [parentForm]="form" label="ผู้ออกแบบ" formControlName="designer" [multiple]="false" [options]="designer"
+                placeholder="เลือกผู้ออกแบบ" (selectChange)="search()" >
+              </app-select>
+            </form>
+          </div>
+
+          <!-- Date Range Filter -->
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-gray-700">ช่วงวันที่คอนเฟิร์ม</label>
+            <div class="flex items-center space-x-2">
+              <mat-form-field class="w-full">
+                <input matInput [matDatepicker]="startPicker" [(ngModel)]="date" (dateChange)="search()"
+                  placeholder="วันที่เริ่มต้น">
+                <mat-datepicker-toggle matIconSuffix [for]="startPicker"></mat-datepicker-toggle>
+                <mat-datepicker #startPicker></mat-datepicker>
+              </mat-form-field>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Summary Stats -->
+      <div *ngIf="confirmedWorkSheets" class="bg-white rounded-lg shadow-sm p-4 mb-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+          <div class="p-4 bg-green-50 rounded-lg">
+            <div class="flex items-center">
+              <div class="p-3 rounded-full bg-green-100 mr-4">
+                <ion-icon name="checkmark-circle-outline" class="text-2xl text-green-600"></ion-icon>
+              </div>
+              <div>
+                <p class="text-sm text-gray-600">งานที่คอนเฟิร์มแล้ว</p>
+                <h3 class="text-xl font-bold text-gray-900">{{confirmedWorkSheets.length}}</h3>
+              </div>
+            </div>
+          </div>
+
+          <div class="p-4 bg-blue-50 rounded-lg">
+            <div class="flex items-center">
+              <div class="p-3 rounded-full bg-blue-100 mr-4">
+                <ion-icon name="cash-outline" class="text-2xl text-blue-600"></ion-icon>
+              </div>
+              <div>
+                <p class="text-sm text-gray-600">มูลค่ารวม</p>
+                <h3 class="text-xl font-bold text-gray-900">{{getTotalAmount() | number:'1.2-2'}}</h3>
+              </div>
+            </div>
+          </div>
+
+          <div class="p-4 bg-purple-50 rounded-lg">
+            <div class="flex items-center">
+              <div class="p-3 rounded-full bg-purple-100 mr-4">
+                <ion-icon name="person-outline" class="text-2xl text-purple-600"></ion-icon>
+              </div>
+              <div>
+                <p class="text-sm text-gray-600">{{form.value.designer?.value || 'ผู้ออกแบบ'}}</p>
+                <h3 class="text-xl font-bold text-gray-900">{{getDesignerConfirmedCount()}}</h3>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Data Table -->
+      <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+        <div class="p-4 border-b">
+          <h2 class="text-lg font-semibold text-gray-900">รายการงานที่คอนเฟิร์มแล้ว</h2>
+        </div>
+
+        <ngx-datatable class="material" [rows]="confirmedWorkSheets" [columnMode]="'force'" [headerHeight]="50"
+          [footerHeight]="50" [rowHeight]="'auto'" [limit]="10" [scrollbarH]="true"
+          [sorts]="[{prop: 'serial_number', dir: 'asc'}]" (activate)="onActivate($event)"
+          *ngIf="confirmedWorkSheets?.length > 0">
+
+          <!-- Serial Number Column -->
+          <ngx-datatable-column name="เลขที่ใบงาน" prop="serial_number">
+            <ng-template let-row="row" ngx-datatable-cell-template>
+              <span class="font-medium">{{row.serial_number || '-'}}</span>
+            </ng-template>
+          </ngx-datatable-column>
+
+          <!-- Customer Name Column -->
+          <ngx-datatable-column name="ชื่อลูกค้า" prop="customer_name">
+            <ng-template let-row="row" ngx-datatable-cell-template>
+              {{row.customer_name || '-'}}
+            </ng-template>
+          </ngx-datatable-column>
+
+          <!-- Designer Column -->
+          <ngx-datatable-column name="ผู้ออกแบบ" prop="design_by">
+            <ng-template let-row="row" ngx-datatable-cell-template>
+              {{row.design_by || '-'}}
+            </ng-template>
+          </ngx-datatable-column>
+
+          <!-- Amount Column -->
+          <ngx-datatable-column name="มูลค่า" prop="total">
+            <ng-template let-row="row" ngx-datatable-cell-template>
+              ฿{{row.total | number:'1.2-2'}}
+            </ng-template>
+          </ngx-datatable-column>
+
+          <!-- Confirmation Date Column -->
+          <ngx-datatable-column name="วันที่คอนเฟิร์ม" prop="confirmation_date">
+            <ng-template let-row="row" ngx-datatable-cell-template>
+              {{row.confirmation_date | date:'dd/MM/yyyy'}}
+            </ng-template>
+          </ngx-datatable-column>
+
+          <!-- Action Column -->
+          <ngx-datatable-column name="ดำเนินการ" [sortable]="false">
+            <ng-template let-row="row" ngx-datatable-cell-template>
+              <div class="flex items-center space-x-2">
+                <button (click)="workSheetInfo(row)" class="p-1 text-blue-600 hover:text-blue-800 focus:outline-none"
+                  matTooltip="ดูรายละเอียด">
+                  <ion-icon name="eye-outline" class="text-xl"></ion-icon>
+                </button>
+                <button (click)="exportWorkSheet(row)"
+                  class="p-1 text-green-600 hover:text-green-800 focus:outline-none" matTooltip="ส่งออก PDF">
+                  <ion-icon name="download-outline" class="text-xl"></ion-icon>
+                </button>
+              </div>
+            </ng-template>
+          </ngx-datatable-column>
+        </ngx-datatable>
+
+        <!-- Empty State -->
+        <div *ngIf="!confirmedWorkSheets?.length" class="p-8 text-center">
+          <div class="inline-block p-4 rounded-full bg-gray-100 mb-4">
+            <ion-icon name="document-outline" class="text-4xl text-gray-400"></ion-icon>
+          </div>
+          <h3 class="text-lg font-medium text-gray-900 mb-2">ไม่พบข้อมูล</h3>
+          <p class="text-gray-500">ยังไม่มีงานที่คอนเฟิร์มในช่วงเวลาที่เลือก</p>
+        </div>
+      </div>
+    </div>
   </div>
-  <div *ngIf="workSheets">
-    <div>{{form.value.designer.value}} คอนเฟิร์มแล้ว {{workSheets.length}} งาน</div>
-  </div>
-  <ngx-datatable class="flex w-full. material expandable" [columnMode]="'force'" [rows]="workSheets" [limit]="10"
-    rowHeight="auto" [headerHeight]="50" [footerHeight]="50" [scrollbarH]="true" (activate)="onActivate($event)"
-    [sorts]="[{prop: 'serial_number', dir: 'asc'}]" *ngIf="workSheets.length > 0">
-    <ngx-datatable-column name="Status" prop="status">
-      <ng-template let-row="row" ngx-datatable-cell-template>
-        {{row.status}}
-      </ng-template>
-    </ngx-datatable-column>
-    <ngx-datatable-column name="Serial Number" prop="serial_number">
-      <ng-template let-row="row" ngx-datatable-cell-template>
-        {{row.serial_number ||''}}
-      </ng-template>
-    </ngx-datatable-column>
-    <ngx-datatable-column name="ชื่อลูกค้า" prop="customer_name">
-      <ng-template let-row="row" ngx-datatable-cell-template>
-        {{row.customer_name ||''}}
-      </ng-template>
-    </ngx-datatable-column>
-    <ngx-datatable-column name="ชื่อผู้ขาย" prop="seller_name">
-      <ng-template let-row="row" ngx-datatable-cell-template>
-        {{row.seller_name ||''}}
-      </ng-template>
-    </ngx-datatable-column>
-    <ngx-datatable-column name="ผู้ออกแบบ" prop="design_by">
-      <ng-template let-row="row" ngx-datatable-cell-template>
-        {{row.design_by ||''}}
-      </ng-template>
-    </ngx-datatable-column>
-    <ngx-datatable-column name="วันที่รับแบบ" prop="date_of_acceptance">
-      <ng-template let-row="row" ngx-datatable-cell-template>
-        {{row.date_of_acceptance ? formatTime(row.date_of_acceptance) : ''}}
-      </ng-template>
-    </ngx-datatable-column>
-    <ngx-datatable-column name="วันที่ส่งแบบ" prop="date_of_submission">
-      <ng-template let-row="row" ngx-datatable-cell-template>
-        {{row.date_of_submission ? formatTime(row.date_of_submission) : ''}}
-      </ng-template>
-    </ngx-datatable-column>
-    <ngx-datatable-column name="ACTION">
-      <ng-template let-row="row" ngx-datatable-cell-template>
-        <ion-text (click)="workSheetInfo(row)" color="primary" class="cursor-pointer">
-          ดูรายละเอียด
-        </ion-text>
-      </ng-template>
-    </ngx-datatable-column>
-  </ngx-datatable>
 </ion-content>

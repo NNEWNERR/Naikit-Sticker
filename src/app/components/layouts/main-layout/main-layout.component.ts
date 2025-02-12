@@ -12,6 +12,8 @@ import { ServiceService } from 'src/app/services/service.service';
 export class MainLayoutComponent implements OnInit {
   public appPages = [
     { title: 'home', url: '/naikit-sticker/home', icon: 'home' },
+    // เพิ่มใบงาน 
+    { title: 'เพิ่มใบงาน', url: '/naikit-sticker/create-work-sheet', icon: 'create' },
     // { title: 'dashboard', url: '/naikit-sticker/dashboard', icon: 'pie-chart' },
     // { title: 'ประวัติการจอง', url: '/naikit-sticker/history', icon: 'book' },
     // { title: 'ตารางงาน', url: '/naikit-sticker/job-schedule', icon: 'calendar' },

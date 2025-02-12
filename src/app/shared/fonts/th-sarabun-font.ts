@@ -1,0 +1,1 @@
+export const thSarabunFont = 'BASE64_STRING_OF_FONT_HERE';  // แทนที่ด้วย base64 string ของฟอนต์ THSarabunNew 

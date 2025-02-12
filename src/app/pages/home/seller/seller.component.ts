@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ModalController } from '@ionic/angular';
 import { EditWorkSheetComponent } from '../../edit-work-sheet/edit-work-sheet.component';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { FirestoreService } from 'src/app/services/firestore.service';
 import { ServiceService } from 'src/app/services/service.service';
 import { StorageService } from 'src/app/services/storage.service';
@@ -44,8 +44,9 @@ export class SellerComponent implements OnInit {
     private modalController: ModalController,
     private storageService: StorageService,
     private formBuilder: FormBuilder,
-    private serviceService: ServiceService
-  ) {}
+    private serviceService: ServiceService,
+    private router: Router
+  ) { }
 
   get statusKeys() {
     return Object.keys(this.statusCount);
@@ -66,7 +67,7 @@ export class SellerComponent implements OnInit {
     return statusColors[status] || 'medium';
   }
 
-  
+
 
   statusName(status) {
     switch (status) {
@@ -185,12 +186,13 @@ export class SellerComponent implements OnInit {
   }
 
   createWorkSheet() {
-    this.modalController
-      .create({
-        component: CreateWorkSheetComponent,
-        cssClass: 'modal-fullscreen',
-      })
-      .then((modal) => modal.present());
+    this.router.navigate(['/naikit-sticker/create-work-sheet']);
+    // this.modalController
+    //   .create({
+    //     component: CreateWorkSheetComponent,
+    //     cssClass: 'modal-fullscreen',
+    //   })
+    //   .then((modal) => modal.present());
   }
 
   sortWorkSheet(workSheets) {

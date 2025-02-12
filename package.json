@@ -41,12 +41,16 @@
     "dayjs": "^1.11.10",
     "echarts": "^5.4.3",
     "firebase": "^10.14.1",
+    "html2canvas": "^1.4.1",
     "ionicons": "^7.0.0",
+    "jspdf": "^2.5.2",
+    "jspdf-autotable": "^3.8.4",
     "ngx-echarts": "^17.1.0",
     "qrcode": "^1.5.3",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "uuid": "^9.0.1",
+    "xlsx": "^0.18.5",
     "zone.js": "~0.14.2"
   },
   "devDependencies": {

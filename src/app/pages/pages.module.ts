@@ -32,6 +32,9 @@ import { DiarySummaryComponent } from './diary-summary/diary-summary.component';
 import { WorksheetInfoComponent } from './worksheet-info/worksheet-info.component';
 import { ShowImageComponent } from './show-image/show-image.component';
 import { HorizontalStepProgressBarComponent } from './worksheet-info/horizontal-step-progress-bar/horizontal-step-progress-bar.component';
+import { WorkItemModalComponent } from './create-work-sheet/work-item-modal/work-item-modal.component';
+import { WorksheetPreviewModalComponent } from '../components/worksheet-preview-modal/worksheet-preview-modal.component';
+import { DragDropModule } from '@angular/cdk/drag-drop';
 
 
 
@@ -57,7 +60,9 @@ import { HorizontalStepProgressBarComponent } from './worksheet-info/horizontal-
     DiarySummaryComponent,
     WorksheetInfoComponent,
     ShowImageComponent,
-    HorizontalStepProgressBarComponent
+    HorizontalStepProgressBarComponent,
+    WorkItemModalComponent,
+    WorksheetPreviewModalComponent
   ],
   imports: [
     CommonModule,

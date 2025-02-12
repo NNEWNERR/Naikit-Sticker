@@ -17,6 +17,11 @@ export class DiarySummaryComponent implements OnInit {
   date = new Date()
   designer = DESIGNER_OPTION.slice(1);
   form: FormGroup;
+  searchTerm: string = '';
+  selectedStatus: string = '';
+  startDate: Date;
+  endDate: Date;
+  confirmedWorkSheets: any[] = [];
 
   constructor(
     private firestoreService: FirestoreService,
@@ -38,9 +43,9 @@ export class DiarySummaryComponent implements OnInit {
     if (this.form.valid) {
       this.firestoreService.unsubscribeSubscriptions();
       this.firestoreService.fetchWorkSheetSummaryDiary(this.date, this.form.value.designer.value).then((res) => {
-        console.log(res);
         this.workSheets = res;
-      })
+        this.confirmedWorkSheets = res;
+      });
     } else {
       this.form.markAllAsTouched();
     }
@@ -81,5 +86,69 @@ export class DiarySummaryComponent implements OnInit {
       },
       cssClass: 'modal-fullscreen',
     }).then(modal => modal.present());
+  }
+
+  getStatusClass(status: string): string {
+    const classes = {
+      'รอดำเนินการ': 'px-2 py-1 rounded-full bg-yellow-100 text-yellow-800',
+      'กำลังดำเนินการ': 'px-2 py-1 rounded-full bg-blue-100 text-blue-800',
+      'เสร็จสิ้น': 'px-2 py-1 rounded-full bg-green-100 text-green-800',
+      'ยกเลิก': 'px-2 py-1 rounded-full bg-red-100 text-red-800'
+    };
+    return classes[status] || '';
+  }
+
+  getConfirmedCount(): number {
+    return this.workSheets?.filter(ws => ws.status === 'เสร็จสิ้น').length || 0;
+  }
+
+  getPendingCount(): number {
+    return this.workSheets?.filter(ws => ws.status === 'รอดำเนินการ').length || 0;
+  }
+
+  getStatusIcon(status: string): string {
+    const icons = {
+      'รอดำเนินการ': 'time-outline',
+      'กำลังดำเนินการ': 'reload-outline',
+      'เสร็จสิ้น': 'checkmark-circle-outline',
+      'ยกเลิก': 'close-circle-outline'
+    };
+    return icons[status] || 'help-outline';
+  }
+
+  getDesignerCount(): number {
+    if (!this.form.value.designer?.value) return 0;
+    return this.workSheets?.filter(ws => ws.design_by === this.form.value.designer.value).length || 0;
+  }
+
+  resetFilters() {
+    this.searchTerm = '';
+    this.selectedStatus = '';
+    this.startDate = null;
+    this.endDate = null;
+    this.form.get('designer').reset();
+    this.search();
+  }
+
+  onSearch() {
+    // Implement search logic
+  }
+
+  exportWorkSheet(row: any) {
+    // Implement PDF export logic
+  }
+
+  getTotalAmount(): number {
+    return this.confirmedWorkSheets.reduce((sum, ws) => sum + (ws.total || 0), 0);
+  }
+
+  getDesignerConfirmedCount(): number {
+    if (!this.form.value.designer?.value) return 0;
+    return this.confirmedWorkSheets.filter(ws => ws.design_by === this.form.value.designer.value).length;
+  }
+
+  exportToExcel() {
+    // TODO: Implement Excel export logic
+    console.log('Exporting to Excel:', this.confirmedWorkSheets);
   }
 }

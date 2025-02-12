@@ -1,0 +1,158 @@
+<app-header title="เพิ่มรายการงาน" [modal]="true"></app-header>
+
+<ion-content class="ion-padding">
+  <div class="max-w-3xl mx-auto">
+    <form [formGroup]="workItemForm" class="space-y-6 bg-white rounded-lg shadow-sm p-6">
+      <!-- ประเภทงาน -->
+      <div class="bg-gray-50 p-4 rounded-lg space-y-4">
+        <h3 class="text-lg font-semibold text-gray-900 border-b pb-2">ข้อมูลงาน</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-gray-700">
+              ประเภทงาน <span class="text-red-500">*</span>
+            </label>
+            <select formControlName="type"
+              class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-500 transition duration-200"
+              [class.border-red-500]="workItemForm.get('type')?.invalid && workItemForm.get('type')?.touched">
+              <option value="">เลือกประเภทงาน</option>
+              <option *ngFor="let type of getWorkItemTypes()" [value]="type.value">
+                {{ type.label }}
+              </option>
+            </select>
+            <p *ngIf="workItemForm.get('type')?.invalid && workItemForm.get('type')?.touched" 
+              class="text-sm text-red-500">กรุณาเลือกประเภทงาน</p>
+          </div>
+
+          <div class="space-y-2" *ngIf="hasPresetOptions(workItemForm.get('type')?.value)">
+            <label class="block text-sm font-medium text-gray-700">
+              ตัวเลือก <span class="text-red-500">*</span>
+            </label>
+            <select formControlName="option"
+              class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-500 transition duration-200"
+              [class.border-red-500]="workItemForm.get('option')?.invalid && workItemForm.get('option')?.touched">
+              <option value="">เลือกตัวเลือก</option>
+              <option *ngFor="let opt of getWorkItemOptions(workItemForm.get('type')?.value)" [value]="opt.value">
+                {{ opt.label }}
+              </option>
+            </select>
+            <p *ngIf="workItemForm.get('option')?.invalid && workItemForm.get('option')?.touched" 
+              class="text-sm text-red-500">กรุณาเลือกตัวเลือก</p>
+          </div>
+
+          <div class="space-y-2" *ngIf="!hasPresetOptions(workItemForm.get('type')?.value)">
+            <label class="block text-sm font-medium text-gray-700">
+              รายละเอียดเพิ่มเติม
+            </label>
+            <input type="text" formControlName="option"
+              class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-500 transition duration-200"
+              placeholder="ระบุรายละเอียด">
+          </div>
+        </div>
+      </div>
+
+      <!-- ขนาดและจำนวน -->
+      <div class="bg-gray-50 p-4 rounded-lg space-y-4">
+        <h3 class="text-lg font-semibold text-gray-900 border-b pb-2">ขนาดและจำนวน</h3>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-gray-700">
+              ความสูง <span class="text-red-500">*</span>
+            </label>
+            <input type="text" formControlName="height"
+              class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-500 transition duration-200"
+              [class.border-red-500]="workItemForm.get('height')?.invalid && workItemForm.get('height')?.touched"
+              placeholder="0.00">
+            <p *ngIf="workItemForm.get('height')?.invalid && workItemForm.get('height')?.touched" 
+              class="text-sm text-red-500">กรุณากรอกความสูง</p>
+          </div>
+          
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-gray-700">
+              ความยาว <span class="text-red-500">*</span>
+            </label>
+            <input type="text" formControlName="width"
+              class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-500 transition duration-200"
+              [class.border-red-500]="workItemForm.get('width')?.invalid && workItemForm.get('width')?.touched"
+              placeholder="0.00">
+            <p *ngIf="workItemForm.get('width')?.invalid && workItemForm.get('width')?.touched" 
+              class="text-sm text-red-500">กรุณากรอกความยาว</p>
+          </div>
+
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-gray-700">
+              หน่วย <span class="text-red-500">*</span>
+            </label>
+            <select formControlName="unit_of_length"
+              class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-500 transition duration-200"
+              [class.border-red-500]="workItemForm.get('unit_of_length')?.invalid && workItemForm.get('unit_of_length')?.touched">
+              <option *ngFor="let unit of getUnitOptions()" [value]="unit.value">
+                {{ unit.label }}
+              </option>
+            </select>
+            <p *ngIf="workItemForm.get('unit_of_length')?.invalid && workItemForm.get('unit_of_length')?.touched" 
+              class="text-sm text-red-500">กรุณาเลือกหน่วย</p>
+          </div>
+
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-gray-700">
+              จำนวน <span class="text-red-500">*</span>
+            </label>
+            <input type="text" formControlName="quantity" min="1"
+              class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-500 transition duration-200"
+              [class.border-red-500]="workItemForm.get('quantity')?.invalid && workItemForm.get('quantity')?.touched"
+              placeholder="1">
+            <p *ngIf="workItemForm.get('quantity')?.invalid && workItemForm.get('quantity')?.touched" 
+              class="text-sm text-red-500">กรุณากรอกจำนวน</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ราคาและหมายเหตุ -->
+      <div class="bg-gray-50 p-4 rounded-lg space-y-4">
+        <h3 class="text-lg font-semibold text-gray-900 border-b pb-2">ราคาและหมายเหตุ</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-gray-700">
+              ราคา <span class="text-red-500">*</span>
+            </label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">฿</span>
+              <input type="text" formControlName="total" min="0"
+                class="w-full pl-8 rounded-lg border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-500 transition duration-200"
+                [class.border-red-500]="workItemForm.get('total')?.invalid && workItemForm.get('total')?.touched"
+                placeholder="0.00">
+            </div>
+            <p *ngIf="workItemForm.get('total')?.invalid && workItemForm.get('total')?.touched" 
+              class="text-sm text-red-500">กรุณากรอกราคา</p>
+          </div>
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-gray-700">
+              หมายเหตุ
+            </label>
+            <textarea formControlName="remark" rows="3"
+              class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-500 transition duration-200 resize-none"
+              placeholder="ระบุหมายเหตุ (ถ้ามี)"></textarea>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+</ion-content>
+
+<ion-footer class="ion-no-border">
+  <div class="p-4 bg-white border-t">
+    <div class="flex justify-end space-x-4">
+      <button type="button" (click)="dismiss()"
+        class="px-6 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 transition duration-200">
+        ยกเลิก
+      </button>
+      <button type="submit" (click)="save()"
+        class="px-6 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 transition duration-200 disabled:opacity-50"
+        [disabled]="!workItemForm.valid">
+        <span class="flex items-center">
+          บันทึก
+        </span>
+      </button>
+    </div>
+  </div>
+</ion-footer>

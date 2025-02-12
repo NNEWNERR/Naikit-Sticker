@@ -321,7 +321,6 @@ export class GraphicComponent implements OnInit {
             let date = new Date();
             let year = date.getFullYear().toString();
             let month_name = date.toLocaleString('th-TH', { month: 'long' });
-            // let month_name = date.toLocaleString('th-TH', { month: 'short' });
             imagePath = `images/${year}/${month_name}/${workSheet.serial_number}/${workSheet.customer_name}_${file.name}`;
             imageUrl = await this.storageService.uploadImage(file, imagePath);
             imageUrls.push(imageUrl);

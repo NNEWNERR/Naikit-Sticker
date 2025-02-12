@@ -1,0 +1,305 @@
+:host {
+  --ion-background-color: #f5f5f5;
+}
+
+.a4-container {
+  width: 210mm;
+  height: 297mm;
+  padding: 15mm;
+  margin: 10px auto;
+  background: white;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.header-section {
+  text-align: center;
+  margin-bottom: 3mm;
+  
+  .title {
+    font-size: 20pt;
+    font-weight: bold;
+    margin-bottom: 5mm;
+  }
+  
+  .order-info {
+    .info-row {
+      margin: 2mm 0;
+      display: flex;
+      justify-content: space-between;
+      font-size: 11pt;
+    }
+  }
+}
+
+.section {
+  margin-bottom: 3mm;
+  
+  .section-title {
+    font-size: 12pt;
+    font-weight: bold;
+    margin-bottom: 3mm;
+    padding-bottom: 1mm;
+    border-bottom: 1px solid #000;
+  }
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 3mm;
+  
+  .info-item {
+    font-size: 10pt;
+    .label {
+      font-weight: bold;
+      margin-right: 2mm;
+    }
+  }
+}
+
+.items-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 3mm 0;
+  font-size: 9pt;
+  
+  th, td {
+    border: 1px solid #000;
+    padding: 1.2mm;
+    text-align: left;
+    
+    &:nth-child(1) { width: 8%; }
+    &:nth-child(2) { width: 20%; }
+    &:nth-child(3) { width: 15%; }
+    &:nth-child(4) { width: 10%; }
+    &:nth-child(5) { width: 12%; }
+    &:nth-child(6) { width: 15%; }
+    &:nth-child(7) { width: 20%; }
+  }
+  
+  th {
+    background-color: #f5f5f5;
+    white-space: nowrap;
+  }
+  
+  td {
+    white-space: normal;
+    vertical-align: top;
+  }
+  
+  .price {
+    text-align: right;
+  }
+}
+
+.payment-info {
+  .payment-row {
+    display: flex;
+    justify-content: space-between;
+    margin: 2mm 0;
+    font-size: 10pt;
+    
+    .label {
+      font-weight: bold;
+    }
+  }
+}
+
+.drawing-area {
+  height: 60mm;
+  border: 1px dashed #000;
+  margin: 3mm 0;
+  padding: 2mm;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2mm;
+  overflow: hidden;
+  
+  .image-container {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    
+    &.worksheet-image {
+      flex: 2;
+      min-width: 50%;
+    }
+    
+    &.reference-image {
+      flex: 1;
+      min-width: 30%;
+    }
+
+    .draggable-image {
+      cursor: move;
+      position: relative;
+      
+      img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        transform-origin: center center;
+        transition: transform 0.1s ease-out;
+        user-select: none;
+      }
+    }
+  }
+  
+  .empty-drawing-area {
+    color: #666;
+    font-style: italic;
+    font-size: 10pt;
+  }
+}
+
+.signature-section {
+  margin-bottom: 5mm;
+  
+  .signature-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 5mm;
+    font-size: 10pt;
+  }
+  
+  .signature-item {
+    text-align: center;
+    
+    .signature-line, .date-line {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 3mm 0;
+      
+      span {
+        min-width: 20mm;
+        white-space: nowrap;
+      }
+      
+      .line {
+        width: 35mm;
+        border-bottom: 1px solid #000;
+        margin-left: 2mm;
+      }
+    }
+  }
+}
+
+.tear-off-section {
+  position: absolute;
+  bottom: 3mm;
+  left: 15mm;
+  right: 15mm;
+  
+  .dotted-line {
+    border-top: 1px dashed #000;
+    position: relative;
+    margin-bottom: 2mm;
+    
+    &:before {
+      content: "✂";
+      position: absolute;
+      left: -5mm;
+      top: -3mm;
+      font-size: 8pt;
+    }
+  }
+  
+  .tear-off-content {
+    padding-top: 2mm;
+    
+    .company-info {
+      text-align: center;
+      font-size: 8pt;
+      margin-bottom: 2mm;
+      
+      > div {
+        margin-bottom: 0.5mm;
+        white-space: nowrap;
+        letter-spacing: -0.2pt;
+      }
+    }
+    
+    .order-details {
+      font-size: 8pt;
+      
+      .order-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 1mm;
+        gap: 3mm;
+        
+        span {
+          flex: 1;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          
+          &:first-child {
+            flex: 2;
+          }
+        }
+        
+        &:last-child {
+          margin-top: 2mm;
+          justify-content: space-between;
+          
+          span {
+            flex: 1;
+          }
+        }
+      }
+    }
+  }
+}
+
+@media print {
+  .a4-container {
+    box-shadow: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  @page {
+    size: A4;
+    margin: 15mm;
+  }
+  
+  .tear-off-section {
+    page-break-before: avoid;
+    bottom: 0;
+    left: 0;
+    right: 0;
+  }
+}
+
+// Responsive Design
+@media (max-width: 576px) {
+  .items-table {
+    table {
+      font-size: 0.9rem;
+      
+      th, td {
+        padding: 8px;
+      }
+    }
+  }
+  
+  ion-card-title {
+    font-size: 1rem;
+  }
+}
+
+// เพิ่ม style สำหรับ drag handle
+.cdk-drag-handle {
+  cursor: move;
+}
+
+// เพิ่ม animation สำหรับการลาก
+.cdk-drag-animating {
+  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}
