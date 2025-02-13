@@ -7,6 +7,6 @@ import { DragDropModule } from '@angular/cdk/drag-drop';
     CommonModule,
     DragDropModule,
     // ... other imports
-  ]
+  ],
 })
-export class WorksheetPreviewModalModule { } 
+export class WorksheetPreviewModalModule {}

@@ -1,318 +1,385 @@
+// A4 paper dimensions
+$a4-width: 210mm;
+$a4-height: 297mm;
+
 :host {
-  --ion-background-color: #f5f5f5;
+  display: block;
+}
+
+ion-content {
+  --background: #f0f0f0;
 }
 
 .a4-container {
-  width: 210mm;
-  height: 297mm;
-  padding: 5mm 15mm 60mm 15mm;
-  margin: 10px auto;
+  width: $a4-width;
+  height: $a4-height;
+  margin: 8px auto;
   background: white;
-  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  padding: 8mm;
+  box-sizing: border-box;
   position: relative;
-  overflow: hidden;
-  font-family: 'Angsana New', serif !important;
 }
 
+// Header Section
 .header-section {
-  text-align: center;
-  margin-bottom: 3mm;
-  
-  .title {
-    font-size: 20pt;
-    font-weight: bold;
-    margin-bottom: 5mm;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.5rem;
+
+  .title-container {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+
+    .title {
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    .serial-number {
+      font-size: 16px;
+    }
   }
-  
+
   .order-info {
+    text-align: right;
+    display: flex;
+    flex-direction: row;
+    gap: 0.5rem;
+    font-size: 12px;
+
     .info-row {
-      margin: 2mm 0;
-      display: flex;
-      justify-content: space-between;
-      font-size: 11pt;
+      margin-bottom: 0.5rem;
     }
   }
 }
 
+// Section Styles
 .section {
-  margin-bottom: 3mm;
-  
+  margin-bottom: 0.5rem;
+
   .section-title {
-    margin-bottom: 3mm;
-    font-size: 12pt;
+    font-size: 16px;
     font-weight: bold;
-    padding-bottom: 1mm;
-    border-bottom: 1px solid #000;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #eee;
   }
 }
 
+// Customer Information Grid
 .info-grid {
-  margin-top: 3mm;
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 3mm;
-  
+  gap: 0.5rem;
+  font-size: 12px;
+
   .info-item {
-    font-size: 10pt;
+    display: flex;
+    gap: 0.5rem;
+
     .label {
-      font-weight: bold;
-      margin-right: 2mm;
+      font-weight: 500;
+      min-width: 100px;
     }
   }
+}
+
+// Items Table
+.table-container {
+  overflow-x: auto;
+  margin-bottom: 1rem;
 }
 
 .items-table {
   width: 100%;
   border-collapse: collapse;
-  margin: 3mm 0;
-  font-size: 9pt;
-  
-  th, td {
-    border: 1px solid #000;
-    padding: 1.2mm;
-    text-align: left;
-    
-    &:nth-child(1) { width: 8%; }
-    &:nth-child(2) { width: 20%; }
-    &:nth-child(3) { width: 15%; }
-    &:nth-child(4) { width: 10%; }
-    &:nth-child(5) { width: 12%; }
-    &:nth-child(6) { width: 15%; }
-    &:nth-child(7) { width: 20%; }
-  }
-  
-  th {
-    background-color: #f5f5f5;
-    white-space: nowrap;
-  }
-  
+  font-size: 12px;
+
+  th,
   td {
-    white-space: normal;
-    vertical-align: top;
+    border: 1px solid #ddd;
+    padding: 0.25rem;
+    text-align: left;
   }
-  
+
+  th {
+    background-color: #f8f9fa;
+    font-weight: 500;
+    text-align: center;
+    padding-bottom: 0.5rem;
+
+  }
+
   .price {
     text-align: right;
   }
 }
 
+// Payment Section
 .payment-info {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+
   .payment-row {
     display: flex;
     justify-content: space-between;
-    margin: 2mm 0;
-    font-size: 10pt;
-    
+    font-size: 14px;
+
     .label {
-      font-weight: bold;
+      font-weight: 500;
     }
   }
 }
 
-.drawing-area {
-  border: 1px dashed #000;
-  padding: 2mm;
-  position: relative;
-  height: 100%;
-  margin-bottom: 3mm;
+// Drawing Area
+.drawing-section {
+  .drawing-area {
+    min-height: 300px;
+    border: 2px dashed #ddd;
+    border-radius: 4px;
+    position: relative;
+    overflow: hidden;
 
-  .image-container {
-    position: static;
-    
-    .draggable-image {
-      cursor: move;
-      touch-action: none;
-      display: inline-block;
-      
+    .image-container {
+      position: absolute;
+
       img {
-        max-width: 30mm;
-        max-height: 30mm;
-        display: block;
-        object-fit: contain;
-        pointer-events: none;
-        user-select: none;
+        max-width: 100%;
+        height: auto;
+        cursor: move;
       }
     }
-  }
-  
-  .empty-drawing-area {
-    color: #666;
-    font-style: italic;
-    font-size: 10pt;
-  }
-}
 
-.signature-section {  
-  .signature-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 5mm;
-    font-size: 10pt;
-  }
-  
-  .signature-item {
-    text-align: center;
-    
-    .signature-line, .date-line {
+    .empty-drawing-area {
       display: flex;
       align-items: center;
       justify-content: center;
-      margin: 3mm 0;
-      
-      span {
-        min-width: 20mm;
-        white-space: nowrap;
-      }
-      
-      .line {
-        width: 35mm;
-        border-bottom: 1px solid #000;
-        margin-left: 2mm;
-      }
+      height: 100%;
+      color: #999;
     }
   }
 }
 
+// Tear-off Section
 .tear-off-section {
-  position: absolute;
-  bottom: 3mm;
-  left: 15mm;
-  right: 15mm;
-  
-  .dotted-line {
-    border-top: 1px dashed #000;
-    position: relative;
-    margin-bottom: 2mm;
-    
-    &:before {
-      content: "✂";
-      position: absolute;
-      left: -5mm;
-      top: -3mm;
-      font-size: 8pt;
-    }
-  }
-  
-  .tear-off-content {
-    padding-top: 2mm;
-    
-    .company-info {
-      text-align: center;
-      font-size: 8pt;
-      margin-bottom: 2mm;
-      
-      > div {
-        margin-bottom: 0.5mm;
-        white-space: nowrap;
-        letter-spacing: -0.2pt;
+  margin-top: 0.5rem;
+  border-top: 1px dashed #000;
+  padding-top: 0.5rem;
+
+  .signature-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+
+    .signature-item {
+
+      .signature-line,
+      .date-line {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+
+        span {
+          min-width: 80px;
+        }
+
+        .line {
+          flex: 1;
+          border-bottom: 1px solid #000;
+          min-width: 150px;
+        }
       }
     }
-    
-    .order-details {
-      font-size: 8pt;
-      
-      .order-row {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 1mm;
-        gap: 3mm;
-        
-        span {
-          flex: 1;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          
-          &:first-child {
-            flex: 2;
-          }
-        }
-        
-        &:last-child {
-          margin-top: 2mm;
-          justify-content: space-between;
-          
-          span {
-            flex: 1;
-          }
-        }
+  }
+
+  .company-info {
+    text-align: center;
+    margin-bottom: 1rem;
+    font-size: 12px;
+    line-height: 1.5;
+
+
+    div {
+      margin-bottom: 0.5rem;
+    }
+  }
+
+  .order-summary {
+    .summary-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 1rem;
+      font-size: 12px;
+      line-height: 1.5;
+
+      span {
+        flex: 1;
+        min-width: 200px;
       }
     }
   }
 }
 
+// Action Buttons
+.action-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  padding: 1rem 0;
+  margin-top: 2rem;
+  border-top: 1px solid #eee;
+
+  button {
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    &.export-button {
+      background-color: #22c55e;
+      color: white;
+      border: none;
+
+      &:hover {
+        background-color: #16a34a;
+      }
+
+      ion-icon {
+        font-size: 20px;
+      }
+    }
+
+    &.cancel-button {
+      border: 1px solid #d1d5db;
+      background-color: white;
+      color: #4b5563;
+
+      &:hover {
+        background-color: #f3f4f6;
+      }
+    }
+
+    &.save-button {
+      background-color: #22c55e;
+      color: white;
+      border: none;
+
+      &:hover {
+        background-color: #16a34a;
+      }
+
+      &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+    }
+  }
+}
+
+// Print-specific styles
 @media print {
   .a4-container {
-    box-shadow: none;
-    padding: 0;
     margin: 0;
+    padding: 0;
   }
-  
-  @page {
-    size: A4;
-    margin: 15mm;
+
+  .action-buttons {
+    display: none;
   }
-  
-  .tear-off-section {
-    page-break-before: avoid;
-    bottom: 0;
-    left: 0;
-    right: 0;
+
+  // Ensure page breaks don't occur in the middle of sections
+  .section {
+    page-break-inside: avoid;
+  }
+
+  // Force background colors and images to print
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 }
 
-// Responsive Design
-@media (max-width: 576px) {
-  .items-table {
-    table {
-      font-size: 0.9rem;
-      
-      th, td {
-        padding: 8px;
-      }
+// Image manipulation styles
+.draggable-image {
+  cursor: move;
+  user-select: none;
+
+  img {
+    max-width: 100%;
+    height: auto;
+    pointer-events: none;
+    transform-origin: center;
+  }
+
+  &:active {
+    cursor: grabbing;
+  }
+}
+
+// Responsive adjustments
+@media screen and (max-width: 768px) {
+  .a4-container {
+    width: 100%;
+    padding: 1rem;
+  }
+
+  .info-grid,
+  .payment-info {
+    grid-template-columns: 1fr;
+  }
+
+  .signature-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+
+    button {
+      width: 100%;
     }
   }
-  
-  ion-card-title {
-    font-size: 1rem;
+}
+
+// Toast customization
+ion-toast {
+  --background: var(--ion-color-success);
+  --color: white;
+  --border-radius: 8px;
+  --button-color: white;
+
+  &.error {
+    --background: var(--ion-color-danger);
   }
 }
 
-// เพิ่ม style สำหรับ drag handle
-.cdk-drag-handle {
-  cursor: move;
+// Custom scrollbar
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
 }
 
-// เพิ่ม animation สำหรับการลาก
-.cdk-drag-animating {
-  transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
 }
 
-// เพิ่ม styles สำหรับ drag
-.cdk-drag {
-  position: relative;
-}
+::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
 
-.cdk-drag-dragging {
-  position: relative;
-  z-index: 1001;
-}
-
-.title-container {
-  position: relative;
-  text-align: center;
-}
-
-.title {
-  font-size: 24px;
-  font-weight: bold;
-  display: inline-block;
-}
-
-.serial-number {
-  position: absolute;
-  right: 0;
-  top: 0;
-  font-size: 24px;
-  font-weight: bold;
+  &:hover {
+    background: #666;
+  }
 }
