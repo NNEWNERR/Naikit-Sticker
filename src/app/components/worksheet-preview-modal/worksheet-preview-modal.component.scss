@@ -101,20 +101,22 @@ ion-content {
   th,
   td {
     border: 1px solid #ddd;
-    padding: 0.25rem;
-    text-align: left;
+    text-align: center;
   }
 
   th {
     background-color: #f8f9fa;
     font-weight: 500;
     text-align: center;
-    padding-bottom: 0.5rem;
+    padding: 0rem 0.5rem 0.5rem 0.5rem;
+  }
 
+  td {
+    padding: 0rem 0.5rem 0.5rem 0.5rem;
   }
 
   .price {
-    text-align: right;
+    text-align: center;
   }
 }
 

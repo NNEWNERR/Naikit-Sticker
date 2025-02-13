@@ -20,7 +20,10 @@
             >
           </div>
           <div class="info-row">
-            <span>ผู้ขาย: {{ worksheetData.seller }}</span>
+            <span
+              >ผู้ขาย:
+              {{ worksheetData.seller || "......................" }}</span
+            >
           </div>
         </div>
       </div>
@@ -59,34 +62,42 @@
       <!-- 3. Item List -->
       <div class="section items-section">
         <h2 class="section-title">รายการสินค้า</h2>
-        <div class="table-container">
-          <table class="items-table">
-            <thead>
-              <tr>
-                <th>ลำดับ</th>
-                <th>รายการ</th>
-                <th>ขนาด</th>
-                <th>จำนวน</th>
-                <th>ราคา</th>
-                <th>ตัวเลือก</th>
-                <th>หมายเหตุ</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let item of worksheetData.workItems; let i = index">
-                <td>{{ i + 1 }}</td>
-                <td>{{ item.type }}</td>
-                <td>
-                  {{ item.height }} × {{ item.width }} {{ item.unit_of_length }}
-                </td>
-                <td>{{ item.quantity }}</td>
-                <td class="price">{{ item.total | number : "1.2-2" }}</td>
-                <td>{{ item.option }}</td>
-                <td>{{ item.remark }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <ng-container
+          *ngIf="worksheetData.workItems.length === 0; else itemsTable"
+        >
+          <div class="text-sm text-center mb-4">ไม่มีรายการสินค้า...</div>
+        </ng-container>
+        <ng-template #itemsTable>
+          <div class="table-container">
+            <table class="items-table">
+              <thead>
+                <tr>
+                  <th>ลำดับ</th>
+                  <th>รายการ</th>
+                  <th>ขนาด</th>
+                  <th>จำนวน</th>
+                  <th>ราคา</th>
+                  <th>ตัวเลือก</th>
+                  <th>หมายเหตุ</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let item of worksheetData.workItems; let i = index">
+                  <td>{{ i + 1 }}</td>
+                  <td>{{ item.type }}</td>
+                  <td>
+                    {{ item.height }} × {{ item.width }}
+                    {{ item.unit_of_length }}
+                  </td>
+                  <td>{{ item.quantity }}</td>
+                  <td class="price">{{ item.total | number : "1.2-2" }}</td>
+                  <td>{{ item.option }}</td>
+                  <td>{{ item.remark }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </ng-template>
       </div>
 
       <!-- 4. Payment Information -->
@@ -108,7 +119,7 @@
           <div class="payment-row">
             <span class="label">คงเหลือ: </span>
             <span class="value">
-              {{ worksheetData.payment?.remaining | number : "1.2-2" }}บาท
+              {{ worksheetData.payment?.remaining | number : "1.2-2" }} บาท
             </span>
           </div>
           <div class="payment-row">
@@ -218,9 +229,8 @@
         <!-- Company Information -->
         <div class="company-info text-xs">
           <div>
-            บจก.ป้ายหมายกฤษติ์เกอร์ (สติ๊กเกอร์แม่กลอง)
-            ในกรณีขอออกแบบฟรีแก้ไขได้ 2 ชุด ชุดต่อไปคิดชุดละ 50 บาท เวลาทำการ
-            จันทร์-เสาร์ เวลา 09.00น.-18.00 น.
+            บจก.ป้ายหมายกฤษติ์เกอร์ ในกรณีขอออกแบบฟรีแก้ไขได้ 2 ชุด
+            ชุดต่อไปคิดชุดละ 50 บาท เวลาทำการ จันทร์-เสาร์ เวลา 09.00น.-18.00 น.
           </div>
           <div>
             งานป้าย โทร. 084-5584238 งานสติ๊กเกอร์(ตัด) โทร. 064-9426989 E-mail:
