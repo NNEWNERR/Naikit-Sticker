@@ -878,62 +878,57 @@ export class CreateWorkSheetComponent implements OnInit {
 
   async exportToPDF() {
     try {
-      const element = document.getElementById('content-to-export');
-      
-      if (!element) {
-        throw new Error('ไม่พบ form ที่ต้องการ export');
+      if (true) {
+        const formData = this.worksheetForm.value;
+        
+        // เพิ่มข้อมูลรูปภาพ
+        const previewData = {
+          ...formData,
+          worksheet_preview: this.workSheetPreviews?.[0], // รูปใบงาน
+          reference_previews: this.referencePreviews || [], // รูปอ้างอิง
+        };
+
+        // แสดง Modal ยืนยันข้อมูล
+        const modal = await this.modalController.create({
+          component: WorksheetPreviewModalComponent,
+          componentProps: {
+            worksheetData: previewData
+          },
+          cssClass: 'modal-fullscreen'
+        });
+
+        await modal.present();
+
+        // รอผลลัพธ์จาก Modal
+        const { data } = await modal.onDidDismiss();
+        
+        if (data?.confirmed) {
+          // await this.submit();
+          
+          const toast = await this.toastController.create({
+            message: 'บันทึกข้อมูลสำเร็จ',
+            duration: 2000,
+            position: 'top',
+            color: 'success'
+          });
+          await toast.present();
+          
+          this.router.navigate(['/worksheets']);
+        }
+      } else {
+        const toast = await this.toastController.create({
+          message: 'กรุณากรอกข้อมูลให้ครบถ้วน',
+          duration: 2000,
+          position: 'top',
+          color: 'warning'
+        });
+        await toast.present();
       }
-
-      const canvas = await html2canvas(element, {
-        scale: 1,
-        useCORS: true,
-        logging: false,
-        allowTaint: true,
-        backgroundColor: '#ffffff',
-        imageTimeout: 0,
-        removeContainer: true,
-        foreignObjectRendering: true
-      });
-
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4'
-      });
-
-      const imgData = canvas.toDataURL('image/jpeg', 1.0);
-
-      const margin = 15;
-      const availableWidth = 210 - (margin * 2);
-      const availableHeight = 297 - (margin * 2);
-
-      pdf.addImage(
-        imgData, 
-        'JPEG', 
-        margin,
-        margin,
-        availableWidth, 
-        availableHeight
-      );
-
-      const today = new Date();
-      const fileName = `worksheet_${today.getFullYear()}${(today.getMonth()+1).toString().padStart(2,'0')}${today.getDate().toString().padStart(2,'0')}.pdf`;
-
-      pdf.save(fileName);
-
-      const toast = await this.toastController.create({
-        message: 'Export PDF สำเร็จ',
-        duration: 2000,
-        position: 'top',
-        color: 'success'
-      });
-      await toast.present();
-
     } catch (error) {
       console.error('Error:', error);
       const toast = await this.toastController.create({
-        message: 'เกิดข้อผิดพลาดในการ export PDF: ' + error.message,
-        duration: 3000,
+        message: 'เกิดข้อผิดพลาดในการบันทึกข้อมูล',
+        duration: 2000,
         position: 'top',
         color: 'danger'
       });

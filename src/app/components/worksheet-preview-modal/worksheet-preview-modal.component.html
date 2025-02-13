@@ -1,13 +1,15 @@
 <app-header title="ตรวจสอบ" [modal]="true"></app-header>
 
 <ion-content class="ion-padding">
-  <div class="a4-container" id="content-to-export">
+  <div class="a4-container flex flex-col" id="content-to-export">
     <!-- 1. หัวข้อใบสั่งงาน -->
     <div class="header-section">
-      <h1 class="title">ใบสั่งงาน</h1>
+      <div class="title-container">
+        <div class="title">ใบสั่งงาน</div>
+        <div class="serial-number">เลขที่: {{ worksheetData.serial_number }}</div>
+      </div>
       <div class="order-info">
         <div class="info-row">
-          <span>เลขที่: {{ worksheetData.serial_number }}</span>
           <span>วันที่: {{ worksheetData.created_at | date:'dd/MM/yyyy' }}</span>
         </div>
         <div class="info-row">
@@ -15,6 +17,7 @@
         </div>
       </div>
     </div>
+    <!-- ในส่วนของ หัวข้อใบสั่งงาน ต้องการให้ เลขที่ อยู่มุมขวาบน เท่ากับคำว่า ใบสั่งงาน และมีขนาดเท่ากัน  -->
 
     <!-- 2. ข้อมูลลูกค้า -->
     <div class="section customer-section">
@@ -91,73 +94,69 @@
       </div>
     </div>
 
-    <!-- 5. พื้นที่สำหรับวาดรูป -->
-    <div class="section drawing-section">
+    <div class="section">
       <h2 class="section-title">แบบร่าง / รูปอ้างอิง</h2>
-      <div class="drawing-area">
+    </div>
+    <!-- 5. พื้นที่สำหรับวาดรูป -->
+    <div class="flex-grow">
+      <div class="drawing-area h-full" #drawingArea>
         <!-- แสดงรูปใบงาน -->
         <div class="image-container worksheet-image" *ngIf="worksheetData.worksheet_preview">
-          <div cdkDrag
-               (cdkDragEnded)="onDragEnded($event, 'worksheet')"
-               (wheel)="onWheel($event, 'worksheet')"
-               class="draggable-image">
-            <img [src]="worksheetData.worksheet_preview" 
-                 [style.transform]="getImageTransform('worksheet')"
-                 alt="รูปใบงาน">
+          <div cdkDrag [cdkDragBoundary]="drawingArea" (cdkDragEnded)="onDragEnded($event, 'worksheet')"
+            (wheel)="onWheel($event, 'worksheet')" class="draggable-image">
+            <img [src]="worksheetData.worksheet_preview" [style.transform]="getImageTransform('worksheet')"
+              alt="รูปใบงาน">
           </div>
         </div>
-        
+
         <!-- แสดงรูปอ้างอิง -->
         <ng-container *ngIf="worksheetData.reference_previews?.length">
-          <div class="image-container reference-image" 
-               *ngFor="let preview of worksheetData.reference_previews; let i = index">
-            <div cdkDrag
-                 (cdkDragEnded)="onDragEnded($event, 'ref_' + i)"
-                 (wheel)="onWheel($event, 'ref_' + i)"
-                 class="draggable-image">
-              <img [src]="preview" 
-                   [style.transform]="getImageTransform('ref_' + i)"
-                   alt="รูปอ้างอิง">
+          <div class="image-container reference-image"
+            *ngFor="let preview of worksheetData.reference_previews; let i = index">
+            <div cdkDrag [cdkDragBoundary]="drawingArea" (cdkDragEnded)="onDragEnded($event, 'ref_' + i)"
+              (wheel)="onWheel($event, 'ref_' + i)" class="draggable-image">
+              <img [src]="preview" [style.transform]="getImageTransform('ref_' + i)" alt="รูปอ้างอิง">
             </div>
           </div>
         </ng-container>
-        
+
         <!-- กรณีไม่มีรูป -->
-        <div *ngIf="!worksheetData.worksheet_preview && !worksheetData.reference_previews?.length" 
-             class="empty-drawing-area">
+        <div *ngIf="!worksheetData.worksheet_preview && !worksheetData.reference_previews?.length"
+          class="empty-drawing-area">
           พื้นที่สำหรับวาดแบบ
         </div>
       </div>
     </div>
 
-    <!-- 6. ลายเซ็นและวันที่ -->
-    <div class="section signature-section">
-      <div class="signature-grid">
-        <div class="signature-item">
-          <div class="signature-line">
-            <span>ผู้ออกแบบ:</span>
-            <div class="line"></div>
-          </div>
-          <div class="date-line">
-            <span>วันที่:</span>
-            <div class="line"></div>
-          </div>
-        </div>
-        <div class="signature-item">
-          <div class="signature-line">
-            <span>ผู้พิมพ์งาน:</span>
-            <div class="line"></div>
-          </div>
-          <div class="date-line">
-            <span>วันที่:</span>
-            <div class="line"></div>
-          </div>
-        </div>
-      </div>
-    </div>
+
 
     <!-- เพิ่มส่วนฉีกด้านล่าง -->
     <div class="tear-off-section">
+      <!-- 6. ลายเซ็นและวันที่ -->
+      <div class="section signature-section">
+        <div class="signature-grid">
+          <div class="signature-item">
+            <div class="signature-line">
+              <span>ผู้ออกแบบ:</span>
+              <div class="line"></div>
+            </div>
+            <div class="date-line">
+              <span>วันที่:</span>
+              <div class="line"></div>
+            </div>
+          </div>
+          <div class="signature-item">
+            <div class="signature-line">
+              <span>ผู้พิมพ์งาน:</span>
+              <div class="line"></div>
+            </div>
+            <div class="date-line">
+              <span>วันที่:</span>
+              <div class="line"></div>
+            </div>
+          </div>
+        </div>
+      </div>
       <div class="dotted-line"></div>
       <div class="tear-off-content">
         <!-- ส่วนข้อมูลบริษัท -->
@@ -171,10 +170,12 @@
         <!-- ส่วนสรุปรายการ -->
         <div class="order-details">
           <div class="order-row">
-            <span>ป้ายไวนิล จำนวน............... ราคา...............บาท ฉลาก จำนวน............... ราคา...............บาท หมายบัตร จำนวน............... ราคา...............บาท</span>
+            <span>ป้ายไวนิล จำนวน............... ราคา...............บาท ฉลาก จำนวน............... ราคา...............บาท
+              หมายบัตร จำนวน............... ราคา...............บาท</span>
           </div>
           <div class="order-row">
-            <span>อื่นๆ ............................................................... ยอดรวม ...............บาท มัดจำ...............บาท คงเหลือ...............บาท</span>
+            <span>อื่นๆ ............................................................... ยอดรวม ...............บาท
+              มัดจำ...............บาท คงเหลือ...............บาท</span>
           </div>
           <div class="order-row">
             <span>ชื่องาน...............................................................</span>
@@ -184,19 +185,24 @@
       </div>
     </div>
   </div>
-</ion-content>
+  <div class="flex justify-end space-x-4 pt-6 border-t">
+    <button type="button" (click)="exportToPDF()"
+      class="px-6 py-2.5 border border-green-300 text-green-700 rounded-lg hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-500 transition duration-200">
+      <span class="flex items-center">
+        <ion-icon name="document-outline" class="mr-2"></ion-icon>
+        Export PDF
+      </span>
+    </button>
+    <!-- ยกเลิก -->
+    <button type="button" (click)="dismiss()"
+      class="px-6 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 transition duration-200">
+      ยกเลิก
+    </button>
 
-<ion-footer class="ion-no-border">
-  <ion-toolbar>
-    <div class="footer-buttons">
-      <ion-button color="medium" (click)="dismiss()" expand="block" fill="outline">
-        <ion-icon name="close-outline" slot="start"></ion-icon>
-        ยกเลิก
-      </ion-button>
-      <ion-button color="primary" (click)="confirmSave()" expand="block">
-        <ion-icon name="checkmark-outline" slot="start"></ion-icon>
-        ยืนยันการบันทึก
-      </ion-button>
-    </div>
-  </ion-toolbar>
-</ion-footer>
+    <!-- บันทึก -->
+    <button type="submit" (click)="confirmSave()"
+      class="px-6 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 transition duration-200 disabled:opacity-50">
+      <span class="flex items-center">ยืนยันการบันทึก </span>
+    </button>
+  </div>
+</ion-content>

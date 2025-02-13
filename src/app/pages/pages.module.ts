@@ -36,8 +36,6 @@ import { WorkItemModalComponent } from './create-work-sheet/work-item-modal/work
 import { WorksheetPreviewModalComponent } from '../components/worksheet-preview-modal/worksheet-preview-modal.component';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 
-
-
 @NgModule({
   declarations: [
     HomeComponent,
@@ -77,6 +75,7 @@ import { DragDropModule } from '@angular/cdk/drag-drop';
     QRCodeModule,
     LayoutsModule,
     UiModule,
+    DragDropModule
   ],
   exports: [
     LoginComponent
