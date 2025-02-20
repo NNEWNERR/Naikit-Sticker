@@ -310,9 +310,11 @@ export class SellerComponent implements OnInit {
 
   confirmWorkSheet(workSheet) {
     const docRef = doc(db, 'jobs', workSheet.key);
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 0);
     const data = {
       status: 'คอนเฟิร์มแล้ว',
-      confirm_date: new Date(),
+      confirm_date: yesterday,
     };
     this.firestoreService.updateDatatoFirebase(docRef, data);
   }

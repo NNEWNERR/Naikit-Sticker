@@ -276,7 +276,7 @@
             <!-- Card Footer -->
             <div class="flex justify-between items-center px-4 py-2 border-t bg-gray-50">
                 <div class="text-sm text-gray-600">
-                    <span>ผู้ขาย: {{ workSheet.seller_name }}</span>
+                    <span>ผู้ขาย: {{ workSheet.seller_name || workSheet.seller || '-' }}</span>
                     <span class="mx-2">|</span>
                     <span>ผู้ออกแบบ: {{ workSheet.design_by || "-" }}</span>
                 </div>

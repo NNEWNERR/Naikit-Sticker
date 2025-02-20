@@ -109,6 +109,8 @@ export class CreateWorkSheetComponent implements OnInit {
     { value: 'น้ำ', label: 'น้ำ' },
     { value: 'ซัง', label: 'ซัง' },
     { value: 'ซิน', label: 'ซิน' },
+    { value: 'เจ๊', label: 'เจ๊' },
+    { value: 'ตาล', label: 'ตาล' },
   ];
 
   payments = [
@@ -355,7 +357,7 @@ export class CreateWorkSheetComponent implements OnInit {
   private initNewForm() {
     this.worksheetForm = this.fb.group({
       serial_number: [this.getMounthName(), Validators.required],
-      seller: ['', Validators.required],
+      seller_name: ['', Validators.required],
       contact: [''],
       customer_name: ['', Validators.required],
       line_name: [''],
@@ -647,8 +649,11 @@ export class CreateWorkSheetComponent implements OnInit {
       formData.balance = this.calculateBalance();
 
       // เพิ่มข้อมูลเวลา
-      formData.created_at = new Date();
-      formData.updated_at = new Date();
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 0);
+      
+      formData.created_at = yesterday;
+      formData.updated_at = yesterday;
       formData.date_of_acceptance = new Date(formData.date_of_acceptance);
 
       // ส่งข้อมูลไป API หรือ Service

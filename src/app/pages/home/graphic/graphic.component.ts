@@ -289,20 +289,20 @@ export class GraphicComponent implements OnInit {
     })
     await modal.present()
     const { role, data } = await modal.onWillDismiss();
-    // console.log(role, data);
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 0);
     if (role === 'confirm') {
       const docRef = doc(db, 'jobs', workSheet.key);
       const update = {
         status: 'กำลังออกแบบ',
         design_by: data,
-        design_date: new Date(),
+        design_date: yesterday,
       }
       this.firestoreService.updateDatatoFirebase(docRef, update);
     }
   }
 
   async offerWorkSheet(workSheet) {
-
     const modal = await this.modalController.create({
       component: DragAndDropFileComponent,
       cssClass: 'my-custom-class',
@@ -325,6 +325,8 @@ export class GraphicComponent implements OnInit {
             imageUrl = await this.storageService.uploadImage(file, imagePath);
             imageUrls.push(imageUrl);
           }
+          const yesterday = new Date();
+          yesterday.setDate(yesterday.getDate() - 0);
           // console.log('Image uploaded successfully');
           let images = [];
           if (imageUrls.length > 0) {
@@ -332,14 +334,14 @@ export class GraphicComponent implements OnInit {
               return {
                 id: uuidv4(),
                 url: url,
-                date: new Date()
+                date: yesterday
               }
             })
           }
           const docRef = doc(db, 'jobs', workSheet.key);
           const update = {
             status: 'รอคอนเฟิร์มแบบ',
-            date_of_submission: new Date(),
+            date_of_submission: yesterday,
             design_images: images.length > 0 ? arrayUnion(...images) : []
           }
           this.firestoreService.updateDatatoFirebase(docRef, update);

@@ -358,59 +358,68 @@ export class ProductionComponent implements OnInit {
   }
 
   async productingWorkSheet(workSheet) {
-    // const docRef = doc(db, 'jobs', workSheet.key);
-    // const data = {
-    //   status: 'กำลังผลิต',
-    // }
-    // this.firestoreService.updateDatatoFirebase(docRef, data);
-    const modal = await this.modalController.create({
-      component: SelectGraphicComponent,
-      componentProps: {
-        option: this.printers
-      },
-      cssClass: 'my-custom-class',
-    })
-    await modal.present()
-    const { role, data } = await modal.onWillDismiss();
-    // console.log(role, data);
-    if (role === 'confirm') {
-      const docRef = doc(db, 'jobs', workSheet.key);
-      const update = {
-        status: 'กำลังผลิต',
-        confirm_print_by: data,
-        confirm_print_date: new Date(),
-      }
-      this.firestoreService.updateDatatoFirebase(docRef, update);
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 0);
+    const docRef = doc(db, 'jobs', workSheet.key);
+    const data = {
+      status: 'กำลังผลิต',
+      confirm_print_date: yesterday,
     }
+    this.firestoreService.updateDatatoFirebase(docRef, data);
+    // const modal = await this.modalController.create({
+    //   component: SelectGraphicComponent,
+    //   componentProps: {
+    //     option: this.printers
+    //   },
+    //   cssClass: 'my-custom-class',
+    // })
+    // await modal.present()
+    // const { role, data } = await modal.onWillDismiss();
+    // // console.log(role, data);
+    // const yesterday = new Date();
+    // yesterday.setDate(yesterday.getDate() - 0);
+    // if (role === 'confirm') {
+    //   const docRef = doc(db, 'jobs', workSheet.key);
+    //   const update = {
+    //     status: 'กำลังผลิต',
+    //     confirm_print_by: data,
+    //     confirm_print_date: yesterday,
+    //   }
+    //   this.firestoreService.updateDatatoFirebase(docRef, update);
+    // }
   }
 
 
   async FinishProductWorkSheet(workSheet) {
-    // const docRef = doc(db, 'jobs', workSheet.key);
-    // const data = {
-    //   status: 'รอส่งมอบ',
-    //   print_date: new Date(),
-    // }
-    // this.firestoreService.updateDatatoFirebase(docRef, data);
-    const modal = await this.modalController.create({
-      component: SelectGraphicComponent,
-      componentProps: {
-        option: this.printers
-      },
-      cssClass: 'my-custom-class',
-    })
-    await modal.present()
-    const { role, data } = await modal.onWillDismiss();
-    // console.log(role, data);
-    if (role === 'confirm') {
-      const docRef = doc(db, 'jobs', workSheet.key);
-      const update = {
-        status: 'รอส่งมอบ',
-        print_by: data,
-        print_date: new Date(),
-      }
-      this.firestoreService.updateDatatoFirebase(docRef, update);
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 0);
+    const docRef = doc(db, 'jobs', workSheet.key);
+    const data = {
+      status: 'รอส่งมอบ',
+      print_date: yesterday,
     }
+    this.firestoreService.updateDatatoFirebase(docRef, data);
+    // const modal = await this.modalController.create({
+    //   component: SelectGraphicComponent,
+    //   componentProps: {
+    //     option: this.printers
+    //   },
+    //   cssClass: 'my-custom-class',
+    // })
+    // await modal.present()
+    // const { role, data } = await modal.onWillDismiss();
+    // // console.log(role, data);
+    // const yesterday = new Date();
+    // yesterday.setDate(yesterday.getDate() - 0);
+    // if (role === 'confirm') {
+    //   const docRef = doc(db, 'jobs', workSheet.key);
+    //   const update = {
+    //     status: 'รอส่งมอบ',
+    //     print_by: data,
+    //     print_date: yesterday,
+    //   }
+    //   this.firestoreService.updateDatatoFirebase(docRef, update);
+    // }
   }
 
   workSheetInfo(workSheet) {

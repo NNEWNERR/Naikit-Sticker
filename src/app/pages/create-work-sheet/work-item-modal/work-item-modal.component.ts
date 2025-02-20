@@ -31,7 +31,7 @@ export class WorkItemModalComponent implements OnInit {
             type: ['ไวนิล', Validators.required],
             height: ['' ],
             width: [''],
-            unit_of_length: ['cm.' ],
+            unit_of_length: ['ซม.' ],
             option: [''],
             quantity: [''],
             total: [''],
@@ -55,7 +55,9 @@ export class WorkItemModalComponent implements OnInit {
             { value: 'โปสเตอร์', label: 'โปสเตอร์' },
             { value: 'พลาสวูด', label: 'พลาสวูด' },
             { value: 'ตรายาง', label: 'ตรายาง' },
-            { value: 'กล่องไฟ', label: 'กล่องไฟ' }
+            { value: 'กล่องไฟ', label: 'กล่องไฟ' },
+            { value: 'โลอัพ', label: 'โลอัพ' },
+            { value: 'แบล็คลิส', label: 'แบล็คลิส' },
         ];
     }
 
@@ -75,14 +77,19 @@ export class WorkItemModalComponent implements OnInit {
                 { value: 'ร้อยท่อ', label: 'ร้อยท่อ' },
                 { value: 'โครงไม้', label: 'โครงไม้' },
                 { value: 'พับขอบ', label: 'พับขอบ' },
+                { value: 'ธงญี่ปุ่นหน้า', label: 'ธงญี่ปุ่นหน้า' },
+                { value: 'ธงญี่ปุ่นหน้า-หลัง', label: 'ธงญี่ปุ่นหน้า-หลัง' },
                 { value: 'ปล่อยขอบ', label: 'ปล่อยขอบ' },
                 { value: 'โครงเหล็ก', label: 'โครงเหล็ก' },
                 { value: 'กรอบไม้', label: 'กรอบไม้' }
             ],
             'สติกเกอร์': [
-                { value: 'ติดฟิวเจอร์บอร์ด', label: 'ติดฟิวเจอร์บอร์ด' },
+                { value: 'ติดฟิวเจอร์บอร์ด 3 มิล', label: 'ติดฟิวเจอร์บอร์ด 3 มิล' },
+                { value: 'ติดฟิวเจอร์บอร์ด 5 มิล', label: 'ติดฟิวเจอร์บอร์ด 5 มิล' },
+                { value: 'ติดพลาสวูด 3 มิล', label: 'ติดพลาสวูด 3 มิล' },
+                { value: 'ติดพลาสวูด 5 มิล', label: 'ติดพลาสวูด 5 มิล' },
+                { value: 'ติดพลาสวูด 10 มิล', label: 'ติดพลาสวูด 10 มิล' },
                 { value: 'ติดอะคริลิค', label: 'ติดอะคริลิค' },
-                { value: 'ติดพลาสวูด', label: 'ติดพลาสวูด' }
             ],
             'สติกเกอร์ตัด': [
                 { value: 'ติดฟิวเจอร์บอร์ด', label: 'ติดฟิวเจอร์บอร์ด' },

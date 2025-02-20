@@ -420,10 +420,12 @@ export class FirestoreService {
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1); // First day of the month
     const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999); // Last day of the month
     console.log(startOfMonth, endOfMonth);
-
+    // เมื่อวาน
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 10);
     const q = query(collection(db, "jobs"),
       where("status", "in", ["กำลังออกแบบ", "รอออกแบบ", "รอคอนเฟิร์มแบบ", "คอนเฟิร์มแล้ว", "รอผลิต", "กำลังผลิต", "รอส่งมอบ"]),
-      where("created_at", ">=", startOfMonth),
+      where("created_at", ">=", yesterday),
       // where("created_at", "<=", endOfMonth)
     );
     return new Promise<any>((resolve) => {
@@ -442,9 +444,13 @@ export class FirestoreService {
 
 
   fetchWorkSheetForGraphic() {
+    
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 10);
     // console.log('fetchWorkSheetForGraphic');
     const q = query(collection(db, "jobs"),
       where("status", "in", ["รอออกแบบ", "กำลังออกแบบ", "รอคอนเฟิร์มแบบ", "คอนเฟิร์มแล้ว"]),
+      where("created_at", ">=", yesterday),
     );
     return new Promise<any>((resolve) => {
       const subscription = onSnapshot(q, { includeMetadataChanges: true }, async (querySnapshot) => {
@@ -461,8 +467,11 @@ export class FirestoreService {
   }
 
   fetchWorkSheetForProduction() {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 10);
     const q = query(collection(db, "jobs"),
       where("status", "in", ["รอผลิต", "กำลังผลิต"]),
+      where("created_at", ">=", yesterday),
     );
     return new Promise<any>((resolve) => {
       const subscription = onSnapshot(q, { includeMetadataChanges: true }, async (querySnapshot) => {
@@ -485,11 +494,12 @@ export class FirestoreService {
     const querydate = new Date(date).setHours(0, 0, 0, 0);
     const dateCondition = new Date(querydate);
     const formatQueryDate = new Date(querydate);
-    formatQueryDate.setDate(formatQueryDate.getDate() + 1);
+    formatQueryDate.setDate(formatQueryDate.getDate() -10);
     // console.log(dateCondition, formatQueryDate, design_by);
     const q = query(collection(db, "jobs"),
-      where("confirm_date", ">", dateCondition),
-      where("confirm_date", "<", formatQueryDate),
+      // where("confirm_date", ">", dateCondition),
+      // where("confirm_date", "<", formatQueryDate),
+      where("created_at", ">=", formatQueryDate),
       where("design_by", "==", design_by),
     );
     return new Promise<any>((resolve) => {

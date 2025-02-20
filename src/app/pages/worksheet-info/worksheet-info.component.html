@@ -11,7 +11,7 @@
       </div>
       <div class="text-lg flex flex-row justify-between gap-4">
         <span>ชื่อผู้ขาย : </span>
-        <span>{{workSheet.seller_name || '-'}}</span>
+        <span>{{workSheet.seller_name || workSheet.seller || '-'}}</span>
       </div>
       <div class="text-lg flex flex-row justify-between gap-4">
         <span>เลขที่ใบงาน : </span>
@@ -49,7 +49,7 @@
       <div class="text-lg flex flex-row justify-between gap-4">
         <div>
           <span>มัดจํา : </span> <span class="text-red-600" *ngIf="!workSheet.payment.deposit">เครดิต
-            {{workSheet.seller_name}}</span>
+            {{workSheet.seller_name || workSheet.seller || '-'}}</span>
         </div>
         <span>{{workSheet.payment.deposit || 0}}</span>
       </div>
@@ -118,6 +118,7 @@
                 <th class="py-2 px-4 text-center">ตัวเลือก</th>
                 <th class="py-2 px-4 text-center">จำนวน</th>
                 <th class="py-2 px-4 text-right">ราคารวม (บาท)</th>
+                <th class="py-2 px-4 text-right">หมายเหตุ</th>                  
               </tr>
             </thead>
             <tbody class="text-gray-600 text-sm overflow-y-auto">
@@ -131,6 +132,7 @@
                 <td class="py-2 px-4 text-center">{{work.option}}</td>
                 <td class="py-2 px-4 text-center">{{work.quantity}}</td>
                 <td class="py-2 px-4 text-right">{{work.total}}</td>
+                <td class="py-2 px-4 text-right">{{work.remark}}</td>
               </tr>
             </tbody>
             <tfoot class="w-full text-sm ">

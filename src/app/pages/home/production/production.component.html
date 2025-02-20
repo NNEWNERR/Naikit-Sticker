@@ -54,7 +54,7 @@
         <div class="flex justify-between items-center py-2 px-3">
             <!-- <ion-button (click)="acceptJob(workSheet)" color="success">รับงาน</ion-button> -->
             <div class="flex flex-row">
-                <div>S.{{workSheet.seller_name}} G.{{workSheet.design_by || '-'}}</div>
+                <div>S.{{workSheet.seller_name|| workSheet.seller || '-'}} G.{{workSheet.design_by || '-'}}</div>
             </div>
             <div>
                 <ion-button *ngIf="workSheet.status === 'รอผลิต'" color="success"
