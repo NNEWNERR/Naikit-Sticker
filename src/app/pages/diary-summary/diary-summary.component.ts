@@ -5,6 +5,7 @@ import { DESIGNER_OPTION } from 'src/app/data/data';
 import { FirestoreService } from 'src/app/services/firestore.service';
 import { WorksheetInfoComponent } from '../worksheet-info/worksheet-info.component';
 import { ModalController } from '@ionic/angular';
+import { NkBadgeTone } from 'src/app/shared/components';
 
 @Component({
   selector: 'app-diary-summary',
@@ -22,6 +23,78 @@ export class DiarySummaryComponent implements OnInit {
   startDate: Date;
   endDate: Date;
   confirmedWorkSheets: any[] = [];
+
+  /**
+   * The 5 "post-confirm" statuses surfaced by the prototype's diary summary —
+   * worksheets the seller already locked in. Drives the filter chips below.
+   */
+  readonly confirmedStatuses = ['คอนเฟิร์มแล้ว', 'รอผลิต', 'กำลังผลิต', 'รอส่งมอบ', 'ส่งมอบแล้ว'] as const;
+
+  readonly statusLabels: Record<string, { short: string; tone: NkBadgeTone }> = {
+    'คอนเฟิร์มแล้ว': { short: 'พร้อมผลิต', tone: 'status-confirmed' },
+    'รอผลิต':       { short: 'รอผลิต',    tone: 'status-printq' },
+    'กำลังผลิต':    { short: 'ผลิต',      tone: 'status-printing' },
+    'รอส่งมอบ':     { short: 'รอส่ง',     tone: 'status-deliverq' },
+    'ส่งมอบแล้ว':   { short: 'ส่งแล้ว',    tone: 'status-delivered' },
+  };
+
+  /** Currently active chip — 'all' shows every confirmed worksheet. */
+  selectedFilter: 'all' | string = 'all';
+
+  setFilter(key: string) {
+    this.selectedFilter = key;
+  }
+
+  countOf(status: string): number {
+    return this.confirmedWorkSheets.filter((w) => w.status === status).length;
+  }
+
+  get visibleRows(): any[] {
+    if (this.selectedFilter === 'all') return this.confirmedWorkSheets;
+    return this.confirmedWorkSheets.filter((w) => w.status === this.selectedFilter);
+  }
+
+  get urgentCount(): number {
+    return this.confirmedWorkSheets.filter((w) => !!w.is_urgent).length;
+  }
+
+  get deliveredCount(): number {
+    return this.confirmedWorkSheets.filter((w) => w.status === 'ส่งมอบแล้ว').length;
+  }
+
+  /**
+   * String adapter for <input type="date">. The component stores `date` as a
+   * Date; the input speaks ISO yyyy-MM-dd. Setting normalizes to noon to
+   * dodge timezone drift across the day boundary.
+   */
+  get dateInputValue(): string {
+    const d = this.date instanceof Date ? this.date : new Date(this.date);
+    if (isNaN(d.getTime())) return '';
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
+  set dateInputValue(v: string) {
+    if (!v) return;
+    const parsed = new Date(v + 'T12:00:00');
+    if (!isNaN(parsed.getTime())) {
+      this.date = parsed;
+    }
+  }
+
+  /** Period label for the SUMMARY block — Thai month + year (current). */
+  get monthLabel(): string {
+    const months = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+    const d = new Date(this.date);
+    return `${months[d.getMonth()]} ${d.getFullYear() + 543}`;
+  }
+
+  toneFor(status: string): NkBadgeTone {
+    return this.statusLabels[status]?.tone || 'neutral';
+  }
+
+  trackByKey = (_i: number, w: any): string => w?.key ?? w?.serial_number ?? String(_i);
 
   constructor(
     private firestoreService: FirestoreService,
@@ -42,9 +115,14 @@ export class DiarySummaryComponent implements OnInit {
   search() {
     if (this.form.valid) {
       this.firestoreService.unsubscribeSubscriptions();
-      this.firestoreService.fetchWorkSheetSummaryDiary(this.date, this.form.value.designer.value).then((res) => {
+      this.firestoreService.fetchWorkSheetSummaryDiary(this.date, this.form.value.designer.value).then((res: any[]) => {
         this.workSheets = res;
-        this.confirmedWorkSheets = res;
+        // The redesigned summary screen is specifically about post-confirm
+        // workflow (พร้อมผลิต → ส่งมอบแล้ว). Filter at the client to match
+        // the prototype's intent; the fetch query is left as-is so callers
+        // and Firestore indexes don't need to change.
+        const allowed = new Set(this.confirmedStatuses as readonly string[]);
+        this.confirmedWorkSheets = (res || []).filter((w) => allowed.has(w.status));
       });
     } else {
       this.form.markAllAsTouched();

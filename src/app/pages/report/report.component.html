@@ -1,79 +1,123 @@
-<app-header title="รายงาน"></app-header>
-<ion-content>
-  <div class="p-4">
-    <form [formGroup]="form" class="grid md:grid-cols-3 grid-cols-1 gap-2">
-      <app-select [parentForm]="form" label="ผู้ขาย" formControlName="seller" placeholder="กรุณาเลือกผู้ขาย"
-        [multiple]="false" [options]="sellers" (selectChange)="filteringWorkSheetBySeller($event)"></app-select>
-      <app-select [parentForm]="form" label="ผู้ออกแบบ" formControlName="graphic" placeholder="กรุณาเลือกผู้ออกแบบ"
-        [multiple]="false" [options]="designers" (selectChange)="filteringWorkSheetByGraphic($event)"></app-select>
-      <app-input [parentForm]="form" label="ค้นหาใบงาน" formControlName="text_search" placeholder="กรุณากรอกเลขที่ใบงาน"
-        (inputChange)="onWorkSheetSearchChange($event)"></app-input>
-    </form>
-    <div class="status-container pt-4">
-      <div *ngFor="let status of statusKeys" class="status-box" [class.selected]="currentStatus === statusName(status)"
-        (click)="filteringWorkSheetByStatus(status)">
-        <p>{{ statusName(status) }}</p>
-        <p>{{ statusCount[status] }}</p>
+<!--
+  Report — neo-brutalist redesign.
+  Replaces the previous ngx-datatable with: page-header + 8-status breakdown
+  grid (clickable to filter) + brutal table.
+  See redesign/extracted/assets/541b5f48-…js for the source design.
+-->
+<ion-content class="bg-surface-2">
+
+  <!-- ── Page header ──────────────────────────────────────────────────── -->
+  <app-page-header
+    breadcrumb="REPORT · รายงาน"
+    title="รายงาน"
+    [subtitle]="visibleRows.length + ' รายการ'"
+    [yellow]="true"
+  >
+    <div header-right class="flex items-center gap-2">
+      <div class="hidden md:flex items-center gap-2 bg-white border-2 border-ink rounded-md
+                  px-3 py-2 shadow-brutal-sm text-body font-semibold text-ink-2">
+        <span aria-hidden="true">🔍</span>
+        <input
+          type="search"
+          [(ngModel)]="currentSearch"
+          (ngModelChange)="onWorkSheetSearchChange($event)"
+          placeholder="ค้นหา serial / ลูกค้า..."
+          class="bg-transparent border-0 outline-none w-44 placeholder:text-ink-4"
+        />
+      </div>
+      <app-button variant="dark" size="md"><span>📥 <span class="hidden md:inline">Export</span></span></app-button>
+    </div>
+  </app-page-header>
+
+  <div class="px-4 md:px-5 py-4 md:py-5">
+
+    <!-- ── Status breakdown grid ──────────────────────────────────────── -->
+    <div class="mb-4">
+      <div class="label-mono mb-2">STATUS BREAKDOWN · กดเพื่อกรอง</div>
+      <div class="grid grid-cols-4 md:grid-cols-8 gap-2">
+        <button
+          *ngFor="let s of statusList"
+          type="button"
+          (click)="setStatusFilter(s.key)"
+          class="border-2 rounded-md px-2.5 py-2.5 cursor-pointer text-left transition-shadow"
+          [class.bg-white]="selectedStatusFilter !== s.key"
+          [class.border-ink]="selectedStatusFilter !== s.key"
+          [class.shadow-brutal-sm]="true"
+          [style.background]="selectedStatusFilter === s.key ? paletteOf(s.key).bg : null"
+          [style.borderColor]="selectedStatusFilter === s.key ? paletteOf(s.key).dot : null"
+          [style.boxShadow]="selectedStatusFilter === s.key ? '2px 2px 0 ' + paletteOf(s.key).dot : null"
+        >
+          <div class="flex items-center gap-1 mb-1.5">
+            <span class="w-1.5 h-1.5 rounded-full flex-shrink-0" [style.background]="paletteOf(s.key).dot"></span>
+            <span class="text-[10px] font-bold truncate" [style.color]="paletteOf(s.key).fg">{{ s.short }}</span>
+          </div>
+          <div class="text-2xl font-black font-num leading-none">{{ countOf(s.key) }}</div>
+        </button>
+      </div>
+      <button
+        *ngIf="selectedStatusFilter"
+        type="button"
+        (click)="clearStatusFilter()"
+        class="mt-2 text-[11px] bg-ink text-brand border-0 rounded px-2.5 py-1 cursor-pointer font-bold"
+      >✕ ล้างตัวกรอง: {{ selectedStatusFilter }}</button>
+    </div>
+
+    <!-- ── Table ──────────────────────────────────────────────────────── -->
+    <div class="bg-white border-2 border-ink rounded-lg shadow-brutal overflow-x-auto md:overflow-hidden">
+
+      <!-- Header -->
+      <div class="grid grid-cols-[120px_120px_1fr_80px] md:grid-cols-[130px_130px_1.5fr_100px_100px_100px_100px_90px_80px]
+                  bg-ink text-brand text-[11px] font-extrabold min-w-[440px] md:min-w-0">
+        <div class="px-3 py-2.5">สถานะ</div>
+        <div class="px-3 py-2.5">เลขใบงาน</div>
+        <div class="px-3 py-2.5">ลูกค้า</div>
+        <div class="hidden md:block px-3 py-2.5">ผู้ขาย</div>
+        <div class="hidden md:block px-3 py-2.5">ออกแบบ</div>
+        <div class="hidden md:block px-3 py-2.5">วันสั่ง</div>
+        <div class="hidden md:block px-3 py-2.5">นัดรับ</div>
+        <div class="px-3 py-2.5">ยอด</div>
+        <div class="hidden md:block px-3 py-2.5"></div>
+      </div>
+
+      <!-- Rows -->
+      <div
+        *ngFor="let w of visibleRows; let i = index; trackBy: trackByKey"
+        (click)="workSheetInfo(w)"
+        class="grid grid-cols-[120px_120px_1fr_80px] md:grid-cols-[130px_130px_1.5fr_100px_100px_100px_100px_90px_80px]
+               border-t border-line items-center cursor-pointer min-w-[440px] md:min-w-0
+               transition-colors hover:bg-brand-50"
+        [class.bg-surface-2]="i % 2 === 1"
+        [class.bg-white]="i % 2 === 0"
+      >
+        <div class="px-3 py-2.5">
+          <app-badge [tone]="toneFor(w.status)" [dot]="true">{{ w.status }}</app-badge>
+        </div>
+        <div class="px-3 py-2.5 text-body-sm font-bold font-num">
+          {{ w.serial_number }}<span *ngIf="w.is_urgent" class="ml-1">⚡</span>
+        </div>
+        <div class="px-3 py-2.5">
+          <div class="text-body font-semibold truncate">{{ w.customer_name }}</div>
+          <div *ngIf="w.workItems?.length" class="text-[11px] text-ink-4 truncate">{{ w.workItems[0].type }}</div>
+        </div>
+        <div class="hidden md:block px-3 py-2.5 text-body">{{ w.seller_name || '—' }}</div>
+        <div class="hidden md:block px-3 py-2.5 text-body" [class.text-ink-4]="!w.design_by || w.design_by === '-'">
+          {{ w.design_by && w.design_by !== '-' ? w.design_by : '—' }}
+        </div>
+        <div class="hidden md:block px-3 py-2.5 text-body-sm font-num text-ink-3">{{ shortDate(w.created_at) }}</div>
+        <div class="hidden md:block px-3 py-2.5 text-body-sm font-num"
+             [class.text-danger]="w.is_urgent"
+             [class.font-bold]="w.is_urgent"
+             [class.text-ink-3]="!w.is_urgent">
+          {{ w.date_of_acceptance ? formatTime(w.date_of_acceptance) : '—' }}
+        </div>
+        <div class="px-3 py-2.5 text-body font-bold font-num">฿{{ (w.total || 0) | number }}</div>
+        <div class="hidden md:block px-3 py-2.5 text-body font-bold underline">เปิด</div>
+      </div>
+
+      <!-- Empty state -->
+      <div *ngIf="visibleRows.length === 0" class="py-12 text-center text-body text-ink-4 font-medium border-t border-line">
+        {{ selectedStatusFilter ? 'ไม่มีใบงานในสถานะ "' + selectedStatusFilter + '"' : 'ไม่มีรายการ' }}
       </div>
     </div>
   </div>
-  <ngx-datatable class="flex w-full. material expandable" [columnMode]="'force'" [rows]="filterWorkSheet" [limit]="10"
-    rowHeight="auto" [headerHeight]="50" [footerHeight]="50" [scrollbarH]="true" (activate)="onActivate($event)"
-    [sorts]="[{prop: 'serial_number', dir: 'asc'}]" *ngIf="workSheet.length > 0">
-    <ngx-datatable-column name="Status" prop="status">
-      <ng-template let-row="row" ngx-datatable-cell-template>
-        <div [class]="'px-2 py-1 rounded-lg text-center ' + selectClass(row.status)">{{row.status}}</div>
-      </ng-template>
-    </ngx-datatable-column>
-    <ngx-datatable-column name="Serial Number" prop="serial_number">
-      <ng-template let-row="row" ngx-datatable-cell-template>
-        {{row.serial_number ||''}}
-      </ng-template>
-    </ngx-datatable-column>
-    <ngx-datatable-column name="ชื่อลูกค้า" prop="customer_name">
-      <ng-template let-row="row" ngx-datatable-cell-template>
-        {{row.customer_name ||''}}
-      </ng-template>
-    </ngx-datatable-column>
-    <ngx-datatable-column name="ชื่อผู้ขาย" prop="seller_name">
-      <ng-template let-row="row" ngx-datatable-cell-template>
-        {{row.seller_name || row.seller || ''}}
-      </ng-template>
-    </ngx-datatable-column>
-    <ngx-datatable-column name="ผู้ออกแบบ" prop="design_by">
-      <ng-template let-row="row" ngx-datatable-cell-template>
-        {{row.design_by ||''}}
-      </ng-template>
-    </ngx-datatable-column>
-    <ngx-datatable-column name="วันที่ลูกค้าสั่ง" prop="created_at">
-      <ng-template let-row="row" ngx-datatable-cell-template>
-        {{row.created_at ? formatTimeFull(row.created_at) : ''}}
-      </ng-template>
-    </ngx-datatable-column>
-    <ngx-datatable-column name="วันที่ส่งแบบ" prop="date_of_submission">
-      <ng-template let-row="row" ngx-datatable-cell-template>
-        {{row.date_of_submission ? formatTimeFull(row.date_of_submission) : ''}}
-      </ng-template>
-    </ngx-datatable-column>
-    <ngx-datatable-column name="วันที่ส่งผลิต" prop="date_of_send_production">
-      <ng-template let-row="row" ngx-datatable-cell-template>
-        {{row.date_of_send_production ? formatTimeFull(row.date_of_send_production) : ''}}
-      </ng-template>
-    </ngx-datatable-column>
-    <ngx-datatable-column name="วันที่นัดรับงาน'" prop="date_of_acceptance">
-      <ng-template let-row="row" ngx-datatable-cell-template>
-        {{row.date_of_acceptance ? formatTime(row.date_of_acceptance) : ''}}
-      </ng-template>
-    </ngx-datatable-column>
-    <ngx-datatable-column name="ACTION">
-      <ng-template let-row="row" ngx-datatable-cell-template>
-        <ion-text (click)="editWorkSheet(row)" color="danger" class="cursor-pointer">
-          แก้ไข
-        </ion-text>
-        <ion-text (click)="workSheetInfo(row)" color="primary" class="cursor-pointer">
-          รายละเอียด
-        </ion-text>
-      </ng-template>
-    </ngx-datatable-column>
-  </ngx-datatable>
 </ion-content>

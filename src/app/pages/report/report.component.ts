@@ -10,6 +10,7 @@ import { CreateWorkSheetComponent } from '../create-work-sheet/create-work-sheet
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { SEGMENT_OPTION, STATUS_OPTION, SELLER_OPTION, DESIGNER_OPTION } from 'src/app/data/data';
 import { WorksheetInfoComponent } from '../worksheet-info/worksheet-info.component';
+import { NkBadgeTone } from 'src/app/shared/components';
 
 @Component({
   selector: 'app-report',
@@ -48,6 +49,78 @@ export class ReportComponent implements OnInit {
   public data = [];
   public results = [...this.data];
   subscription;
+
+  /**
+   * 8-status breakdown — drives the brutal grid at the top of the report.
+   * Same ordering / short labels as worksheet-info Timeline so the language
+   * is consistent across the app.
+   */
+  readonly statusList: { key: string; short: string; tone: NkBadgeTone }[] = [
+    { key: 'รอออกแบบ',      short: 'รอแบบ',     tone: 'status-design' },
+    { key: 'กำลังออกแบบ',    short: 'ออกแบบ',    tone: 'status-designing' },
+    { key: 'รอคอนเฟิร์มแบบ', short: 'รอคอนเฟิร์ม', tone: 'status-await' },
+    { key: 'คอนเฟิร์มแล้ว',   short: 'พร้อมผลิต', tone: 'status-confirmed' },
+    { key: 'รอผลิต',         short: 'รอผลิต',    tone: 'status-printq' },
+    { key: 'กำลังผลิต',      short: 'ผลิต',      tone: 'status-printing' },
+    { key: 'รอส่งมอบ',       short: 'รอส่ง',     tone: 'status-deliverq' },
+    { key: 'ส่งมอบแล้ว',     short: 'ส่งแล้ว',    tone: 'status-delivered' },
+  ];
+
+  /** Click a status tile to filter the table; clicking again clears. */
+  selectedStatusFilter: string | null = null;
+
+  /** Status-palette lookup — same hex values as TimelineComponent + BadgeComponent. */
+  private static readonly STATUS_PALETTE: Record<string, { bg: string; fg: string; dot: string }> = {
+    'รอออกแบบ':      { bg: '#FFE9E9', fg: '#B91C1C', dot: '#DC2626' },
+    'กำลังออกแบบ':    { bg: '#E0F2FE', fg: '#075985', dot: '#0284C7' },
+    'รอคอนเฟิร์มแบบ': { bg: '#FFF7CC', fg: '#854D0E', dot: '#CA8A04' },
+    'คอนเฟิร์มแล้ว':   { bg: '#DCFCE7', fg: '#166534', dot: '#16A34A' },
+    'รอผลิต':         { bg: '#EDE9FE', fg: '#5B21B6', dot: '#7C3AED' },
+    'กำลังผลิต':      { bg: '#E0E7FF', fg: '#3730A3', dot: '#4F46E5' },
+    'รอส่งมอบ':       { bg: '#FFEDD5', fg: '#9A3412', dot: '#EA580C' },
+    'ส่งมอบแล้ว':     { bg: '#CCFBF1', fg: '#115E59', dot: '#0D9488' },
+  };
+
+  paletteOf(status: string): { bg: string; fg: string; dot: string } {
+    return ReportComponent.STATUS_PALETTE[status] || { bg: '#F4F4F4', fg: '#525252', dot: '#A3A3A3' };
+  }
+
+  toneFor(status: string): NkBadgeTone {
+    return this.statusList.find((s) => s.key === status)?.tone || 'neutral';
+  }
+
+  countOf(status: string): number {
+    return this.workSheet.filter((w: any) => w.status === status).length;
+  }
+
+  setStatusFilter(status: string) {
+    this.selectedStatusFilter = this.selectedStatusFilter === status ? null : status;
+  }
+
+  clearStatusFilter() {
+    this.selectedStatusFilter = null;
+  }
+
+  /** Final rows shown in the table — combines tile-filter + search filter. */
+  get visibleRows(): any[] {
+    let rows = this.filterWorkSheet;
+    if (this.selectedStatusFilter) {
+      rows = rows.filter((w: any) => w.status === this.selectedStatusFilter);
+    }
+    return rows;
+  }
+
+  /** Short MM-DD label for the table's "วันสั่ง" column. */
+  shortDate(ts: any): string {
+    if (!ts) return '—';
+    const d = ts.seconds ? new Date(ts.seconds * 1000) : new Date(ts);
+    if (isNaN(d.getTime())) return '—';
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${mm}-${dd}`;
+  }
+
+  trackByKey = (_i: number, w: any): string => w?.key ?? w?.serial_number ?? String(_i);
 
   constructor(
     private serviceService: ServiceService,
