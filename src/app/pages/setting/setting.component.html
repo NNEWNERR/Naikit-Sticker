@@ -3,7 +3,7 @@
   Left side-nav (desktop) + horizontal tab strip (mobile). Four sub-pages
   render inside a brutal card on the right.
 -->
-<ion-content class="bg-surface-2">
+<div class="nk-content bg-surface-2">
 
   <app-page-header
     breadcrumb="SETTING · ตั้งค่า"
@@ -35,8 +35,7 @@
         *ngFor="let it of tabs"
         type="button"
         (click)="setTab(it.key)"
-        class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-md mb-1 cursor-pointer text-body
-               border-2 transition-colors"
+        class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-md mb-1 cursor-pointer text-body border-2 transition-colors"
         [class.bg-brand]="tab === it.key"
         [class.border-ink]="tab === it.key"
         [class.font-extrabold]="tab === it.key"
@@ -60,4 +59,4 @@
       </div>
     </div>
   </div>
-</ion-content>
+</div>

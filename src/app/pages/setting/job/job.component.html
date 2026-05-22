@@ -15,8 +15,7 @@
 </div>
 
 <div class="border-2 border-ink rounded-md overflow-x-auto md:overflow-hidden">
-  <div class="grid grid-cols-[120px_120px_1fr_44px] md:grid-cols-[140px_120px_1.4fr_100px_100px_110px_44px]
-              bg-ink text-brand text-[11px] font-extrabold min-w-[420px] md:min-w-0">
+  <div class="grid grid-cols-[120px_120px_1fr_44px] md:grid-cols-[140px_120px_1.4fr_100px_100px_110px_44px] bg-ink text-brand text-[11px] font-extrabold min-w-[420px] md:min-w-0">
     <div class="px-3 py-2.5">สถานะ</div>
     <div class="px-3 py-2.5">เลขใบงาน</div>
     <div class="px-3 py-2.5">ลูกค้า</div>
@@ -28,8 +27,7 @@
 
   <div
     *ngFor="let j of results; let i = index"
-    class="grid grid-cols-[120px_120px_1fr_44px] md:grid-cols-[140px_120px_1.4fr_100px_100px_110px_44px]
-           border-t border-line items-center min-w-[420px] md:min-w-0"
+    class="grid grid-cols-[120px_120px_1fr_44px] md:grid-cols-[140px_120px_1.4fr_100px_100px_110px_44px] border-t border-line items-center min-w-[420px] md:min-w-0"
     [class.bg-surface-2]="i % 2 === 1"
     [class.bg-white]="i % 2 === 0"
   >

@@ -1,7 +1,7 @@
 import { ServiceService } from 'src/app/services/service.service';
 import { FirestoreService } from './../../services/firestore.service';
 import { Component, Input, OnInit } from '@angular/core';
-import { ModalController } from '@ionic/angular';
+import { ModalController } from 'src/app/services/modal.service';
 import { arrayUnion, collection, doc, Timestamp } from 'firebase/firestore';
 import { STATUS_OPTION } from 'src/app/data/data';
 import { Comment } from 'src/app/data/interfaces/firebase';

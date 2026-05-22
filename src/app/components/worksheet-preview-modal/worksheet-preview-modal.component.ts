@@ -1,9 +1,9 @@
 import { Component, Input, OnInit, ViewChild, ElementRef } from '@angular/core';
-import { ModalController } from '@ionic/angular';
+import { ModalController } from 'src/app/services/modal.service';
 import { DragRef, Point, CdkDragEnd } from '@angular/cdk/drag-drop';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
-import { ToastController } from '@ionic/angular';
+import { ToastController } from 'src/app/services/service.service';
 
 @Component({
   selector: 'app-worksheet-preview-modal',
@@ -217,6 +217,8 @@ export class WorksheetPreviewModalComponent implements OnInit {
   dismiss() {
     this.modalController.dismiss();
   }
+
+  closeModal() { this.modalController.dismiss(); }
 
   async confirmSave() {
     this.modalController.dismiss({ confirmed: true });

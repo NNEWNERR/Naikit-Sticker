@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { IonicModule } from '@ionic/angular';
+
 import { QRCodeModule } from 'angularx-qrcode';
 import { LayoutsModule } from '../components/layouts/layouts.module';
 import { UiModule } from '../components/ui.module';
@@ -58,7 +58,6 @@ import {
   imports: [
     CommonModule,
     FormsModule,
-    IonicModule,
     ReactiveFormsModule,
     QRCodeModule,
     LayoutsModule,

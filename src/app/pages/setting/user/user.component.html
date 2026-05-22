@@ -17,8 +17,7 @@
 <!-- Table -->
 <div class="border-2 border-ink rounded-md overflow-x-auto md:overflow-hidden">
   <!-- Header -->
-  <div class="grid grid-cols-[44px_1fr_44px] md:grid-cols-[44px_1.5fr_1fr_1fr_44px]
-              bg-ink text-brand text-[11px] font-extrabold min-w-[360px] md:min-w-0">
+  <div class="grid grid-cols-[44px_1fr_44px] md:grid-cols-[44px_1.5fr_1fr_1fr_44px] bg-ink text-brand text-[11px] font-extrabold min-w-[360px] md:min-w-0">
     <div class="px-3 py-2.5"></div>
     <div class="px-3 py-2.5">ชื่อ</div>
     <div class="hidden md:block px-3 py-2.5">เบอร์โทร</div>
@@ -29,8 +28,7 @@
   <!-- Rows -->
   <div
     *ngFor="let u of results; let i = index"
-    class="grid grid-cols-[44px_1fr_44px] md:grid-cols-[44px_1.5fr_1fr_1fr_44px]
-           border-t border-line items-center min-w-[360px] md:min-w-0"
+    class="grid grid-cols-[44px_1fr_44px] md:grid-cols-[44px_1.5fr_1fr_1fr_44px] border-t border-line items-center min-w-[360px] md:min-w-0"
     [class.bg-surface-2]="i % 2 === 1"
     [class.bg-white]="i % 2 === 0"
   >

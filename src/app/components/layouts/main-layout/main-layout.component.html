@@ -7,7 +7,7 @@
   bottom-nav switch responsively (md breakpoint, matching the prototype's
   useIsMobile = window.innerWidth < 768).
 
-  Pages render in <ion-router-outlet> — kept (not swapped for <router-outlet>)
+  Pages render in <router-outlet> — kept (not swapped for <router-outlet>)
   so existing pages that rely on Ionic page lifecycle hooks keep working.
 -->
 <app-shell
@@ -18,5 +18,5 @@
   [hasTopbar]="false"
   (logoutRequested)="logout()"
 >
-  <ion-router-outlet id="main-content"></ion-router-outlet>
+  <router-outlet id="main-content"></router-outlet>
 </app-shell>

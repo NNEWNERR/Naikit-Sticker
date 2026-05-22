@@ -4,11 +4,20 @@
   </label>
 
   <div class="input-wrap">
-    <ion-select interface="popover" mode="md" fill="outline" [placeholder]="placeholder" [value]="value"
-      [name]="formControlName" [id]="formControlName" [multiple]="multiple" (ionChange)="onChange($event)">
-      <ion-select-option *ngFor="let option of options" [disabled]="option.disabled"
-        [value]="option">{{option.title}}</ion-select-option>
-    </ion-select>
+    <select
+      [name]="formControlName"
+      [id]="formControlName"
+      [multiple]="multiple"
+      (change)="onChange($event)"
+      class="custom-input w-full border-2 border-ink rounded-md px-3 py-2 bg-white text-body font-semibold outline-none"
+    >
+      <option [value]="null" *ngIf="!multiple && placeholder" disabled selected>{{ placeholder }}</option>
+      <option
+        *ngFor="let option of options"
+        [disabled]="option.disabled"
+        [ngValue]="option"
+      >{{ option.title }}</option>
+    </select>
     <div #childrenWrapper>
       <ng-content></ng-content>
     </div>

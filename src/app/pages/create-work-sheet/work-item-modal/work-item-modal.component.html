@@ -1,6 +1,9 @@
-<app-header title="เพิ่มรายการงาน" [modal]="true"></app-header>
+<div class="flex items-center justify-between gap-3 px-4 py-3 bg-brand border-b-[3px] border-ink">
+  <h1 class="text-h1 m-0 truncate">เพิ่มรายการงาน</h1>
+  <button type="button" (click)="closeModal()" class="btn-ghost">à¸›à¸´à¸” âœ•</button>
+</div>
 
-<ion-content class="ion-padding">
+<div class="nk-content">
   <div class="max-w-3xl mx-auto">
     <form [formGroup]="workItemForm" class="space-y-6 bg-white rounded-lg shadow-sm p-6">
       <!-- ประเภทงาน -->
@@ -137,9 +140,9 @@
       </div>
     </form>
   </div>
-</ion-content>
+</div>
 
-<ion-footer class="ion-no-border">
+<div class="nk-footer">
   <div class="p-4 bg-white border-t">
     <div class="flex justify-end space-x-4">
       <button type="button" (click)="dismiss()"
@@ -155,4 +158,4 @@
       </button>
     </div>
   </div>
-</ion-footer>
+</div>

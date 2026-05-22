@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ModalController } from '@ionic/angular';
+import { ModalController } from 'src/app/services/modal.service';
 import { Timestamp } from 'firebase/firestore';
 import { SettingAddComponent } from 'src/app/components/modals/setting-add/setting-add.component';
 import { SettingEditComponent } from 'src/app/components/modals/setting-edit/setting-edit.component';

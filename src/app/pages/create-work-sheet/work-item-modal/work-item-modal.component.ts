@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { ModalController } from '@ionic/angular';
+import { ModalController } from 'src/app/services/modal.service';
 import { v4 as uuidv4 } from 'uuid';
 
 @Component({
@@ -123,6 +123,8 @@ export class WorkItemModalComponent implements OnInit {
     dismiss() {
         this.modalController.dismiss();
     }
+
+    closeModal() { this.modalController.dismiss(); }
 
     async save() {
         if (this.workItemForm.valid) {

@@ -1,5 +1,8 @@
-<app-header [title]="title" [modal]="true"></app-header>
-<ion-content class="ion-padding">
+<div class="flex items-center justify-between gap-3 px-4 py-3 bg-brand border-b-[3px] border-ink">
+  <h1 class="text-h1 m-0 truncate">{{ title }}</h1>
+  <button type="button" (click)="closeModal()" class="btn-ghost">à¸›à¸´à¸” âœ•</button>
+</div>
+<div class="nk-content">
   <form [formGroup]="form" (ngSubmit)="submit()" [ngSwitch]="type">
     <div *ngSwitchCase="'user'">
       <app-input [parentForm]="form" label="ชื่อ" typeInput="text" formControlName="name"
@@ -40,7 +43,7 @@
         placeholder="ชื่อโครงการ"></app-input>
     </div>
   </form>
-</ion-content>
-<ion-footer class="ion-no-border ion-padding">
-  <ion-button type="submit" expand="block" (click)="submit()" [disabled]="form.invalid">บันทึก</ion-button>
-</ion-footer>
+</div>
+<div class="nk-footer">
+  <button type="submit" (click)="submit()" [disabled]="form.invalid">บันทึก</button>
+</div>

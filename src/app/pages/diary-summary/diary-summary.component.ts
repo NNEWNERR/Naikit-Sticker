@@ -4,7 +4,7 @@ import { Timestamp } from 'firebase/firestore';
 import { DESIGNER_OPTION } from 'src/app/data/data';
 import { FirestoreService } from 'src/app/services/firestore.service';
 import { WorksheetInfoComponent } from '../worksheet-info/worksheet-info.component';
-import { ModalController } from '@ionic/angular';
+import { ModalController } from 'src/app/services/modal.service';
 import { NkBadgeTone } from 'src/app/shared/components';
 
 @Component({

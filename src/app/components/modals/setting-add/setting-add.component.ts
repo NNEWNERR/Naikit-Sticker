@@ -2,7 +2,7 @@ import { initializeApp } from 'firebase/app';
 import { CommonModule } from '@angular/common';
 import { Component, Input, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, Validators } from '@angular/forms';
-import { IonicModule, ModalController } from '@ionic/angular';
+import { ModalController } from 'src/app/services/modal.service';
 import { v4 as uuidv4 } from 'uuid';
 import { FirestoreService } from 'src/app/services/firestore.service';
 import { db } from 'src/app/services/firebase-config';
@@ -84,6 +84,8 @@ export class SettingAddComponent implements OnInit {
       site_groups: ['']
     })
   }
+
+  closeModal() { this.modalController.dismiss(); }
 
   dismiss() {
     this.modalController.dismiss()

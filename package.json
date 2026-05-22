@@ -1,8 +1,7 @@
 {
   "name": "Naikit-Sticker-FE",
   "version": "0.0.1",
-  "author": "Ionic Framework",
-  "homepage": "https://ionicframework.com/",
+  "author": "Naikit",
   "packageManager": "npm@10.9.3",
   "scripts": {
     "ng": "ng",
@@ -11,8 +10,8 @@
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "lint": "ng lint",
-    "hosting:prod": "ionic build --prod && firebase deploy",
-    "app:android": "ionic build && npx cap sync android"
+    "hosting:prod": "ng build --configuration production && firebase deploy",
+    "app:android": "ng build && npx cap sync android"
   },
   "private": true,
   "dependencies": {
@@ -33,14 +32,12 @@
     "@capacitor/keyboard": "^6.0.2",
     "@capacitor/push-notifications": "^6.0.2",
     "@capacitor/status-bar": "^6.0.1",
-    "@ionic/angular": "^7.0.0",
     "angularx-qrcode": "^17.0.1",
     "axios": "^1.6.8",
     "cors": "^2.8.5",
     "dayjs": "^1.11.10",
     "firebase": "^10.14.1",
     "html2canvas": "^1.4.1",
-    "ionicons": "^7.0.0",
     "jspdf": "^2.5.2",
     "jspdf-autotable": "^3.8.4",
     "qrcode": "^1.5.3",
@@ -61,7 +58,6 @@
     "@angular/compiler-cli": "^17.0.2",
     "@angular/language-service": "^17.0.2",
     "@capacitor/cli": "^6.1.2",
-    "@ionic/angular-toolkit": "^9.0.0",
     "@types/jasmine": "~5.1.0",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",
@@ -82,5 +78,5 @@
     "tailwindcss": "^3.4.1",
     "typescript": "~5.2.2"
   },
-  "description": "An Ionic project"
+  "description": "Naikit Sticker — worksheet tracker"
 }

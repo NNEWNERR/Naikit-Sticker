@@ -1,6 +1,9 @@
-<app-header title="ตรวจสอบ" [modal]="true"></app-header>
+<div class="flex items-center justify-between gap-3 px-4 py-3 bg-brand border-b-[3px] border-ink">
+  <h1 class="text-h1 m-0 truncate">ตรวจสอบ</h1>
+  <button type="button" (click)="closeModal()" class="btn-ghost">à¸›à¸´à¸” âœ•</button>
+</div>
 
-<ion-content class="ion-padding">
+<div class="nk-content">
   <!-- PDF Export Container -->
   <div class="a4-container" #contentToExport>
     <div class="content-wrapper">
@@ -271,7 +274,7 @@
   <div class="action-buttons">
     <button type="button" (click)="exportToPDF()" class="export-button">
       <span class="button-content">
-        <ion-icon name="document-outline"></ion-icon>
+        
         Export PDF
       </span>
     </button>
@@ -284,4 +287,4 @@
       <span class="button-content">ยืนยันการบันทึก</span>
     </button>
   </div>
-</ion-content>
+</div>

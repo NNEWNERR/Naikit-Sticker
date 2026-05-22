@@ -5,7 +5,7 @@
   Designer selection still gates the data fetch (preserves existing behavior).
   See redesign/extracted/assets/541b5f48-…js for the source design.
 -->
-<ion-content class="bg-surface-2">
+<div class="nk-content bg-surface-2">
 
   <!-- ── Page header ──────────────────────────────────────────────────── -->
   <app-page-header
@@ -103,8 +103,7 @@
     <!-- ── Table ──────────────────────────────────────────────────────── -->
     <div class="bg-white border-2 border-ink rounded-lg shadow-brutal overflow-x-auto md:overflow-hidden">
 
-      <div class="grid grid-cols-[120px_1fr_80px] md:grid-cols-[130px_1.5fr_130px_110px_110px_100px_70px]
-                  bg-ink text-brand text-[11px] font-extrabold min-w-[340px] md:min-w-0">
+      <div class="grid grid-cols-[120px_1fr_80px] md:grid-cols-[130px_1.5fr_130px_110px_110px_100px_70px] bg-ink text-brand text-[11px] font-extrabold min-w-[340px] md:min-w-0">
         <div class="px-3 py-2.5">เลขใบงาน</div>
         <div class="px-3 py-2.5">ลูกค้า</div>
         <div class="hidden md:block px-3 py-2.5">สถานะ</div>
@@ -117,9 +116,7 @@
       <div
         *ngFor="let w of visibleRows; let i = index; trackBy: trackByKey"
         (click)="workSheetInfo(w)"
-        class="grid grid-cols-[120px_1fr_80px] md:grid-cols-[130px_1.5fr_130px_110px_110px_100px_70px]
-               border-t border-line items-center cursor-pointer min-w-[340px] md:min-w-0
-               transition-colors hover:bg-brand-50"
+        class="grid grid-cols-[120px_1fr_80px] md:grid-cols-[130px_1.5fr_130px_110px_110px_100px_70px] border-t border-line items-center cursor-pointer min-w-[340px] md:min-w-0 transition-colors hover:bg-brand-50"
         [class.bg-surface-2]="i % 2 === 1"
         [class.bg-white]="i % 2 === 0"
       >
@@ -145,4 +142,4 @@
       </div>
     </div>
   </div>
-</ion-content>
+</div>

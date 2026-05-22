@@ -1,7 +1,0 @@
-{
-  "name": "Naikit-Sticker-FE",
-  "integrations": {
-    "capacitor": {}
-  },
-  "type": "angular"
-}

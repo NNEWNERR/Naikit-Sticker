@@ -7,7 +7,7 @@
   FormGroup; only the visible step changes. Submit still validates the whole
   form, so the user can't skip required fields by jumping past a step.
 -->
-<ion-content class="bg-surface-2">
+<div class="nk-content bg-surface-2">
 
   <!-- ── Page header ──────────────────────────────────────────────────── -->
   <app-page-header
@@ -34,8 +34,7 @@
     <form [formGroup]="worksheetForm" novalidate>
 
       <!-- Urgency strip (always visible across steps) -->
-      <div class="bg-ink text-brand rounded-lg px-4 md:px-[18px] py-3.5 mb-5
-                  flex items-center gap-4 flex-wrap">
+      <div class="bg-ink text-brand rounded-lg px-4 md:px-[18px] py-3.5 mb-5 flex items-center gap-4 flex-wrap">
         <div class="flex-1 min-w-[160px]">
           <div class="text-[10px] font-bold tracking-[0.1em] opacity-70">JOB PRIORITY</div>
           <div class="text-[15px] font-extrabold">งานปกติ หรือ งานด่วน?</div>
@@ -44,8 +43,7 @@
           <button
             type="button"
             (click)="setUrgent(false)"
-            class="px-4 py-2 rounded-md border-2 border-brand text-body font-bold cursor-pointer
-                   transition-colors"
+            class="px-4 py-2 rounded-md border-2 border-brand text-body font-bold cursor-pointer transition-colors"
             [class.bg-brand]="!worksheetForm.get('is_urgent')?.value"
             [class.text-ink]="!worksheetForm.get('is_urgent')?.value"
             [class.text-brand]="worksheetForm.get('is_urgent')?.value"
@@ -154,8 +152,7 @@
         <!-- Table -->
         <div class="border-2 border-ink rounded-md overflow-hidden">
           <!-- Header -->
-          <div class="grid grid-cols-[1fr_90px] md:grid-cols-[36px_2fr_1.2fr_1.2fr_80px_100px_44px]
-                      bg-ink text-brand text-[11px] font-extrabold">
+          <div class="grid grid-cols-[1fr_90px] md:grid-cols-[36px_2fr_1.2fr_1.2fr_80px_100px_44px] bg-ink text-brand text-[11px] font-extrabold">
             <div class="hidden md:block px-3 py-2.5">#</div>
             <div class="px-3 py-2.5">ประเภท</div>
             <div class="hidden md:block px-3 py-2.5">ขนาด</div>
@@ -168,8 +165,7 @@
           <!-- Rows -->
           <div
             *ngFor="let item of workItems.controls; let i = index"
-            class="grid grid-cols-[1fr_90px] md:grid-cols-[36px_2fr_1.2fr_1.2fr_80px_100px_44px]
-                   border-t border-line items-center bg-white"
+            class="grid grid-cols-[1fr_90px] md:grid-cols-[36px_2fr_1.2fr_1.2fr_80px_100px_44px] border-t border-line items-center bg-white"
           >
             <div class="hidden md:block px-3 py-2.5 text-body-sm font-bold text-ink-3 font-num">{{ i + 1 }}</div>
             <div class="px-3 py-2.5">
@@ -367,4 +363,4 @@
 
     </form>
   </div>
-</ion-content>
+</div>

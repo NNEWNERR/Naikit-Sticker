@@ -4,7 +4,7 @@
   grid (clickable to filter) + brutal table.
   See redesign/extracted/assets/541b5f48-…js for the source design.
 -->
-<ion-content class="bg-surface-2">
+<div class="nk-content bg-surface-2">
 
   <!-- ── Page header ──────────────────────────────────────────────────── -->
   <app-page-header
@@ -14,8 +14,7 @@
     [yellow]="true"
   >
     <div header-right class="flex items-center gap-2">
-      <div class="hidden md:flex items-center gap-2 bg-white border-2 border-ink rounded-md
-                  px-3 py-2 shadow-brutal-sm text-body font-semibold text-ink-2">
+      <div class="hidden md:flex items-center gap-2 bg-white border-2 border-ink rounded-md px-3 py-2 shadow-brutal-sm text-body font-semibold text-ink-2">
         <span aria-hidden="true">🔍</span>
         <input
           type="search"
@@ -66,8 +65,7 @@
     <div class="bg-white border-2 border-ink rounded-lg shadow-brutal overflow-x-auto md:overflow-hidden">
 
       <!-- Header -->
-      <div class="grid grid-cols-[120px_120px_1fr_80px] md:grid-cols-[130px_130px_1.5fr_100px_100px_100px_100px_90px_80px]
-                  bg-ink text-brand text-[11px] font-extrabold min-w-[440px] md:min-w-0">
+      <div class="grid grid-cols-[120px_120px_1fr_80px] md:grid-cols-[130px_130px_1.5fr_100px_100px_100px_100px_90px_80px] bg-ink text-brand text-[11px] font-extrabold min-w-[440px] md:min-w-0">
         <div class="px-3 py-2.5">สถานะ</div>
         <div class="px-3 py-2.5">เลขใบงาน</div>
         <div class="px-3 py-2.5">ลูกค้า</div>
@@ -83,9 +81,7 @@
       <div
         *ngFor="let w of visibleRows; let i = index; trackBy: trackByKey"
         (click)="workSheetInfo(w)"
-        class="grid grid-cols-[120px_120px_1fr_80px] md:grid-cols-[130px_130px_1.5fr_100px_100px_100px_100px_90px_80px]
-               border-t border-line items-center cursor-pointer min-w-[440px] md:min-w-0
-               transition-colors hover:bg-brand-50"
+        class="grid grid-cols-[120px_120px_1fr_80px] md:grid-cols-[130px_130px_1.5fr_100px_100px_100px_100px_90px_80px] border-t border-line items-center cursor-pointer min-w-[440px] md:min-w-0 transition-colors hover:bg-brand-50"
         [class.bg-surface-2]="i % 2 === 1"
         [class.bg-white]="i % 2 === 0"
       >
@@ -120,4 +116,4 @@
       </div>
     </div>
   </div>
-</ion-content>
+</div>

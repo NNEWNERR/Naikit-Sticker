@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { ModalController } from '@ionic/angular';
+import { ModalController } from 'src/app/services/modal.service';
 import { Subscription } from 'rxjs';
 import { SESSION_STORAGE_KEY, parseSession } from 'src/app/interfaces/session.interface';
 import { FirestoreService } from 'src/app/services/firestore.service';

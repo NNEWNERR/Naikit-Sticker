@@ -1,6 +1,6 @@
 import { ServiceService } from './../../../services/service.service';
 import { Component, Input, OnInit } from '@angular/core';
-import { ModalController } from '@ionic/angular';
+import { ModalController } from 'src/app/services/modal.service';
 import { SettingAddComponent } from 'src/app/components/modals/setting-add/setting-add.component';
 import { SettingEditComponent } from 'src/app/components/modals/setting-edit/setting-edit.component';
 import { FirestoreService } from 'src/app/services/firestore.service';

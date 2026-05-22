@@ -6,7 +6,7 @@
 
   See redesign/extracted/assets/541b5f48-…js for the source design.
 -->
-<ion-content class="bg-surface-2">
+<div class="nk-content bg-surface-2">
 
   <!-- ── Page header ──────────────────────────────────────────────────── -->
   <app-page-header
@@ -260,9 +260,7 @@
           [class.mb-2.5]="!isLast"
         >
           <div
-            class="w-[26px] h-[26px] rounded-full border-[1.5px] border-ink
-                   flex items-center justify-center text-[11px] font-extrabold flex-shrink-0
-                   bg-brand-50"
+            class="w-[26px] h-[26px] rounded-full border-[1.5px] border-ink flex items-center justify-center text-[11px] font-extrabold flex-shrink-0 bg-brand-50"
           >{{ (comment.user || '?').charAt(0).toUpperCase() }}</div>
           <div class="flex-1 min-w-0">
             <div class="flex justify-between items-baseline gap-2">
@@ -336,4 +334,4 @@
       </div>
     </div>
   </div>
-</ion-content>
+</div>

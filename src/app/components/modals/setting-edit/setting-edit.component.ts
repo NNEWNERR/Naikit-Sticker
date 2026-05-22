@@ -1,6 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { FormGroup, FormBuilder, Validators } from '@angular/forms';
-import { ModalController } from '@ionic/angular';
+import { ModalController } from 'src/app/services/modal.service';
 import { collection, doc, getDoc, getDocs, query, where } from 'firebase/firestore';
 import { getColor } from 'src/app/data/interfaces/color';
 import { db } from 'src/app/services/firebase-config';
@@ -293,6 +293,8 @@ export class SettingEditComponent implements OnInit {
   dismiss() {
     this.modalController.dismiss()
   }
+
+  closeModal() { this.modalController.dismiss(); }
 
   submit() {
     switch (this.type) {

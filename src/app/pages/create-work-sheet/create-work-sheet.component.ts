@@ -1,6 +1,7 @@
 import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { ModalController, ToastController, AlertController } from '@ionic/angular';
+import { ModalController } from 'src/app/services/modal.service';
+import { ToastController, AlertController } from 'src/app/services/service.service';
 import { arrayUnion, collection } from 'firebase/firestore';
 import { db } from 'src/app/services/firebase-config';
 import { v4 as uuidv4 } from 'uuid';

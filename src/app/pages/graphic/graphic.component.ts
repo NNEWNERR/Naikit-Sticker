@@ -1,4 +1,4 @@
-import { ModalController } from '@ionic/angular';
+import { ModalController } from 'src/app/services/modal.service';
 import { Component, Input, OnInit } from '@angular/core';
 import { DESIGNER_OPTION } from 'src/app/data/data';
 

@@ -2,7 +2,7 @@ import { group } from '@angular/animations';
 import { Component, Input, OnInit } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { SafeUrl } from '@angular/platform-browser';
-import { ModalController } from '@ionic/angular';
+import { ModalController } from 'src/app/services/modal.service';
 import { FixMeLater, QRCodeElementType, QRCodeErrorCorrectionLevel } from 'angularx-qrcode';
 import * as dayjs from 'dayjs';
 import { collection, doc, getDoc, getDocs, query, where } from 'firebase/firestore';
