@@ -1,57 +1,305 @@
-<ion-content>
-  <div class="w-full h-full bg-white flex flex-col justify-center items-center">
-    <div class="h-60 w-60 rounded-full">
-      <img class="rounded-full" [src]="'../../assets/images/naikit-logo.jpg'">
-      <!-- <ion-img [src]="'../../assets/icon/logo.jpeg'"></ion-img> -->
+<!--
+  Naikit Sticker — Login screen (neo-brutalist redesign)
+  Layout: mobile-first single column with yellow hero on top, form below;
+          on md+ the hero becomes a left brand panel (46%) and the form sits
+          on a soft-grey right panel.
+  Logic preserved: username/password (default), phone+OTP (toggle), reCAPTCHA
+  container id="sign-in-button" (required by signInWithPhoneNumber).
+-->
+<div class="min-h-[100dvh] flex flex-col md:flex-row bg-[#FAFAFA] font-['IBM_Plex_Sans_Thai',sans-serif]">
+
+  <!-- ───── BRAND PANEL (mobile hero / desktop left) ───── -->
+  <aside
+    class="relative overflow-hidden bg-brand border-b-[3px] border-ink
+           md:border-b-0 md:border-r-[3px] md:w-[46%] md:min-w-[420px] md:flex-shrink-0
+           md:flex md:flex-col"
+  >
+    <!-- Dot grid pattern -->
+    <svg class="absolute inset-0 w-full h-full opacity-[0.18] pointer-events-none" aria-hidden="true">
+      <defs>
+        <pattern id="lg-dots" x="0" y="0" width="24" height="24" patternUnits="userSpaceOnUse">
+          <circle cx="2" cy="2" r="1.5" fill="#0A0A0A" />
+        </pattern>
+      </defs>
+      <rect width="100%" height="100%" fill="url(#lg-dots)" />
+    </svg>
+
+    <!-- Logo + version row -->
+    <div class="relative z-10 flex items-center gap-3 px-[22px] pt-7 pb-5 md:px-10 md:pt-7 md:pb-6
+                md:border-b-2 md:border-ink/15">
+      <div class="w-11 h-11 md:w-[52px] md:h-[52px] rounded-[10px] bg-ink text-brand
+                  flex items-center justify-center font-num font-black text-lg md:text-[22px]
+                  border-2 border-ink shadow-[3px_3px_0_rgba(0,0,0,0.2)] flex-shrink-0">
+        NK
+      </div>
+      <div class="flex flex-col">
+        <span class="text-lg md:text-xl font-black leading-none">Naikit Sticker</span>
+        <span class="text-[10px] md:text-[11px] font-bold opacity-60 tracking-[0.12em] md:tracking-[0.15em] mt-0.5">
+          WORKSHEET TRACKER
+        </span>
+      </div>
+      <span class="ml-auto bg-ink text-brand text-[10px] font-extrabold px-2 py-[3px] rounded font-num">
+        v2
+      </span>
     </div>
-    <div class="p-4">
-      <form [formGroup]="form" *ngIf="!has_user">
-        <!-- username -->
-        <app-input [parentForm]="formPhone" label="ชื่อผู้ใช้" typeInput="text" formControlName="username"
-          placeholder="ระบุชื่อผู้ใช้"></app-input>
-        <!-- password -->
-        <app-input [parentForm]="formPhone" label="รหัสผ่าน" typeInput="password" formControlName="password"
-          placeholder="ระบุรหัสผ่าน"></app-input>
-        <ion-button class="w-full" [disabled]="form.invalid" (click)="signIn()">เข้าสู่ระบบ</ion-button>
+
+    <!-- Hero copy -->
+    <div class="relative z-10 px-[22px] pb-7 md:px-10 md:pt-10 md:pb-8 md:flex-1 md:flex md:flex-col md:justify-center">
+      <div class="hidden md:inline-flex items-center gap-2.5 mb-6">
+        <div class="w-8 h-[3px] bg-ink"></div>
+        <span class="text-[11px] font-extrabold tracking-[0.2em]">OPERATIONS PLATFORM</span>
+      </div>
+
+      <div class="font-black leading-[0.92] tracking-[-0.04em] text-[38px] md:text-[72px] md:leading-[0.9] md:tracking-[-0.035em]">
+        <div>จบเรื่อง</div>
+        <div class="my-1 md:my-1.5">
+          <span class="inline-block bg-ink text-brand px-2.5 md:px-4 pt-0 pb-1 md:pb-2">กระดาษ</span>
+        </div>
+        <div>ในร้าน</div>
+      </div>
+
+      <p class="hidden md:block mt-7 max-w-[400px] py-3.5 px-[18px] bg-ink/[0.07]
+                border-l-[3px] border-ink rounded-r-md text-sm font-medium leading-[1.65]">
+        ติดตามใบงานสติกเกอร์ ไวนิล และงานพิมพ์ ตั้งแต่รับออเดอร์ ออกแบบ ผลิต จนส่งมอบ —
+        <strong>ทุกขั้นตอนในที่เดียว</strong>
+      </p>
+    </div>
+
+    <!-- Stats strip (desktop only) -->
+    <div class="hidden md:flex relative z-10 border-t-2 border-ink/15 px-10 py-4 bg-ink/[0.06]">
+      <div class="flex-1">
+        <span class="block font-num font-extrabold text-[26px] leading-none">1,247</span>
+        <span class="text-[11px] font-bold opacity-65">ใบงาน/เดือน</span>
+      </div>
+      <div class="flex-1 pl-6 ml-6 border-l-[1.5px] border-ink/20">
+        <span class="block font-num font-extrabold text-[26px] leading-none">98%</span>
+        <span class="text-[11px] font-bold opacity-65">ส่งตรงเวลา</span>
+      </div>
+      <div class="flex-1 pl-6 ml-6 border-l-[1.5px] border-ink/20">
+        <span class="block font-num font-extrabold text-[26px] leading-none">14</span>
+        <span class="text-[11px] font-bold opacity-65">คนในทีม</span>
+      </div>
+    </div>
+
+    <!-- Decorative ring (desktop) -->
+    <div class="hidden md:block absolute -bottom-20 -right-20 w-[260px] h-[260px] rounded-full
+                border-[28px] border-ink opacity-[0.07] pointer-events-none"></div>
+    <div class="hidden md:block absolute top-[120px] right-9 w-[54px] h-[54px]
+                border-[3px] border-ink opacity-[0.12] rotate-[18deg] pointer-events-none"></div>
+    <!-- Decorative ring (mobile) -->
+    <div class="md:hidden absolute -bottom-10 -right-10 w-[160px] h-[160px] rounded-full
+                border-[22px] border-ink opacity-[0.07] pointer-events-none"></div>
+  </aside>
+
+  <!-- ───── FORM PANEL ───── -->
+  <main class="flex-1 flex flex-col items-center justify-center px-[22px] py-7 md:px-14 md:py-12 bg-[#FAFAFA]">
+    <div class="w-full max-w-[380px]">
+
+      <!-- Eyebrow -->
+      <div class="flex items-center gap-2.5 mb-5">
+        <div class="w-5 h-[3px] bg-brand border border-ink"></div>
+        <span class="text-[11px] font-extrabold text-ink-3 tracking-[0.15em]">
+          SIGN IN · เข้าสู่ระบบ
+        </span>
+      </div>
+
+      <h2 class="text-[36px] font-black leading-none tracking-[-0.025em] mb-1.5">ยินดีต้อนรับ</h2>
+      <p class="text-sm font-medium text-ink-3 mb-8">เข้าสู่ระบบเพื่อจัดการใบงานของคุณ</p>
+
+      <!-- ── Username + Password form ── -->
+      <form
+        *ngIf="mode === 'password'"
+        [formGroup]="form"
+        (ngSubmit)="signIn()"
+        novalidate
+      >
+        <app-field label="USERNAME · ชื่อผู้ใช้" [required]="true">
+          <div class="input-brutal focus-ring flex items-center gap-2.5">
+            <span class="opacity-40 text-base" aria-hidden="true">👤</span>
+            <input
+              type="text"
+              formControlName="username"
+              placeholder="ระบุชื่อผู้ใช้"
+              autocomplete="username"
+              class="flex-1 bg-transparent border-0 outline-none text-[15px] font-semibold placeholder:text-ink-4 placeholder:font-medium"
+            />
+          </div>
+        </app-field>
+
+        <div class="h-3.5"></div>
+
+        <app-field label="PASSWORD · รหัสผ่าน" [required]="true">
+          <div class="input-brutal focus-ring flex items-center gap-2.5">
+            <span class="opacity-40 text-base" aria-hidden="true">🔒</span>
+            <input
+              [type]="showPw ? 'text' : 'password'"
+              formControlName="password"
+              placeholder="ระบุรหัสผ่าน"
+              autocomplete="current-password"
+              class="flex-1 bg-transparent border-0 outline-none text-[15px] font-semibold placeholder:text-ink-4 placeholder:font-medium tracking-wider"
+            />
+            <button
+              type="button"
+              (click)="showPw = !showPw"
+              class="text-[11px] font-extrabold text-ink-3 tracking-[0.1em] select-none cursor-pointer bg-transparent border-0"
+              [attr.aria-label]="showPw ? 'ซ่อนรหัสผ่าน' : 'แสดงรหัสผ่าน'"
+            >
+              {{ showPw ? 'HIDE' : 'SHOW' }}
+            </button>
+          </div>
+        </app-field>
+
+        <!-- Remember me -->
+        <label class="flex items-center gap-2.5 mt-3 mb-7 cursor-pointer select-none">
+          <input type="checkbox" [(ngModel)]="remember" [ngModelOptions]="{standalone: true}" class="sr-only peer" />
+          <span
+            class="w-[18px] h-[18px] rounded border-2 border-ink bg-white
+                   flex items-center justify-center text-[11px] font-black flex-shrink-0
+                   peer-checked:bg-brand peer-focus-visible:shadow-[0_0_0_3px_rgba(255,212,0,0.6)]"
+            aria-hidden="true"
+          >{{ remember ? '✓' : '' }}</span>
+          <span class="text-[13px] font-semibold text-ink-2">จำฉันไว้ในอุปกรณ์นี้</span>
+        </label>
+
+        <app-button
+          variant="primary"
+          size="lg"
+          type="submit"
+          [block]="true"
+          [disabled]="form.invalid"
+        >
+          เข้าสู่ระบบ
+          <span class="bg-ink text-brand text-sm font-black px-2.5 py-0.5 rounded ml-1">→</span>
+        </app-button>
+
+        <button
+          type="button"
+          (click)="switchMode('phone')"
+          class="block w-full text-center mt-4 text-[12px] font-bold text-ink-3 hover:text-ink underline underline-offset-2 bg-transparent border-0 cursor-pointer"
+        >
+          เข้าสู่ระบบด้วยเบอร์โทร (OTP)
+        </button>
       </form>
 
-      <!-- <form [formGroup]="formOTP" *ngIf="has_user">
+      <!-- ── Phone (OTP step 1: request) ── -->
+      <form
+        *ngIf="mode === 'phone' && !has_user"
+        [formGroup]="formPhone"
+        (ngSubmit)="submitPhone()"
+        novalidate
+      >
+        <app-field label="PHONE · เบอร์โทรศัพท์" [required]="true">
+          <div class="input-brutal focus-ring flex items-center gap-2.5">
+            <span class="opacity-40 text-base" aria-hidden="true">📱</span>
+            <input
+              type="tel"
+              inputmode="numeric"
+              formControlName="phone"
+              placeholder="08X-XXX-XXXX"
+              autocomplete="tel"
+              class="flex-1 bg-transparent border-0 outline-none text-[15px] font-semibold font-num placeholder:text-ink-4 placeholder:font-medium tracking-wide"
+            />
+          </div>
+        </app-field>
 
-        <app-input [parentForm]="formOTP" label="OTP" typeInput="tel" formControlName="otp"
-          placeholder="ระบุรหัส OTP"></app-input>
+        <div class="h-7"></div>
 
-        <ion-button class="w-full" [disabled]="formOTP.invalid" (click)="submitOTP()">ยืนยัน</ion-button>
+        <app-button
+          variant="primary"
+          size="lg"
+          type="submit"
+          [block]="true"
+          [disabled]="formPhone.invalid"
+        >
+          ขอรหัส OTP
+          <span class="bg-ink text-brand text-sm font-black px-2.5 py-0.5 rounded ml-1">→</span>
+        </app-button>
 
-      </form> -->
-    </div>
-    <!-- <div class="w-full text-center justify-center flex-row p-6">
-      <img src="https://ionicframework.com/docs/img/demos/card-media.png" class="w-1/2 py-5">
-      <div class="text-lg font-bold text-blue-500 mb-6">
-        <ion-label>ระบบติดตามเครื่องมือและอุปกรณ์</ion-label>
+        <button
+          type="button"
+          (click)="switchMode('password')"
+          class="block w-full text-center mt-4 text-[12px] font-bold text-ink-3 hover:text-ink underline underline-offset-2 bg-transparent border-0 cursor-pointer"
+        >
+          กลับไปเข้าสู่ระบบด้วยรหัสผ่าน
+        </button>
+      </form>
+
+      <!-- ── Phone (OTP step 2: verify) ── -->
+      <form
+        *ngIf="mode === 'phone' && has_user"
+        [formGroup]="formOTP"
+        (ngSubmit)="submitOTP()"
+        novalidate
+      >
+        <app-field label="OTP · รหัสยืนยัน" [required]="true" hint="6 หลัก">
+          <div class="input-brutal focus-ring flex items-center gap-2.5">
+            <span class="opacity-40 text-base" aria-hidden="true">🔢</span>
+            <input
+              type="tel"
+              inputmode="numeric"
+              maxlength="6"
+              formControlName="otp"
+              placeholder="••••••"
+              autocomplete="one-time-code"
+              class="flex-1 bg-transparent border-0 outline-none text-[15px] font-semibold font-num placeholder:text-ink-4 placeholder:font-medium tracking-[0.4em]"
+            />
+          </div>
+        </app-field>
+
+        <div class="h-7"></div>
+
+        <app-button
+          variant="primary"
+          size="lg"
+          type="submit"
+          [block]="true"
+          [disabled]="formOTP.invalid"
+        >
+          ยืนยัน OTP
+          <span class="bg-ink text-brand text-sm font-black px-2.5 py-0.5 rounded ml-1">→</span>
+        </app-button>
+
+        <button
+          type="button"
+          (click)="resetPhoneFlow()"
+          class="block w-full text-center mt-4 text-[12px] font-bold text-ink-3 hover:text-ink underline underline-offset-2 bg-transparent border-0 cursor-pointer"
+        >
+          เปลี่ยนเบอร์โทร
+        </button>
+      </form>
+
+      <!-- ── Help divider + tip ── -->
+      <div class="flex items-center gap-3 mt-6 mb-4">
+        <div class="flex-1 h-[1.5px] bg-line"></div>
+        <span class="text-[11px] font-bold text-ink-4 tracking-[0.1em]">ความช่วยเหลือ</span>
+        <div class="flex-1 h-[1.5px] bg-line"></div>
       </div>
-      <div class="text-base text-blue-500">
-        <ion-label>InDistinct.Co.Ltd</ion-label>
-      </div>
-    </div>
-    <div class="px-6">
-      <div *ngIf="is_send_otp === false">
-        <ion-label class="text-lg text-blue-500">หมายเลขโทรศัพท์</ion-label>
-        <input [(ngModel)]="phone" name="phone" type="tel" placeholder="ระบุหมายเลขโทรศัพท์ของคุณ"
-          class="rounded-lg border-2 border-blue-500 p-4 bg-white h-12 w-full mb-6" />
-        <div class="flex-row justify-end items-center">
-          <button (click)="LoginWithPhone(phone)" class="h-10 w-1/5 bg-blue-500 rounded-lg text-white">ต่อไป</button>
+
+      <div class="py-3 px-3.5 border-2 border-line rounded-lg bg-white flex gap-2.5 items-start">
+        <div class="w-[26px] h-[26px] rounded-md bg-brand border-[1.5px] border-ink flex items-center justify-center flex-shrink-0">
+          💡
+        </div>
+        <div>
+          <div class="text-[12px] font-extrabold mb-0.5">ลืมรหัสผ่าน?</div>
+          <div class="text-[12px] text-ink-3">
+            ติดต่อแอดมินที่ไลน์
+            <span class="font-extrabold text-ink">&#64;naikit-admin</span>
+          </div>
         </div>
       </div>
-      <div *ngIf="is_send_otp === true">
-        <ion-label class="text-base text-blue-500">OTP</ion-label>
-        <input [(ngModel)]="otp" name="otp" type="tel" placeholder="ระบุ OTP"
-          class="rounded-lg border-2 border-blue-500 p-4 bg-white h-12 w-full mb-6" />
-        <div class="flex-row justify-between items-center">
-          <ion-label class="text-base text-blue-500"></ion-label>
-          <button (click)="confirmOTP(otp)" class="h-10 w-1/5 bg-blue-500 rounded-lg text-white">ต่อไป</button>
-        </div>
+
+      <!-- Footer -->
+      <div class="text-center mt-8">
+        <span class="text-[11px] text-ink-4 font-medium">
+          Naikit Sticker · Worksheet Tracker v2 · &copy; 2026
+        </span>
       </div>
-    </div> -->
-  </div>
-  <div style="display: none;" id="sign-in-button"></div>
-</ion-content>
+    </div>
+  </main>
+
+  <!--
+    reCAPTCHA invisible container — must be a stable DOM node (not *ngIf'd)
+    because RecaptchaVerifier renders into it at runtime. Hidden but present.
+  -->
+  <div id="sign-in-button" aria-hidden="true" style="display:none"></div>
+</div>

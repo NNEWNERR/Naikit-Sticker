@@ -258,7 +258,7 @@ export class GraphicComponent implements OnInit {
       status: 'กำลังออกแบบ',
       modify: workSheet.modify + 1
     }
-    this.firestoreService.updateDatatoFirebase(docRef, data);
+    this.firestoreService.safeUpdate(docRef, data);
   }
 
   confirmWorkSheet(workSheet) {
@@ -267,7 +267,7 @@ export class GraphicComponent implements OnInit {
       status: 'คอนเฟิร์มแล้ว',
       confirm_date: new Date(),
     }
-    this.firestoreService.updateDatatoFirebase(docRef, data);
+    this.firestoreService.safeUpdate(docRef, data);
   }
 
   deliverWorkSheet(workSheet) {
@@ -276,7 +276,7 @@ export class GraphicComponent implements OnInit {
       status: 'ส่งมอบแล้ว',
       date_of_completion: new Date(),
     }
-    this.firestoreService.updateDatatoFirebase(docRef, data);
+    this.firestoreService.safeUpdate(docRef, data);
   }
 
   async acceptWorkSheet(workSheet) {
@@ -298,7 +298,7 @@ export class GraphicComponent implements OnInit {
         design_by: data,
         design_date: yesterday,
       }
-      this.firestoreService.updateDatatoFirebase(docRef, update);
+      this.firestoreService.safeUpdate(docRef, update);
     }
   }
 
@@ -344,7 +344,7 @@ export class GraphicComponent implements OnInit {
             date_of_submission: yesterday,
             design_images: images.length > 0 ? arrayUnion(...images) : []
           }
-          this.firestoreService.updateDatatoFirebase(docRef, update);
+          this.firestoreService.safeUpdate(docRef, update);
         } catch (error) {
           console.error('failed:', error);
         }
@@ -359,7 +359,7 @@ export class GraphicComponent implements OnInit {
       // วันที่ส่งไฟล์ผลิต
       date_of_send_production: new Date(),
     }
-    this.firestoreService.updateDatatoFirebase(docRef, data);
+    this.firestoreService.safeUpdate(docRef, data);
   }
 
   productingWorkSheet(workSheet) {
@@ -367,7 +367,7 @@ export class GraphicComponent implements OnInit {
     const data = {
       status: 'กำลังผลิต',
     }
-    this.firestoreService.updateDatatoFirebase(docRef, data);
+    this.firestoreService.safeUpdate(docRef, data);
   }
 
   FinishProductWorkSheet(workSheet) {
@@ -376,7 +376,7 @@ export class GraphicComponent implements OnInit {
       status: 'รอส่งมอบ',
       print_date: new Date(),
     }
-    this.firestoreService.updateDatatoFirebase(docRef, data);
+    this.firestoreService.safeUpdate(docRef, data);
   }
 
   workSheetInfo(workSheet) {

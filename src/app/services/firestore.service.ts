@@ -264,7 +264,9 @@ export class FirestoreService {
         } else {
           const data: any = [];
           for (const docs of querySnapshot.docs) {
-            data.push(docs.data());
+            // Include doc_id so the caller can build a session without exposing
+            // the password field downstream.
+            data.push({ ...docs.data(), doc_id: docs.id });
           };
           resolve(data);
         }
@@ -286,7 +288,7 @@ export class FirestoreService {
         } else {
           const data: any = [];
           for (const docs of querySnapshot.docs) {
-            data.push(docs.data());
+            data.push({ ...docs.data(), key: docs.id });
           };
           resolve(data);
         }
@@ -295,28 +297,39 @@ export class FirestoreService {
     return user;
   }
 
+  // Direct passthroughs to Firestore. Earlier this wrapped addDoc/updateDoc
+  // in `new Promise()` and swallowed errors in the .catch() — leaving the
+  // outer promise PENDING forever on failure (callers hung). Now errors
+  // propagate so callers can react (or at least log) and the happy path
+  // resolves with the underlying result.
   async addDatatoFirebase(collectionRef: any, data: any) {
-    // const querySnapshot = await getDocs(q);
-    // if (querySnapshot.empty) {
-    return new Promise<any>(async (resolve) => {
-      await addDoc(collectionRef, data).then((res) => {
-        resolve(res);
-      }).catch((error) => {
-        console.error(error);
-      });
-    });
-    // } else {
-    //   this.service.showAlert('ไม่สามารถเพิ่มงานได้', 'มีงานเวลานี้อยู่แล้ว', () => { }, { confirmOnly: true })
-    // }
+    return await addDoc(collectionRef, data);
   }
 
   async updateDatatoFirebase(collectionRef: any, data: any) {
-    return new Promise<any>(async (resolve) => {
-      await updateDoc(collectionRef, data).then((res) => {
-        resolve(res);
-      }).catch((error) => {
-        console.error(error);
-      });
+    return await updateDoc(collectionRef, data);
+  }
+
+  // Fire-and-forget convenience wrappers. The unwrapped variants above
+  // propagate errors (intentionally — callers that DO want to handle a write
+  // failure can await them). Many call sites are fire-and-forget though (UI
+  // status toggles, like-counts, soft-deletes); for those, use these
+  // helpers so an unhandled-rejection doesn't surface in prod.
+  // The error is logged with a tag so it can be filtered in Sentry / Crashlytics
+  // once observability lands. A user-facing toast is intentionally NOT shown
+  // here — most callers fire these from a button-handler that has its own
+  // success affordance (modal dismiss, status badge change) and a silent
+  // background failure should not block the UI flow. Caller can switch to
+  // the awaited variant if it needs to surface failure.
+  safeAdd(collectionRef: any, data: any): void {
+    this.addDatatoFirebase(collectionRef, data).catch((err) => {
+      console.error('[firestore] add failed', err);
+    });
+  }
+
+  safeUpdate(docOrCollectionRef: any, data: any): void {
+    this.updateDatatoFirebase(docOrCollectionRef, data).catch((err) => {
+      console.error('[firestore] update failed', err);
     });
   }
 

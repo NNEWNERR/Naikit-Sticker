@@ -15,6 +15,21 @@ import { thSarabunFont } from '../../shared/fonts/th-sarabun-font';
 import * as XLSX from 'xlsx';
 import html2canvas from 'html2canvas';
 import { WorksheetPreviewModalComponent } from '../../components/worksheet-preview-modal/worksheet-preview-modal.component';
+import { parseSession, SESSION_STORAGE_KEY } from '../../interfaces/session.interface';
+
+// File-upload safety limits. Kept here (vs constants file) so a reviewer can
+// see them next to the upload code.
+const MAX_REFERENCE_FILES = 10;
+const MAX_TOTAL_UPLOAD_BYTES = 25 * 1024 * 1024; // 25MB combined
+const MAX_SINGLE_FILE_BYTES = 10 * 1024 * 1024;  // 10MB per file
+// MIME -> allowed extensions. Used for a consistency check; this is NOT
+// magic-byte sniffing — see TODO below. A malicious client can still spoof
+// both MIME and extension, so the storage rules also enforce content-type.
+const ALLOWED_TYPES: Record<string, string[]> = {
+  'image/jpeg': ['jpg', 'jpeg'],
+  'image/png': ['png'],
+  'application/pdf': ['pdf'],
+};
 
 @Component({
   selector: 'app-create-work-sheet',
@@ -257,6 +272,23 @@ export class CreateWorkSheetComponent implements OnInit {
   referencePreviews: string[] = [];  // เพิ่มบรรทัดนี้
   referenceFiles: File[] = [];
 
+  /**
+   * Wizard step state — drives the prototype's 4-step layout. The underlying
+   * `worksheetForm` is one FormGroup; only the visible step changes. Submit
+   * still validates the whole form (any step can be invalid).
+   *
+   * 1 = ลูกค้า, 2 = รายการงาน, 3 = ชำระเงิน, 4 = ไฟล์แนบ
+   */
+  step: 1 | 2 | 3 | 4 = 1;
+  readonly stepLabels = ['ลูกค้า', 'รายการงาน', 'ชำระเงิน', 'ไฟล์แนบ'];
+  /** Arrow-fn ref passed to <app-page-header [onBack]> — preserves `this`. */
+  goBack = () => this.cancel();
+  readonly contactOptions = [
+    { value: 'หน้าร้าน', label: '🏪 หน้าร้าน' },
+    { value: 'เฟสบุ๊ค',  label: '📘 เฟสบุ๊ค' },
+    { value: 'ไลน์',     label: '💬 ไลน์' },
+    { value: 'อีเมล',    label: '📧 อีเมล' },
+  ];
 
   constructor(
     private firestoreService: FirestoreService,
@@ -274,68 +306,64 @@ export class CreateWorkSheetComponent implements OnInit {
     // this.calculateTotal();
   }
 
-  create() {
-    const date = new Date();
-    const newDate = new Date(date.setDate(date.getDate() + 1));
-    const total = 600;
-    const deposit = 600;
-    const remaining = total - deposit;
-    const data = {
-      id: uuidv4(), // รหัสงาน
-      serial_number: 'ม.ค. 001', // หมายเลขงาน
-      contact: 'ไลน์', // ช่องทางการติดต่อ
-      customer_name: 'วัดภุมรินทร์', // ชื่อลูกค้า
-      phone: '', // เบอร์โทร
-      line_name: 'พระอาจารย์ คง', // ชื่อผู้ติดต่อ
-      created_at: new Date(), // วันที่สร้าง
-      created_by: 'admin', // ผู้สร้าง
-      seller_name: 'admin', // ชื่อผู้ขาย
-      workItems: [
-        {
-          id: uuidv4(),
-          type: 'ไวนิล', // ชนิดงาน
-          height: '300', // ความสูง
-          width: '800', // ความกว้าง
-          unit_of_length: 'cm.', // หน่วย
-          option: 'ตาไก่', // หมวดหมู่
-          quantity: 2, // จํานวน
-          total: 500, // ราคาต่อหน่วย
-        },
-        {
-          id: uuidv4(),
-          type: 'สตก.', // ชนิดงาน
-          height: '30', // ความสูง
-          width: '80', // ความกว้าง
-          unit_of_length: 'cm.', // หน่วย
-          option: 'ติดฟิว', // หมวดหมู่
-          quantity: 2, // จํานวน
-          total: 500, // ราคาต่อหน่วย
-        },
-      ],
-      other: '', // งานอื่นๆ
-      payment: {
-        total: total, // ราคารวม
-        deposit: deposit, // เงินมัดจำ
-        date_of_payment: new Date(), // วันที่ชําระ
-        payment_method: 'เงินสด', // วิธีการชําระ
-        remaining: remaining, // คงเหลือ
-      },
-      status: 'รอออกแบบ',
-      remark: '', // หมายเหตุ
-      design_by: 'admin', // ผู้ออกแบบ
-      design_date: '', // วันที่รับแบบ
-      confirm_by: 'admin', // ผู้อนุมัติ
-      confirm_date: '', // วันที่อนุมัติ
-      print_by: 'admin', // ผู้พิมพ์
-      print_date: '', // วันที่พิมพ์
-      is_urgent: true, // เป็นงานด่วน
-      modify: 0,
-      date_of_acceptance: newDate, // วันที่รับงาน
-      date_of_submission: '', // วันที่ส่งแบบ
-      date_of_completion: '', // วันที่ส่งมอบงาน
-    };
-    const collectionRef = collection(db, 'jobs');
-    this.firestoreService.addDatatoFirebase(collectionRef, data)
+  // ── Wizard navigation ─────────────────────────────────────────────────────
+
+  /** Go to the next step (clamped to 4). */
+  nextStep() {
+    if (this.step < 4) this.step = (this.step + 1) as 1 | 2 | 3 | 4;
+  }
+
+  /** Go to the previous step (clamped to 1). */
+  prevStep() {
+    if (this.step > 1) this.step = (this.step - 1) as 1 | 2 | 3 | 4;
+  }
+
+  /** Allow clicking on a done/current step in the stepper to jump back. */
+  goToStep(num: number) {
+    if (num >= 1 && num <= 4 && num <= this.step) {
+      this.step = num as 1 | 2 | 3 | 4;
+    }
+  }
+
+  /** Chip handler for the ช่องทางติดต่อ row in Step 1. */
+  setContact(value: string) {
+    this.worksheetForm.get('contact')?.setValue(value);
+  }
+
+  /** Urgency strip handler — sets the `is_urgent` boolean. */
+  setUrgent(value: boolean) {
+    this.worksheetForm.get('is_urgent')?.setValue(value);
+  }
+
+  /** Count of work items — used by the Step 2 chip "N รายการ". */
+  get workItemCount(): number {
+    return this.workItems?.length ?? 0;
+  }
+
+  /** Sum of qty across all work items — shown in the table footer. */
+  get workItemQtyTotal(): number {
+    let total = 0;
+    for (let i = 0; i < this.workItemCount; i++) {
+      const v = this.workItems.at(i).value;
+      total += Number(v?.quantity) || 0;
+    }
+    return total;
+  }
+
+  /** Sum of total across all work items — shown in the table footer. */
+  get workItemPriceTotal(): number {
+    let total = 0;
+    for (let i = 0; i < this.workItemCount; i++) {
+      const v = this.workItems.at(i).value;
+      total += Number(v?.total) || 0;
+    }
+    return total;
+  }
+
+  /** คงเหลือ = total - deposit, used by Step 3 payment summary. */
+  get paymentRemaining(): number {
+    const p = this.worksheetForm.get('payment')?.value || {};
+    return (Number(p.total) || 0) - (Number(p.deposit) || 0);
   }
 
   private async saveJob(data: Job): Promise<void> {
@@ -380,7 +408,7 @@ export class CreateWorkSheetComponent implements OnInit {
       reference_images: [[]],
       status: ['รอออกแบบ'],
       created_at: [new Date()],
-      created_by: ['admin'],
+      created_by: [this.getCurrentUsername()],
       design_date: [''],
       confirm_by: [''],
       confirm_date: [''],
@@ -572,9 +600,43 @@ export class CreateWorkSheetComponent implements OnInit {
   }
 
   private isValidFile(file: File): boolean {
-    const validTypes = ['image/jpeg', 'image/png', 'application/pdf'];
-    const maxSize = 10 * 1024 * 1024; // 10MB
-    return validTypes.includes(file.type) && file.size <= maxSize;
+    if (file.size <= 0 || file.size > MAX_SINGLE_FILE_BYTES) return false;
+    const allowedExts = ALLOWED_TYPES[file.type];
+    if (!allowedExts) return false;
+    // Extension must match the MIME family. Real magic-byte sniffing requires
+    // reading the file header (e.g. via FileReader) — leaving as a follow-up.
+    // TODO(A4-followup): add async magic-byte sniff for at least JPEG/PNG/PDF.
+    const dotIdx = file.name.lastIndexOf('.');
+    if (dotIdx < 0) return false;
+    const ext = file.name.slice(dotIdx + 1).toLowerCase();
+    return allowedExts.includes(ext);
+  }
+
+  /**
+   * Sanitize a string to be safe for use as a Cloud Storage path segment.
+   * Strips path separators, parent-dir traversal, leading dots, and control
+   * characters; whitelists [A-Za-z0-9_-] plus the Thai Unicode block
+   * (U+0E00..U+0E7F) so Thai month names / serial numbers survive intact.
+   * Returns 'unknown' if nothing is left.
+   */
+  private sanitizePathSegment(input: string): string {
+    if (!input) return 'unknown';
+    const cleaned = input
+      // eslint-disable-next-line no-control-regex
+      .replace(/[ -]/g, '')
+      .replace(/\.\./g, '')
+      .replace(/[^A-Za-z0-9_\-฀-๿]/g, '_')
+      .replace(/^\.+/, '');
+    return cleaned.length > 0 ? cleaned.slice(0, 64) : 'unknown';
+  }
+
+  private getCurrentUsername(): string {
+    const session = parseSession(localStorage.getItem(SESSION_STORAGE_KEY));
+    if (!session) {
+      console.warn('[create-work-sheet] no session in localStorage; using "unknown" as created_by');
+      return 'unknown';
+    }
+    return session.username || session.phone || 'unknown';
   }
 
   private createPreview(file: File, type: 'worksheet' | 'reference') {
@@ -696,18 +758,52 @@ export class CreateWorkSheetComponent implements OnInit {
     try {
       const date = new Date();
       const year = date.getFullYear().toString();
-      const month_name = date.toLocaleString('th-TH', { month: 'long' });
+      const month_name = this.sanitizePathSegment(
+        date.toLocaleString('th-TH', { month: 'long' })
+      );
       const imageUrls: string[] = [];
 
-      // ถ้าเป็นใบงาน ใช้แค่ไฟล์แรก
-      const filesToUpload = type === 'worksheet' ? [files[0]] : files;
+      // Enforce upload caps. For reference uploads only — worksheet always
+      // takes a single file.
+      let filesToUpload: File[];
+      if (type === 'worksheet') {
+        filesToUpload = [files[0]];
+      } else {
+        if (files.length > MAX_REFERENCE_FILES) {
+          throw new Error(`เลือกได้สูงสุด ${MAX_REFERENCE_FILES} ไฟล์`);
+        }
+        const totalBytes = files.reduce((s, f) => s + (f.size || 0), 0);
+        if (totalBytes > MAX_TOTAL_UPLOAD_BYTES) {
+          throw new Error('ขนาดไฟล์รวมเกิน 25MB');
+        }
+        filesToUpload = files;
+      }
+
+      // Sanitize serial_number BEFORE building any storage path to prevent
+      // path-traversal (e.g. "../../" or absolute paths) via the form input.
+      const safeSerial = this.sanitizePathSegment(
+        this.worksheetForm.get('serial_number')?.value ?? ''
+      );
+      const subdir = type === 'worksheet' ? 'worksheet' : 'reference';
 
       for (const file of filesToUpload) {
-        // สร้าง path สำหรับเก็บไฟล์
-        const imagePath = `images/${year}/${month_name}/${this.worksheetForm.get('serial_number').value}/${type === 'worksheet' ? 'worksheet' : 'reference'
-          }/${file.name}`;
+        // Re-validate per file (defense in depth — handleFiles also filters,
+        // but submit() might be called with files added another way).
+        if (!this.isValidFile(file)) {
+          throw new Error(`ไฟล์ไม่ถูกต้อง: ${file.name}`);
+        }
+        // Rename: ${uuid}-${sanitized-original}. Prevents collisions and any
+        // path injection from `file.name`.
+        const safeName = this.sanitizePathSegment(
+          file.name.replace(/\.[^.]+$/, '')
+        );
+        const dotIdx = file.name.lastIndexOf('.');
+        const ext = dotIdx >= 0
+          ? this.sanitizePathSegment(file.name.slice(dotIdx + 1).toLowerCase())
+          : 'bin';
+        const finalName = `${uuidv4()}-${safeName}.${ext}`;
+        const imagePath = `images/${year}/${month_name}/${safeSerial}/${subdir}/${finalName}`;
 
-        // อัพโหลดไฟล์
         const imageUrl = await this.storageService.uploadImage(file, imagePath);
         imageUrls.push(imageUrl);
       }

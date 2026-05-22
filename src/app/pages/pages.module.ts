@@ -35,6 +35,19 @@ import { HorizontalStepProgressBarComponent } from './worksheet-info/horizontal-
 import { WorkItemModalComponent } from './create-work-sheet/work-item-modal/work-item-modal.component';
 import { WorksheetPreviewModalComponent } from '../components/worksheet-preview-modal/worksheet-preview-modal.component';
 import { DragDropModule } from '@angular/cdk/drag-drop';
+import {
+  ButtonComponent,
+  FieldComponent,
+  IconComponent,
+  PageHeaderComponent,
+  KanbanCardComponent,
+  KanbanColumnComponent,
+  StatCardComponent,
+  SegmentedComponent,
+  StepProgressComponent,
+  TimelineComponent,
+  BadgeComponent,
+} from '../shared/components';
 
 @NgModule({
   declarations: [
@@ -75,7 +88,20 @@ import { DragDropModule } from '@angular/cdk/drag-drop';
     QRCodeModule,
     LayoutsModule,
     UiModule,
-    DragDropModule
+    DragDropModule,
+    // Shared standalone primitives (neo-brutalist redesign) — imported here
+    // so module-declared pages (e.g. LoginComponent) can use them in templates.
+    ButtonComponent,
+    FieldComponent,
+    IconComponent,
+    PageHeaderComponent,
+    KanbanCardComponent,
+    KanbanColumnComponent,
+    StatCardComponent,
+    SegmentedComponent,
+    StepProgressComponent,
+    TimelineComponent,
+    BadgeComponent,
   ],
   exports: [
     LoginComponent

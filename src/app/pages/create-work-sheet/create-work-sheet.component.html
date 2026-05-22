@@ -1,390 +1,370 @@
-<app-header title="ใบสั่งงาน"></app-header>
-<ion-content class="ion-padding">
-  <div class="min-h-screen bg-gray-50">
-    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
-      <!-- Header -->
-      <div class="mb-6">
-        <h1 class="text-2xl font-bold text-gray-900">ใบสั่งงาน</h1>
-        <p class="text-sm text-gray-600">กรุณากรอกข้อมูลให้ครบถ้วน</p>
+<!--
+  Create Worksheet — neo-brutalist 4-step wizard.
+  Replaces the previous single-form layout with the prototype's stepper
+  (redesign/extracted/assets/534698ed-…js).
+
+  All existing form bindings are preserved verbatim — `worksheetForm` is one
+  FormGroup; only the visible step changes. Submit still validates the whole
+  form, so the user can't skip required fields by jumping past a step.
+-->
+<ion-content class="bg-surface-2">
+
+  <!-- ── Page header ──────────────────────────────────────────────────── -->
+  <app-page-header
+    breadcrumb="CREATE · สร้างใบงานใหม่"
+    title="สร้างใบงาน"
+    [yellow]="true"
+    [onBack]="goBack"
+  >
+    <div header-right class="flex items-center gap-1.5 text-body-sm font-semibold">
+      <span class="w-2 h-2 rounded-full bg-accent inline-block" aria-hidden="true"></span>
+      <span class="hidden md:inline">บันทึกอัตโนมัติ</span>
+    </div>
+  </app-page-header>
+
+  <!-- ── Stepper ──────────────────────────────────────────────────────── -->
+  <app-step-progress
+    [steps]="stepLabels"
+    [current]="step"
+    (stepClick)="goToStep($event)"
+  ></app-step-progress>
+
+  <!-- ── Form body ────────────────────────────────────────────────────── -->
+  <div class="px-4 md:px-6 py-5 max-w-[1100px] mx-auto w-full">
+    <form [formGroup]="worksheetForm" novalidate>
+
+      <!-- Urgency strip (always visible across steps) -->
+      <div class="bg-ink text-brand rounded-lg px-4 md:px-[18px] py-3.5 mb-5
+                  flex items-center gap-4 flex-wrap">
+        <div class="flex-1 min-w-[160px]">
+          <div class="text-[10px] font-bold tracking-[0.1em] opacity-70">JOB PRIORITY</div>
+          <div class="text-[15px] font-extrabold">งานปกติ หรือ งานด่วน?</div>
+        </div>
+        <div class="flex gap-2">
+          <button
+            type="button"
+            (click)="setUrgent(false)"
+            class="px-4 py-2 rounded-md border-2 border-brand text-body font-bold cursor-pointer
+                   transition-colors"
+            [class.bg-brand]="!worksheetForm.get('is_urgent')?.value"
+            [class.text-ink]="!worksheetForm.get('is_urgent')?.value"
+            [class.text-brand]="worksheetForm.get('is_urgent')?.value"
+          >งานปกติ</button>
+          <button
+            type="button"
+            (click)="setUrgent(true)"
+            class="px-4 py-2 rounded-md border-2 text-body font-extrabold cursor-pointer transition-all"
+            style="border-color:#E63946;color:#FFD400;"
+            [style.background]="worksheetForm.get('is_urgent')?.value ? '#E63946' : 'transparent'"
+            [style.boxShadow]="worksheetForm.get('is_urgent')?.value ? '2px 2px 0 #FFD400' : 'none'"
+          >⚡ ด่วน</button>
+        </div>
       </div>
 
-      <form [formGroup]="worksheetForm" class="space-y-8 bg-white rounded-lg shadow-sm p-6">
-        <!-- ประเภทงาน -->
-        <div class="flex items-center space-x-8 mb-6">
-          <label class="relative flex items-center group cursor-pointer">
-            <input type="radio" formControlName="is_urgent" [value]="false" class="peer sr-only" />
-            <div
-              class="w-11 h-6 bg-gray-200 rounded-full peer-checked:bg-blue-600 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all">
-            </div>
-            <span class="ml-3 text-gray-700 group-hover:text-gray-900">งานปกติ</span>
-          </label>
-
-          <label class="relative flex items-center group cursor-pointer">
-            <input type="radio" formControlName="is_urgent" [value]="true" class="peer sr-only" />
-            <div
-              class="w-11 h-6 bg-gray-200 rounded-full peer-checked:bg-red-600 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all">
-            </div>
-            <span class="ml-3 text-gray-700 group-hover:text-gray-900">งานด่วน</span>
-          </label>
+      <!-- ━━━ STEP 1 · ข้อมูลลูกค้า ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+      <div *ngIf="step === 1" class="bg-white border-2 border-ink rounded-lg p-5 md:p-[22px] shadow-brutal">
+        <div class="flex items-center gap-2.5 mb-5">
+          <div class="w-7 h-7 rounded-md bg-brand border-2 border-ink flex items-center justify-center text-body-lg font-extrabold">1</div>
+          <h3 class="text-h3 m-0">ข้อมูลลูกค้า · Customer Info</h3>
         </div>
 
-        <!-- เลขที่ใบงานและผู้ขาย -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <!-- เลขที่ใบงาน -->
-          <div class="space-y-2">
-            <label class="block text-sm font-medium text-gray-700">
-              เลขที่ใบงาน <span class="text-red-500">*</span>
-            </label>
-            <input type="text" formControlName="serial_number"
-              class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-500 transition duration-200"
-              [class.border-red-500]="isFieldInvalid('serial_number')" placeholder="กรุณากรอกเลขที่ใบงาน" />
-            <p *ngIf="isFieldInvalid('serial_number')" class="text-sm text-red-500">
-              กรุณากรอกเลขที่ใบงาน
-            </p>
-          </div>
-
-          <!-- ผู้ขาย -->
-          <div class="space-y-2">
-            <label class="block text-sm font-medium text-gray-700">
-              ผู้ขาย <span class="text-red-500">*</span>
-            </label>
-            <select formControlName="seller_name"
-              class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-500 transition duration-200"
-              [class.border-red-500]="isFieldInvalid('seller_name')">
+        <!-- Serial + seller + accept date -->
+        <div class="grid grid-cols-1 md:grid-cols-[180px_1fr_1fr] gap-3.5 mb-3.5">
+          <app-field label="เลขใบงาน" [required]="true" [error]="isFieldInvalid('serial_number') ? 'กรุณากรอกเลขที่ใบงาน' : ''">
+            <input
+              type="text"
+              formControlName="serial_number"
+              class="input-base focus-ring w-full font-num font-bold"
+              placeholder="NK-…"
+            />
+          </app-field>
+          <app-field label="ผู้ขาย" [required]="true" [error]="isFieldInvalid('seller_name') ? 'กรุณาเลือกผู้ขาย' : ''">
+            <select formControlName="seller_name" class="input-base focus-ring w-full font-semibold">
               <option value="">เลือกผู้ขาย</option>
-              <option *ngFor="let seller of sellers" [value]="seller.value">
-                {{seller.label}}
-              </option>
+              <option *ngFor="let s of sellers" [value]="s.value">{{ s.label }}</option>
             </select>
-            <p *ngIf="isFieldInvalid('seller_name')" class="text-sm text-red-500">
-              กรุณาเลือกผู้ขาย
-            </p>
+          </app-field>
+          <app-field label="วันรับงาน" [required]="true" [error]="isFieldInvalid('date_of_acceptance') ? 'กรุณาเลือกวันรับงาน' : ''">
+            <input
+              type="date"
+              formControlName="date_of_acceptance"
+              class="input-base focus-ring w-full font-num font-semibold"
+            />
+          </app-field>
+        </div>
+
+        <!-- Contact chips -->
+        <div class="mb-3.5">
+          <label class="block text-body-sm font-extrabold mb-2">ช่องทางติดต่อ <span class="text-danger">*</span></label>
+          <div class="flex gap-2 flex-wrap">
+            <button
+              *ngFor="let c of contactOptions"
+              type="button"
+              (click)="setContact(c.value)"
+              class="px-3.5 py-2 rounded-md border-2 border-ink text-body font-bold cursor-pointer transition-all"
+              [class.bg-brand]="worksheetForm.get('contact')?.value === c.value"
+              [class.bg-white]="worksheetForm.get('contact')?.value !== c.value"
+              [class.shadow-brutal-sm]="worksheetForm.get('contact')?.value === c.value"
+            >{{ c.label }}</button>
           </div>
         </div>
 
-        <!-- Contact Method -->
-        <div class="space-y-3">
-          <h3 class="text-lg font-semibold text-gray-900 border-b pb-2">
-            ช่องทางการติดต่อ
-          </h3>
-          <div class="flex flex-wrap gap-6">
-            <label class="relative flex items-center group cursor-pointer">
-              <input type="radio" name="contact" formControlName="contact" value="หน้าร้าน" class="peer sr-only" />
-              <div
-                class="w-11 h-6 bg-gray-200 rounded-full peer-checked:bg-yellow-600 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all">
-              </div>
-              <span class="ml-3 text-gray-700 group-hover:text-gray-900">หน้าร้าน</span>
-            </label>
+        <!-- Customer name + line + phone -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+          <app-field label="ชื่อลูกค้า" [required]="true" [error]="isFieldInvalid('customer_name') ? 'กรุณากรอกชื่อผู้สั่งงาน' : ''">
+            <input
+              type="text"
+              formControlName="customer_name"
+              class="input-base focus-ring w-full font-semibold"
+              placeholder="ชื่อลูกค้า / ร้าน"
+            />
+          </app-field>
+          <app-field label="ID ไลน์ / อีเมล">
+            <input
+              type="text"
+              formControlName="line_name"
+              class="input-base focus-ring w-full font-semibold"
+              placeholder="@brownbean"
+            />
+          </app-field>
+          <app-field label="เบอร์โทร">
+            <input
+              type="tel"
+              formControlName="phone"
+              class="input-base focus-ring w-full font-num font-semibold"
+              placeholder="08x-xxx-xxxx"
+            />
+          </app-field>
+        </div>
+      </div>
 
-            <label class="relative flex items-center group cursor-pointer">
-              <input type="radio" name="contact" formControlName="contact" value="เฟสบุ๊ค" class="peer sr-only" />
-              <div
-                class="w-11 h-6 bg-gray-200 rounded-full peer-checked:bg-blue-600 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all">
-              </div>
-              <span class="ml-3 text-gray-700 group-hover:text-gray-900">เฟสบุ๊ค</span>
-            </label>
-
-            <label class="relative flex items-center group cursor-pointer">
-              <input type="radio" name="contact" formControlName="contact" value="ไลน์" class="peer sr-only" />
-              <div
-                class="w-11 h-6 bg-gray-200 rounded-full peer-checked:bg-green-600 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all">
-              </div>
-              <span class="ml-3 text-gray-700 group-hover:text-gray-900">ไลน์</span>
-            </label>
-
-            <label class="relative flex items-center group cursor-pointer">
-              <input type="radio" name="contact" formControlName="contact" value="อีเมล" class="peer sr-only" />
-              <div
-                class="w-11 h-6 bg-gray-200 rounded-full peer-checked:bg-purple-600 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all">
-              </div>
-              <span class="ml-3 text-gray-700 group-hover:text-gray-900">อีเมล</span>
-            </label>
-          </div>
+      <!-- ━━━ STEP 2 · รายการงาน ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+      <div *ngIf="step === 2" class="bg-white border-2 border-ink rounded-lg p-5 md:p-[22px] shadow-brutal">
+        <div class="flex items-center gap-2.5 mb-5 flex-wrap">
+          <div class="w-7 h-7 rounded-md bg-brand border-2 border-ink flex items-center justify-center text-body-lg font-extrabold">2</div>
+          <h3 class="text-h3 m-0">รายการงาน · Work Items</h3>
+          <span class="bg-brand-50 border-[1.5px] border-ink px-2.5 py-0.5 rounded-full text-body-sm font-bold">
+            {{ workItemCount }} รายการ
+          </span>
+          <app-button class="ml-auto" variant="dark" size="sm" (clicked)="addWorkItem()">
+            ➕ เพิ่มรายการ
+          </app-button>
         </div>
 
-
-        <!-- Customer Information with improved validation -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div class="space-y-2">
-            <label class="block text-sm font-medium text-gray-700">
-              ชื่อผู้สั่งงาน <span class="text-red-500">*</span>
-            </label>
-            <input type="text" formControlName="customer_name"
-              class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-500 transition duration-200"
-              [class.border-red-500]="isFieldInvalid('customer_name')" placeholder="กรุณาใส่ชื่อ" />
-            <p *ngIf="isFieldInvalid('customer_name')" class="text-sm text-red-500">
-              กรุณากรอกชื่อผู้สั่งงาน
-            </p>
-          </div>
-          <div class="space-y-2">
-            <label class="block text-sm font-medium text-gray-700">
-              ไลน์/อีเมล
-            </label>
-            <input type="text" formControlName="line_name"
-              class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-500 transition duration-200"
-              placeholder="ID Line หรือ อีเมล" />
-          </div>
-          <div class="space-y-2">
-            <label class="block text-sm font-medium text-gray-700">
-              เบอร์โทรศัพท์
-            </label>
-            <input type="tel" formControlName="phone"
-              class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-500 transition duration-200"
-              placeholder="0x-xxxx-xxxx" />
-          </div>
-        </div>
-
-        <!-- Work Items Table with better organization -->
-        <div class="space-y-4">
-          <div class="flex justify-between items-center border-b pb-2">
-            <h3 class="text-lg font-semibold text-gray-900">ประเภทงาน</h3>
-            <button type="button" (click)="addWorkItem()"
-              class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-200">
-              <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
-              เพิ่มรายการ
-            </button>
+        <!-- Table -->
+        <div class="border-2 border-ink rounded-md overflow-hidden">
+          <!-- Header -->
+          <div class="grid grid-cols-[1fr_90px] md:grid-cols-[36px_2fr_1.2fr_1.2fr_80px_100px_44px]
+                      bg-ink text-brand text-[11px] font-extrabold">
+            <div class="hidden md:block px-3 py-2.5">#</div>
+            <div class="px-3 py-2.5">ประเภท</div>
+            <div class="hidden md:block px-3 py-2.5">ขนาด</div>
+            <div class="hidden md:block px-3 py-2.5">ตัวเลือก</div>
+            <div class="hidden md:block px-3 py-2.5">จำนวน</div>
+            <div class="px-3 py-2.5">ราคา</div>
+            <div class="hidden md:block px-3 py-2.5"></div>
           </div>
 
-          <div class="overflow-x-auto rounded-lg border">
-            <table class="min-w-full divide-y divide-gray-200">
-              <thead class="bg-gray-50">
-                <tr>
-                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">ลำดับ</th>
-                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">ประเภท</th>
-                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">ขนาด</th>
-                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">ตัวเลือก</th>
-                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">จำนวน</th>
-                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">ราคา</th>
-                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">จัดการ</th>
-                </tr>
-              </thead>
-              <tbody class="bg-white divide-y divide-gray-200">
-                <tr *ngFor="let item of workItems.controls; let i = index">
-                  <td class="px-4 py-3">{{ i + 1 }}</td>
-                  <td class="px-4 py-3">{{ item.value.type }}</td>
-                  <td class="px-4 py-3">{{ item.value.width }} × {{ item.value.height }} {{ item.value.unit_of_length }}
-                  </td>
-                  <td class="px-4 py-3">{{ item.value.option }}</td>
-                  <td class="px-4 py-3">{{ item.value.quantity }}</td>
-                  <td class="px-4 py-3">{{ item.value.total | number }}</td>
-                  <td class="px-4 py-3">
-                    <div class="flex space-x-2">
-                      <button (click)="editWorkItem(i)" class="text-blue-600 hover:text-blue-800">
-                        <ion-icon name="create-outline"></ion-icon>
-                      </button>
-                      <button (click)="removeWorkItem(i)" class="text-red-600 hover:text-red-800">
-                        <ion-icon name="trash-outline"></ion-icon>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- Payment Information -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <!-- ข้อมูลการชำระเงิน -->
-          <div class="space-y-2" formGroupName="payment">
-            <label class="block text-sm font-medium text-gray-700">ยอดรวม</label>
-            <div class="relative">
-              <input type="text" formControlName="total"
-                class="w-full pl-8 rounded-lg border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-500 transition duration-200"
-                placeholder="0" />
+          <!-- Rows -->
+          <div
+            *ngFor="let item of workItems.controls; let i = index"
+            class="grid grid-cols-[1fr_90px] md:grid-cols-[36px_2fr_1.2fr_1.2fr_80px_100px_44px]
+                   border-t border-line items-center bg-white"
+          >
+            <div class="hidden md:block px-3 py-2.5 text-body-sm font-bold text-ink-3 font-num">{{ i + 1 }}</div>
+            <div class="px-3 py-2.5">
+              <div class="text-body-lg font-bold">{{ item.value.type }}</div>
+              <div class="md:hidden text-[11px] text-ink-3 font-num">
+                {{ item.value.width }}×{{ item.value.height }} {{ item.value.unit_of_length }} · {{ item.value.quantity | number }} ชิ้น
+              </div>
+            </div>
+            <div class="hidden md:block px-3 py-2.5 text-body text-ink-2 font-num">
+              {{ item.value.width }}×{{ item.value.height }} {{ item.value.unit_of_length }}
+            </div>
+            <div class="hidden md:block px-3 py-2.5 text-body text-ink-2">{{ item.value.option }}</div>
+            <div class="hidden md:block px-3 py-2.5 text-body font-bold font-num">{{ item.value.quantity | number }}</div>
+            <div class="px-3 py-2.5 text-body-lg font-extrabold font-num">฿{{ item.value.total | number }}</div>
+            <div class="hidden md:flex px-3 py-2.5 gap-2 text-ink-3 text-body-lg">
+              <button type="button" (click)="editWorkItem(i)" class="cursor-pointer hover:text-ink" aria-label="แก้ไข">✏️</button>
+              <button type="button" (click)="removeWorkItem(i)" class="cursor-pointer hover:text-danger" aria-label="ลบ">🗑</button>
             </div>
           </div>
-          <div class="space-y-2" formGroupName="payment">
-            <label class="block text-sm font-medium text-gray-700">มัดจํา</label>
-            <div class="relative">
-              <input type="text" formControlName="deposit"
-                class="w-full pl-8 rounded-lg border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-500 transition duration-200"
-                placeholder="0" />
-            </div>
+
+          <!-- Empty state -->
+          <div *ngIf="workItemCount === 0" class="py-9 text-center text-body text-ink-4 font-medium border-t border-line">
+            ยังไม่มีรายการงาน — กด "เพิ่มรายการ" เพื่อเริ่ม
           </div>
-          <div class="space-y-2" formGroupName="payment">
-            <label class="block text-sm font-medium text-gray-700">ช่องทางการชำระเงิน</label>
-            <select formControlName="payment_method"
-              class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-500 transition duration-200">
+
+          <!-- Footer summary -->
+          <div *ngIf="workItemCount > 0"
+               class="px-4 py-3 bg-brand-50 border-t-2 border-ink flex justify-between items-center flex-wrap gap-2">
+            <span class="text-body font-bold text-ink-2">
+              รวม {{ workItemCount }} รายการ · <span class="font-num">{{ workItemQtyTotal | number }}</span> ชิ้น
+            </span>
+            <span class="text-[18px] font-black font-num">฿{{ workItemPriceTotal | number }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ━━━ STEP 3 · ชำระเงิน ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+      <div *ngIf="step === 3" class="bg-white border-2 border-ink rounded-lg p-5 md:p-[22px] shadow-brutal">
+        <div class="flex items-center gap-2.5 mb-5">
+          <div class="w-7 h-7 rounded-md bg-brand border-2 border-ink flex items-center justify-center text-body-lg font-extrabold">3</div>
+          <h3 class="text-h3 m-0">การชำระเงิน · Payment</h3>
+        </div>
+
+        <div formGroupName="payment" class="grid grid-cols-2 md:grid-cols-4 gap-3.5">
+          <app-field label="ยอดรวม">
+            <div class="input-base focus-ring flex items-center gap-2">
+              <span class="font-num font-bold text-ink-3">฿</span>
+              <input
+                type="number"
+                formControlName="total"
+                class="flex-1 bg-transparent border-0 outline-none font-num font-bold"
+                placeholder="0"
+              />
+            </div>
+          </app-field>
+          <app-field label="มัดจำ">
+            <div class="input-base focus-ring flex items-center gap-2">
+              <span class="font-num font-bold text-ink-3">฿</span>
+              <input
+                type="number"
+                formControlName="deposit"
+                class="flex-1 bg-transparent border-0 outline-none font-num font-bold"
+                placeholder="0"
+              />
+            </div>
+          </app-field>
+          <app-field label="คงเหลือ">
+            <div class="input-base flex items-center gap-2 bg-surface-3">
+              <span class="font-num font-bold text-ink-3">฿</span>
+              <span class="flex-1 font-num font-bold text-ink">{{ paymentRemaining | number }}</span>
+            </div>
+          </app-field>
+          <app-field label="ช่องทาง">
+            <select formControlName="payment_method" class="input-base focus-ring w-full font-semibold">
               <option value="เงินสด">เงินสด</option>
               <option value="โอน">โอนเงิน</option>
               <option value="เช็ค">เช็ค</option>
               <option value="เครดิต">เครดิต</option>
             </select>
-          </div>
-          <!-- วันนัดรับงาน (อยู่นอก payment) -->
-          <div class="space-y-2">
-            <label class="block text-sm font-medium text-gray-700">วันนัดรับงาน</label>
-            <div class="relative">
-              <input type="date" formControlName="date_of_acceptance"
-                class="w-full rounded-lg border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-500 transition duration-200" />
-            </div>
-          </div>
+          </app-field>
+        </div>
+      </div>
+
+      <!-- ━━━ STEP 4 · ไฟล์แนบ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+      <div *ngIf="step === 4" class="bg-white border-2 border-ink rounded-lg p-5 md:p-[22px] shadow-brutal">
+        <div class="flex items-center gap-2.5 mb-5">
+          <div class="w-7 h-7 rounded-md bg-brand border-2 border-ink flex items-center justify-center text-body-lg font-extrabold">4</div>
+          <h3 class="text-h3 m-0">ไฟล์แนบ · Attachments</h3>
         </div>
 
-        <!-- File Attachments with drag and drop -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
           <!-- ใบงาน -->
-          <div class="space-y-4">
-            <h3 class="text-lg font-semibold text-gray-900 border-b pb-2">
-              ใบงาน
-            </h3>
-            <div class="relative">
-              <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center"
-                [class.border-blue-500]="isWorkSheetDragging" 
-                (dragover)="onDragOver($event, 'worksheet')" 
-                (dragleave)="onDragLeave($event, 'worksheet')" 
-                (drop)="onDrop($event, 'worksheet')">
-                <input type="file" #worksheetInput
-                  accept="image/jpeg,image/png,application/pdf"
-                  (change)="onFileSelected($event, 'worksheet')"
-                  class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
-                <div class="space-y-2">
-                  <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                  </svg>
-                  <div class="text-sm text-gray-600">
-                    <label class="relative cursor-pointer text-blue-600 hover:text-blue-700">
-                      <span>อัพโหลดไฟล์ใบงาน</span>
-                    </label>
-                    <p class="text-xs text-gray-500 mt-1">
-                      PNG, JPG, PDF ขนาดไม่เกิน 10MB
-                    </p>
-                  </div>
-                </div>
-              </div>
+          <div>
+            <label class="label-mono block mb-2">ใบงาน (1 ไฟล์)</label>
+            <div
+              class="relative border-[3px] border-dashed rounded-lg p-8 text-center bg-surface-2 transition-colors"
+              [class.border-line-2]="!isWorkSheetDragging"
+              [class.border-ink]="isWorkSheetDragging"
+              [class.bg-brand-50]="isWorkSheetDragging"
+              (dragover)="onDragOver($event, 'worksheet')"
+              (dragleave)="onDragLeave($event, 'worksheet')"
+              (drop)="onDrop($event, 'worksheet')"
+            >
+              <input
+                #worksheetInput
+                type="file"
+                accept="image/jpeg,image/png,application/pdf"
+                (change)="onFileSelected($event, 'worksheet')"
+                class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              />
+              <div class="text-[36px] mb-3">📎</div>
+              <div class="text-base font-bold mb-1.5">ลากไฟล์มาวางที่นี่</div>
+              <div class="text-body text-ink-3 mb-5">รองรับ JPG, PNG, PDF (สูงสุด 10MB)</div>
+              <span class="btn-primary inline-flex">เลือกไฟล์</span>
             </div>
 
-            <!-- Preview Section -->
-            <div *ngIf="workSheetPreviews.length > 0" class="mt-4">
-              <div class="relative group rounded-lg overflow-hidden w-full max-w-xs mx-auto">
-                <img [src]="workSheetPreviews[0]" class="w-full h-48 object-cover" />
-                <div class="absolute inset-0 bg-black bg-opacity-40 opacity-0 group-hover:opacity-100 transition duration-200 flex items-center justify-center space-x-2">
-                  <button type="button" (click)="previewFile(workSheetPreviews[0], 'worksheet')"
-                    class="p-1.5 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition duration-200">
-                    <ion-icon name="eye-outline" class="w-4 h-4"></ion-icon>
-                  </button>
-                  <button type="button" (click)="removeFile(workSheetPreviews[0], 'worksheet')"
-                    class="p-1.5 bg-red-500 text-white rounded-full hover:bg-red-600 transition duration-200">
-                    <ion-icon name="trash-outline" class="w-4 h-4"></ion-icon>
-                  </button>
-                </div>
+            <div *ngIf="workSheetPreviews.length > 0" class="mt-3 grid grid-cols-2 gap-2.5">
+              <div *ngFor="let p of workSheetPreviews" class="relative border-2 border-ink rounded-md overflow-hidden shadow-brutal-sm">
+                <img [src]="p" alt="ตัวอย่างไฟล์ใบงาน" class="w-full h-32 object-cover" />
+                <button
+                  type="button"
+                  (click)="removeFile(p, 'worksheet')"
+                  class="absolute top-1 right-1 bg-white border-2 border-ink rounded-full w-7 h-7 flex items-center justify-center cursor-pointer"
+                  aria-label="ลบไฟล์"
+                >🗑</button>
               </div>
             </div>
           </div>
 
           <!-- รูปอ้างอิง -->
-          <div class="space-y-4">
-            <h3 class="text-lg font-semibold text-gray-900 border-b pb-2">
-              รูปอ้างอิงอื่นๆ
-            </h3>
-            <div class="relative">
-              <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center"
-                [class.border-blue-500]="isReferenceDragging" (dragover)="onDragOver($event, 'reference')"
-                (dragleave)="onDragLeave($event, 'reference')" (drop)="onDrop($event, 'reference')">
-                <input #referenceInput type="file" multiple (change)="onFileSelected($event, 'reference')"
-                  class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
-                <div class="space-y-2">
-                  <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                  </svg>
-                  <div class="text-sm text-gray-600">
-                    <label class="relative cursor-pointer text-blue-600 hover:text-blue-700">
-                      <span>อัพโหลดรูปอ้างอิง</span>
-                    </label>
-                    <p class="text-xs text-gray-500 mt-1">
-                      PNG, JPG, PDF ขนาดไม่เกิน 10MB
-                    </p>
-                  </div>
-                </div>
-              </div>
+          <div>
+            <label class="label-mono block mb-2">รูปอ้างอิงอื่นๆ (สูงสุด 10 ไฟล์)</label>
+            <div
+              class="relative border-[3px] border-dashed rounded-lg p-8 text-center bg-surface-2 transition-colors"
+              [class.border-line-2]="!isReferenceDragging"
+              [class.border-ink]="isReferenceDragging"
+              [class.bg-brand-50]="isReferenceDragging"
+              (dragover)="onDragOver($event, 'reference')"
+              (dragleave)="onDragLeave($event, 'reference')"
+              (drop)="onDrop($event, 'reference')"
+            >
+              <input
+                #referenceInput
+                type="file"
+                multiple
+                accept="image/jpeg,image/png,application/pdf"
+                (change)="onFileSelected($event, 'reference')"
+                class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              />
+              <div class="text-[36px] mb-3">🖼️</div>
+              <div class="text-base font-bold mb-1.5">ลากไฟล์มาวางที่นี่</div>
+              <div class="text-body text-ink-3 mb-5">PNG, JPG, PDF · ขนาดรวมไม่เกิน 25MB</div>
+              <span class="btn-primary inline-flex">เลือกไฟล์</span>
             </div>
 
-            <!-- Preview รูปอ้างอิง -->
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-              <div *ngFor="let preview of referencePreviews; let i = index"
-                class="relative group rounded-lg overflow-hidden">
-                <img [src]="preview" class="w-full h-32 object-cover" />
-                <div
-                  class="absolute inset-0 bg-black bg-opacity-40 opacity-0 group-hover:opacity-100 transition duration-200 flex items-center justify-center space-x-2">
-                  <button type="button" (click)="previewFile(preview, 'reference')"
-                    class="p-1.5 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition duration-200">
-                    <ion-icon name="eye-outline" class="w-4 h-4"></ion-icon>
-                  </button>
-                  <button type="button" (click)="removeFile(preview, 'reference')"
-                    class="p-1.5 bg-red-500 text-white rounded-full hover:bg-red-600 transition duration-200">
-                    <ion-icon name="trash-outline" class="w-4 h-4"></ion-icon>
-                  </button>
-                </div>
+            <div *ngIf="referencePreviews.length > 0" class="mt-3 grid grid-cols-2 md:grid-cols-4 gap-2.5">
+              <div *ngFor="let p of referencePreviews" class="relative border-2 border-ink rounded-md overflow-hidden shadow-brutal-sm">
+                <img [src]="p" alt="รูปอ้างอิง" class="w-full h-24 object-cover" />
+                <button
+                  type="button"
+                  (click)="removeFile(p, 'reference')"
+                  class="absolute top-1 right-1 bg-white border-2 border-ink rounded-full w-6 h-6 flex items-center justify-center cursor-pointer text-body-sm"
+                  aria-label="ลบไฟล์"
+                >🗑</button>
               </div>
             </div>
           </div>
         </div>
+      </div>
 
-        <!-- Action Buttons -->
-        <div class="flex justify-end space-x-4 pt-6 border-t">
-          <!-- ล้างแบบ -->
-          <!-- <button type="button" (click)="clearForm()"
-            class="px-6 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 transition duration-200">
-            <span class="flex items-center">
-              <ion-icon name="trash-outline" class="mr-2"></ion-icon>
-              ล้างแบบ
-            </span>
-          </button> -->
+      <!-- ━━━ NAV (sticky to form bottom) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+      <div class="flex justify-between items-center mt-5 pt-5 border-t-2 border-dashed border-line-2">
+        <app-button variant="ghost" size="md" (clicked)="step > 1 ? prevStep() : cancel()">
+          ← {{ step > 1 ? 'ย้อนกลับ' : 'ยกเลิก' }}
+        </app-button>
 
-          <!-- บันทึกแบบร่าง -->
-          <!-- <button type="button" (click)="saveDraft()"
-            class="px-6 py-2.5 border border-blue-300 text-blue-700 rounded-lg hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200">
-            <span class="flex items-center">
-              <ion-icon name="save-outline" class="mr-2"></ion-icon>
-              บันทึกแบบร่าง
-            </span>
-          </button> -->
+        <app-button
+          *ngIf="step < 4"
+          variant="primary"
+          size="md"
+          (clicked)="nextStep()"
+        >ถัดไป →</app-button>
 
-          <!-- Export PDF -->
-          <!-- <button type="button" (click)="exportToPDF()"
-            class="px-6 py-2.5 border border-green-300 text-green-700 rounded-lg hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-500 transition duration-200">
-            <span class="flex items-center">
-              <ion-icon name="document-outline" class="mr-2"></ion-icon>
-              Export PDF
-            </span>
-          </button> -->
+        <app-button
+          *ngIf="step === 4"
+          variant="dark"
+          size="md"
+          (clicked)="submit()"
+          [disabled]="!worksheetForm.valid || isSubmitting"
+        >
+          <span *ngIf="!isSubmitting">✓ บันทึกใบงาน</span>
+          <span *ngIf="isSubmitting">กำลังบันทึก...</span>
+        </app-button>
+      </div>
 
-          <!-- Export Excel -->
-          <!-- <button type="button" (click)="exportExcel()"
-            class="px-6 py-2.5 border border-yellow-300 text-yellow-700 rounded-lg hover:bg-yellow-50 focus:outline-none focus:ring-2 focus:ring-yellow-500 transition duration-200">
-            <span class="flex items-center">
-              <ion-icon name="document-outline" class="mr-2"></ion-icon>
-              Export Excel  
-            </span>
-          </button> -->
-
-          <!-- ยกเลิก -->
-          <button type="button" (click)="cancel()"
-            class="px-6 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 transition duration-200">
-            ยกเลิก
-          </button>
-
-          <!-- บันทึก -->
-          <button type="submit" (click)="submit()"
-            class="px-6 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 transition duration-200 disabled:opacity-50"
-            [disabled]="!worksheetForm.valid || isSubmitting">
-            <span class="flex items-center">
-              <svg *ngIf="isSubmitting" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none"
-                viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-                <path class="opacity-75" fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-              </svg>
-              {{ isSubmitting ? "กำลังบันทึก..." : "บันทึก" }}
-            </span>
-          </button>
-        </div>
-      </form>
-    </div>
+    </form>
   </div>
 </ion-content>

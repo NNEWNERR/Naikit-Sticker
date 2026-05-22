@@ -5,10 +5,11 @@ import { IonicModule } from '@ionic/angular';
 import { AppRoutingModule, routes } from 'src/app/app-routing.module';
 import { MainLayoutComponent } from './main-layout/main-layout.component';
 import { HeaderComponent } from './header/header.component';
+import { ShellComponent, SidebarComponent, BottomNavComponent } from 'src/app/shared/chrome';
 
 @NgModule({
   declarations: [
-    MainLayoutComponent,  
+    MainLayoutComponent,
     HeaderComponent,
   ],
   imports: [
@@ -16,6 +17,11 @@ import { HeaderComponent } from './header/header.component';
     IonicModule,
     FormsModule,
     AppRoutingModule,
+    // Redesign chrome (standalone components, imported here so the
+    // NgModule-declared MainLayoutComponent template can use them).
+    ShellComponent,
+    SidebarComponent,
+    BottomNavComponent,
   ],
   exports: [
     MainLayoutComponent,

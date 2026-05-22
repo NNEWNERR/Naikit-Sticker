@@ -1,0 +1,45 @@
+rules_version = '2';
+
+// =============================================================================
+// Naikit-Sticker Cloud Storage rules
+// -----------------------------------------------------------------------------
+// TEMPORARY rules — request.auth is null because the app uses a custom
+// localStorage session (see firestore.rules for context). These rules at
+// minimum:
+//   - cap upload size at 10MB per file
+//   - restrict content-type to image/* and application/pdf
+//   - confine writes to the application's known path pattern
+//
+// Replace `allow read: if true` with auth checks once A1 (Firebase Auth)
+// lands and the upload flow attaches the user id.
+// =============================================================================
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isAllowedContentType() {
+      return request.resource.contentType.matches('image/.*')
+          || request.resource.contentType == 'application/pdf';
+    }
+
+    function isUnderSizeCap() {
+      return request.resource.size < 10 * 1024 * 1024; // 10MB per file
+    }
+
+    // App writes follow this pattern (see create-work-sheet.component.ts:707):
+    //   images/{year}/{month}/{serial}/{worksheet|reference}/{filename}
+    match /images/{year}/{month}/{serial}/{kind}/{filename} {
+      allow read: if true;
+      allow create, update: if
+        (kind == 'worksheet' || kind == 'reference') &&
+        isAllowedContentType() &&
+        isUnderSizeCap();
+      allow delete: if false;
+    }
+
+    // Default: deny everything else.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

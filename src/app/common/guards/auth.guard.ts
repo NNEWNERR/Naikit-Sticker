@@ -14,13 +14,19 @@ export class AuthGuard {
   ) { }
   async canActivate() {
     const isLogedIn = await this.authService.SessionIsLogedIn();
-    if (isLogedIn == true) {
-      return true;
-    }
-    else {
-      // localStorage.removeItem('token');
+    if (!isLogedIn) {
       this.router.navigate(['/login']);
       return false;
     }
+    // Shape-check the stored session. A bare existence check on `token` is not
+    // enough — historically it could be a Firebase access-token string or the
+    // full user document. Anything that doesn't parse to a valid Session is
+    // treated as logged-out (helper clears localStorage on parse failure).
+    const session = this.authService.getValidSession();
+    if (!session) {
+      this.router.navigate(['/login']);
+      return false;
+    }
+    return true;
   }
 }

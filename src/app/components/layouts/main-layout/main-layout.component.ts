@@ -1,8 +1,10 @@
 import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { signOut } from 'src/app/common/constant/alert-messages';
 import { AuthService } from 'src/app/services/auth.service';
 import { FirestoreService } from 'src/app/services/firestore.service';
 import { ServiceService } from 'src/app/services/service.service';
+import { NavItem } from 'src/app/shared/chrome';
 
 @Component({
   selector: 'app-main-layout',
@@ -10,67 +12,70 @@ import { ServiceService } from 'src/app/services/service.service';
   styleUrls: ['./main-layout.component.scss'],
 })
 export class MainLayoutComponent implements OnInit {
-  public appPages = [
-    { title: 'home', url: '/naikit-sticker/home', icon: 'home' },
-    // เพิ่มใบงาน 
-    { title: 'เพิ่มใบงาน', url: '/naikit-sticker/create-work-sheet', icon: 'create' },
-    // { title: 'dashboard', url: '/naikit-sticker/dashboard', icon: 'pie-chart' },
-    // { title: 'ประวัติการจอง', url: '/naikit-sticker/history', icon: 'book' },
-    // { title: 'ตารางงาน', url: '/naikit-sticker/job-schedule', icon: 'calendar' },
-    // { title: 'ทีมงาน', url: '/naikit-sticker/work-group', icon: 'people-circle' },
-    // สรุปงาน
-    { title: 'งานทั้งหมด', url: '/naikit-sticker/all', icon: 'documents' },
-    { title: 'สรุปงานรายวัน', url: '/naikit-sticker/diary-summary', icon: 'clipboard' },
-    { title: 'ตั้งค่า', url: '/naikit-sticker/setting', icon: 'settings' },
+  /**
+   * Sidebar nav — sectioned by `section` (WORKFLOW / SYSTEM), matching the
+   * prototype's ProtoSidebar grouping. Routes preserved verbatim from the
+   * previous Ionic menu (see app-routing.module.ts).
+   *
+   * Emoji icons match the prototype 1:1; SVG icon names are also accepted by
+   * <app-sidebar> if we choose to migrate later (see icon.component.ts).
+   */
+  navItems: NavItem[] = [
+    { key: 'home', label: 'หน้าหลัก', icon: '📋', routerLink: '/naikit-sticker/home', section: 'WORKFLOW' },
+    { key: 'create', label: 'สร้างใบงาน', icon: '➕', routerLink: '/naikit-sticker/create-work-sheet', section: 'WORKFLOW' },
+    { key: 'all', label: 'งานทั้งหมด', icon: '📊', routerLink: '/naikit-sticker/all', section: 'WORKFLOW' },
+    { key: 'diary', label: 'สรุปงานรายวัน', icon: '✅', routerLink: '/naikit-sticker/diary-summary', section: 'WORKFLOW' },
+    { key: 'setting', label: 'ตั้งค่า', icon: '⚙️', routerLink: '/naikit-sticker/setting', section: 'SYSTEM' },
   ];
-  phone
+
+  /**
+   * Bottom-nav (mobile) — 3 primary tabs + a centre FAB. Matches the
+   * prototype's MobileBottomNav. The FAB navigates to create-work-sheet,
+   * sitting visually above the strip with a 2px ink shadow.
+   */
+  primaryTabs: NavItem[] = [
+    { key: 'home', label: 'งาน', icon: '📋', routerLink: '/naikit-sticker/home' },
+    { key: 'create-fab', label: 'สร้าง', icon: '➕', routerLink: '/naikit-sticker/create-work-sheet', fab: true },
+    { key: 'all', label: 'รายงาน', icon: '📊', routerLink: '/naikit-sticker/all' },
+    { key: 'setting', label: 'ตั้งค่า', icon: '⚙️', routerLink: '/naikit-sticker/setting' },
+  ];
+
+  /** Displayed in the sidebar footer. Populated from the active session. */
+  userName = '';
+  userRole = '';
+  phone = '';
+
   constructor(
     private authService: AuthService,
     private service: ServiceService,
     private firestoreService: FirestoreService,
+    private router: Router,
   ) { }
+
   async ngOnInit() {
-    // await disableNetwork(db);
     const isLogedIn = await this.authService.SessionIsLogedIn();
     if (isLogedIn == true) {
-      try {
-        // this.service.presentLoadingWithOutTime2('Loading...');
-        const token = localStorage.getItem('token');
-        const user = token ? JSON.parse(token) : null;
-        this.firestoreService.fetchDataUser(user.phone)
-      } catch (error) {
-      } finally {
-        // this.service.dismissLoading2();
+      const session = this.authService.getValidSession();
+      if (!session) {
+        // Stale/corrupt token (e.g. legacy Firebase access-token string) —
+        // helper already cleared it; force re-login.
+        console.warn('[main-layout] invalid session payload; redirecting to /login');
+        this.router.navigate(['/login']);
+        return;
       }
-      // this.firestoreService.fetchDataUser(user.phone).then(async (users) => {
-      //   // console.log('dismissLoading2');
+      // Populate sidebar footer from session.
+      this.userName = session.username || session.phone || '';
+      this.userRole = session.role || '';
+      this.phone = session.phone || '';
 
-      //   if (users.length > 0) {
-      //     const site = await this.firestoreService.fetchDataSite(users[0].project_id);
-      //     const group = await this.firestoreService.fetchDataGroup(users[0].project_id);
-      //   }
-      // });
-      // await this.authService.checkAuth().then((res) => {
-      //   if (res == true) {
-      //     const UserFormAuth = this.authService.getUserFormAuth();
-      //     this.phone = this.formatPhoneNumber(UserFormAuth.phoneNumber);
-      //     this.firestoreService.fetchDataUser(this.phone).then(async (users) => {
-      //       this.service.dismissLoading2();
-      //       if (users.length > 0) {
-      //         const site = await this.firestoreService.fetchDataSite(users[0].project_id);
-      //         const group = await this.firestoreService.fetchDataGroup(users[0].project_id);
-      //       }
-      //     });
-      //   } else {
-      //     this.authService.signout().finally(() => {
-      //       this.service.dismissLoading2();
-      //     })
-      //   }
-      // });
+      if (session.phone) {
+        this.firestoreService.fetchDataUser(session.phone);
+      }
     } else {
       this.service.dismissLoading2();
     }
   }
+
   formatPhoneNumber(phoneNumber: any) {
     if (phoneNumber.length === 12 && phoneNumber.startsWith("+66")) {
       return "0" + phoneNumber.substring(3);

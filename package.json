@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "author": "Ionic Framework",
   "homepage": "https://ionicframework.com/",
+  "packageManager": "npm@10.9.3",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",

@@ -1,10 +1,13 @@
 import { ServiceService } from 'src/app/services/service.service';
 import { FirestoreService } from './../../services/firestore.service';
 import { Component, Input, OnInit } from '@angular/core';
+import { ModalController } from '@ionic/angular';
 import { arrayUnion, collection, doc, Timestamp } from 'firebase/firestore';
 import { STATUS_OPTION } from 'src/app/data/data';
 import { Comment } from 'src/app/data/interfaces/firebase';
 import { db } from 'src/app/services/firebase-config';
+import { parseSession, SESSION_STORAGE_KEY } from 'src/app/interfaces/session.interface';
+import { TimelineStep } from 'src/app/shared/components';
 
 import { v4 as uuidv4 } from 'uuid';
 @Component({
@@ -16,6 +19,30 @@ export class WorksheetInfoComponent implements OnInit {
   @Input() workSheet: any;
   statuses = STATUS_OPTION.slice(1);
   newComment = '';
+
+  /**
+   * Mobile-only panel selector. The desktop layout shows all three side-by-side,
+   * but mobile collapses to a tab strip per the prototype.
+   */
+  mobilePanel: 'sales' | 'graphic' | 'production' = 'sales';
+
+  /**
+   * 8-status timeline shown at the top of the screen. Order + short labels
+   * match the prototype's STATUS_LIST.short (assets/541b5f48-…js).
+   */
+  readonly timelineSteps: TimelineStep[] = [
+    { key: 'รอออกแบบ',      short: 'รอแบบ' },
+    { key: 'กำลังออกแบบ',    short: 'ออกแบบ' },
+    { key: 'รอคอนเฟิร์มแบบ', short: 'คอนเฟิร์ม' },
+    { key: 'คอนเฟิร์มแล้ว',   short: 'พร้อมผลิต' },
+    { key: 'รอผลิต',         short: 'รอผลิต' },
+    { key: 'กำลังผลิต',      short: 'ผลิต' },
+    { key: 'รอส่งมอบ',       short: 'รอส่ง' },
+    { key: 'ส่งมอบแล้ว',     short: 'ส่งแล้ว' },
+  ];
+
+  /** Bound to [onBack] of <app-page-header>. */
+  goBack = () => this.dismiss();
 
   comments: Comment[] = [
     // {
@@ -37,8 +64,45 @@ export class WorksheetInfoComponent implements OnInit {
   ];
   constructor(
     private firestoreService: FirestoreService,
-    private serviceService: ServiceService
+    private serviceService: ServiceService,
+    private modalCtrl: ModalController,
   ) { }
+
+  /** Close the modal — opened from home / report. */
+  dismiss() {
+    this.modalCtrl.dismiss();
+  }
+
+  /** Mobile panel switcher — takes a loose string from the template loop. */
+  setMobilePanel(k: string) {
+    if (k === 'sales' || k === 'graphic' || k === 'production') {
+      this.mobilePanel = k;
+    }
+  }
+
+  /** คงเหลือ = ยอดรวม − มัดจำ, used by the sales panel summary. */
+  get paymentRemaining(): number {
+    const p = this.workSheet?.payment || {};
+    return (Number(p.total) || 0) - (Number(p.deposit) || 0);
+  }
+
+  /** Map workSheet.status to the BadgeComponent tone for the status pill. */
+  get badgeTone():
+    | 'status-design' | 'status-designing' | 'status-await' | 'status-confirmed'
+    | 'status-printq' | 'status-printing' | 'status-deliverq' | 'status-delivered'
+    | 'neutral' {
+    switch (this.workSheet?.status) {
+      case 'รอออกแบบ':      return 'status-design';
+      case 'กำลังออกแบบ':    return 'status-designing';
+      case 'รอคอนเฟิร์มแบบ': return 'status-await';
+      case 'คอนเฟิร์มแล้ว':   return 'status-confirmed';
+      case 'รอผลิต':         return 'status-printq';
+      case 'กำลังผลิต':      return 'status-printing';
+      case 'รอส่งมอบ':       return 'status-deliverq';
+      case 'ส่งมอบแล้ว':     return 'status-delivered';
+      default:               return 'neutral';
+    }
+  }
 
   async ngOnInit() {
     this.firestoreService.fetchCommentById(this.workSheet.id)
@@ -102,13 +166,22 @@ export class WorksheetInfoComponent implements OnInit {
     window.open(image, '_blank');
   }
 
+  private currentUsername(): string {
+    const session = parseSession(localStorage.getItem(SESSION_STORAGE_KEY));
+    if (!session) {
+      console.warn('[worksheet-info] no session; using "unknown" for comment user');
+      return 'unknown';
+    }
+    return session.username || session.phone || 'unknown';
+  }
+
   addComment() {
     this.serviceService.presentRemarkAlert('หมายเหตุ', (data) => {
       console.log(data);
       const collectionRef = collection(db, "comments");
       const comment: Comment = {
         id: uuidv4(),
-        user: 'Admin',
+        user: this.currentUsername(),
         text: data,
         date: new Date(),
         likes: 0,
@@ -117,9 +190,13 @@ export class WorksheetInfoComponent implements OnInit {
         deleted_at: null,
         replies: [],
       }
-      this.firestoreService.addDatatoFirebase(collectionRef, comment).then(() => {
-        console.log('Comment added successfully');
-      })
+      this.firestoreService.addDatatoFirebase(collectionRef, comment)
+        .then(() => {
+          console.log('Comment added successfully');
+        })
+        .catch((err) => {
+          console.error('[worksheet-info] addComment failed', err);
+        });
     });
   }
 
@@ -130,7 +207,7 @@ export class WorksheetInfoComponent implements OnInit {
     const data = {
       likes: comment.likes + 1
     }
-    this.firestoreService.updateDatatoFirebase(docRef, data)
+    this.firestoreService.safeUpdate(docRef, data);
   }
 
   deleteComment(comment: any) {
@@ -140,7 +217,7 @@ export class WorksheetInfoComponent implements OnInit {
       is_deleted: true,
       deleted_at: new Date()
     }
-    this.firestoreService.updateDatatoFirebase(docRef, data)
+    this.firestoreService.safeUpdate(docRef, data);
   }
 
   replyComment(comment: any) {
@@ -150,7 +227,7 @@ export class WorksheetInfoComponent implements OnInit {
       const comment = {
         replies: arrayUnion({
           id: uuidv4(),
-          user: 'Admin',
+          user: this.currentUsername(),
           text: data,
           date: new Date(),
           likes: 0,
@@ -158,7 +235,7 @@ export class WorksheetInfoComponent implements OnInit {
           deleted_at: null,
         }),
       }
-      this.firestoreService.updateDatatoFirebase(docRef, comment)
+      this.firestoreService.safeUpdate(docRef, comment);
     });
   }
 

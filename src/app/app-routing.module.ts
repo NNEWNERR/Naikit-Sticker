@@ -6,7 +6,6 @@ import { MainLayoutComponent } from './components/layouts/main-layout/main-layou
 import { HomeComponent } from './pages/home/home.component';
 import { LoginComponent } from './pages/login/login.component';
 import { SettingComponent } from './pages/setting/setting.component';
-import { TestComponent } from './test/test.component';
 import { ReportComponent } from './pages/report/report.component';
 import { DiarySummaryComponent } from './pages/diary-summary/diary-summary.component';
 import { CreateWorkSheetComponent } from './pages/create-work-sheet/create-work-sheet.component';
@@ -48,10 +47,6 @@ export const routes: Routes = [
     path: 'login',
     component: LoginComponent,
     canActivate: [LoggedInGuard]
-  },
-  {
-    path: 'test',
-    component: TestComponent
   }
 ];
 

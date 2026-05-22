@@ -324,9 +324,9 @@ export class SettingEditComponent implements OnInit {
       // project_id: this.firestoreService.user[0].project_id,
       group_id: '',
     }
-    this.firestoreService.updateDatatoFirebase(collectionRef, data).then(() => {
-      this.dismiss()
-    })
+    this.firestoreService.updateDatatoFirebase(collectionRef, data)
+      .then(() => this.dismiss())
+      .catch((err) => console.error('[setting-edit] editUser failed', err));
   }
 
   editSite() {
@@ -338,9 +338,9 @@ export class SettingEditComponent implements OnInit {
       // project_id: this.firestoreService.user[0].project_id,
       group_id: this.form.value.group_id,
     }
-    this.firestoreService.updateDatatoFirebase(collectionRef, data).then(() => {
-      this.dismiss()
-    })
+    this.firestoreService.updateDatatoFirebase(collectionRef, data)
+      .then(() => this.dismiss())
+      .catch((err) => console.error('[setting-edit] editSite failed', err));
   }
 
   editGroup() {
@@ -364,7 +364,7 @@ export class SettingEditComponent implements OnInit {
         const data = {
           group_id: this.group.id,
         }
-        this.firestoreService.updateDatatoFirebase(docRef, data)
+        this.firestoreService.safeUpdate(docRef, data);
       })
     }).catch((error) => {
       console.error(error);
@@ -390,9 +390,9 @@ export class SettingEditComponent implements OnInit {
       status: this.form.value.status.value,
       remark: this.form.value.remark,
     }
-    this.firestoreService.updateDatatoFirebase(collectionRef, data).then(() => {
-      this.dismiss()
-    })
+    this.firestoreService.updateDatatoFirebase(collectionRef, data)
+      .then(() => this.dismiss())
+      .catch((err) => console.error('[setting-edit] editJob failed', err));
   }
 
   setColor() {
@@ -430,7 +430,7 @@ export class SettingEditComponent implements OnInit {
       status: 'CANCELED',
     }
     this.service.showAlert('ยืนยัน', 'ยืนยันการยกเลิกงาน', () => {
-      this.firestoreService.updateDatatoFirebase(docRef, data)
+      this.firestoreService.safeUpdate(docRef, data);
     }, { confirmOnly: false }).then((result) => {
       if (result) {
         this.dismiss();
@@ -444,7 +444,7 @@ export class SettingEditComponent implements OnInit {
       status: 'REJECTED',
     }
     this.service.showAlert('ยืนยัน', 'ยืนยันการปฏิเสธงาน', () => {
-      this.firestoreService.updateDatatoFirebase(docRef, data)
+      this.firestoreService.safeUpdate(docRef, data);
     }, { confirmOnly: false });
   }
   setJob() {

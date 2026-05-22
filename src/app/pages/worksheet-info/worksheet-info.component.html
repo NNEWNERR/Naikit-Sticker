@@ -1,245 +1,338 @@
-<app-header [title]="'ใบงาน ' + workSheet.serial_number + ' ' + workSheet.customer_name" [modal]="true"></app-header>
-<ion-content class="ion-padding">
-  <app-horizontal-step-progress-bar [currentStatus]="workSheet.status"
-    class="lg:hidden"></app-horizontal-step-progress-bar>
-  <div class="w-full lg:h-full flex flex-col lg:flex-row gap-2">
-    <div class="w-full lg:w-1/3 h-full border rounded-lg p-4">
-      <div class="text-2xl">💼 ฝ่ายขาย</div>
-      <div class="text-lg flex flex-row justify-between items-center gap-4">
-        <span>สถานะ : </span>
-        <span [class]="'px-2 py-1 rounded-lg ' + selectClass(workSheet.status)">{{workSheet.status || '-'}}</span>
-      </div>
-      <div class="text-lg flex flex-row justify-between gap-4">
-        <span>ชื่อผู้ขาย : </span>
-        <span>{{workSheet.seller_name || workSheet.seller || '-'}}</span>
-      </div>
-      <div class="text-lg flex flex-row justify-between gap-4">
-        <span>เลขที่ใบงาน : </span>
-        <span>{{workSheet.serial_number || '-'}}</span>
-      </div>
-      <div class="text-lg flex flex-row justify-between gap-4">
-        <span>ชื่อลูกค้า : </span>
-        <span>{{workSheet.customer_name || '-'}}</span>
-      </div>
-      <div class="text-lg flex flex-row justify-between gap-4">
-        <span>ช่องทางติดต่อ : </span>
-        <span>{{workSheet.contact || '-'}}</span>
-      </div>
-      <div class="text-lg flex flex-row justify-between gap-4">
-        <span>เบอร์โทร : </span>
-        <span>{{workSheet.phone_number || '-'}}</span>
-      </div>
-      <div class="text-lg flex flex-row justify-between gap-4">
-        <span>ชื่อไลน์ : </span>
-        <span>{{workSheet.line_name || '-'}}</span>
-      </div>
-      <div class="text-lg flex flex-row justify-between gap-4">
-        <span>วันที่ลูกค้าสั่งงาน : </span>
-        <span>{{workSheet.created_at ? formatTimeFull(workSheet.created_at) : '-'}}</span>
-      </div>
-      <div class="text-lg flex flex-row justify-between gap-4">
-        <span>วันที่นัดรับงาน : </span>
-        <span>{{workSheet.date_of_acceptance ? formatTime(workSheet.date_of_acceptance) : '-'}}</span>
-      </div>
-      <hr class="my-2 ">
-      <div class="text-lg flex flex-row justify-between gap-4">
-        <span>ยอดทั้งหมด : </span>
-        <span>{{workSheet.payment.total || 0}}</span>
-      </div>
-      <div class="text-lg flex flex-row justify-between gap-4">
-        <div>
-          <span>มัดจํา : </span> <span class="text-red-600" *ngIf="!workSheet.payment.deposit">เครดิต
-            {{workSheet.seller_name || workSheet.seller || '-'}}</span>
-        </div>
-        <span>{{workSheet.payment.deposit || 0}}</span>
-      </div>
-      <div class="text-lg flex flex-row justify-between gap-4">
-        <span>คงเหลือ : </span>
-        <span>{{workSheet.payment.total - workSheet.payment.deposit || 0}}</span>
-      </div>
-      <hr class="my-2 ">
-      <div>
-        <span>รูปใบงาน : </span><br>
-        <img [src]="workSheet.worksheet_image || 'https://placehold.co/300x300?text=No+Image'" alt="WorkSheet Image"
-          class="w-40 h-40 object-cover border rounded-lg"
-          (click)="workSheet.worksheet_image ? openImage(workSheet.worksheet_image): ''">
-      </div>
-      <span>รูปอ้างอิง : </span><br>
-      <div class="flex overflow-x-auto space-x-4 scrollbar-hide">
-        <div *ngFor="let image of workSheet.reference_images" class="flex-shrink-0">
-          <img [src]="image || 'https://placehold.co/300x300?text=No+Image'" alt="Reference Image"
-            class="w-40 h-40 object-cover border rounded-lg" (click)="openImage(workSheet.worksheet_image)">
-        </div>
-      </div>
-      <div *ngIf="!workSheet.reference_images">
-        <img src="https://placehold.co/300x300?text=No+Image" alt="Reference Image"
-          class="w-40 h-40 object-cover border rounded-lg">
-      </div>
-    </div>
-    <div class="w-full lg:w-1/3 h-full border rounded-lg p-4">
-      <div class="text-2xl">🎨 ฝ่ายกราฟิก</div>
-      <div class="text-lg flex flex-row justify-between gap-4">
-        <span>ผู้ออกแบบ : </span>
-        <span>{{workSheet.design_by || '-'}}</span>
-      </div>
-      <div class="text-lg flex flex-row justify-between gap-4">
-        <span>วันที่รับออกแบบ : </span>
-        <span>{{workSheet.design_date ? formatTimeFull(workSheet.design_date) : '-'}}</span>
-      </div>
-      <div class="text-lg flex flex-row justify-between gap-4">
-        <span>จำนวนครั้งในการแก้ไข : </span>
-        <span>{{workSheet.modify ||'-'}}</span>
-      </div>
-      <div class="text-lg flex flex-row justify-between gap-4">
-        <span>วันที่ส่งแบบ : </span>
-        <span>{{workSheet.date_of_submission ? formatTimeFull(workSheet.date_of_submission) : '-'}}</span>
-      </div>
-      <hr class="my-2">
-      <div class="text-lg flex flex-row justify-between gap-4">
-        <span>ผู้คอนเฟิร์ม : </span>
-        <span>{{workSheet.confirm_by || '-'}}</span>
-      </div>
-      <div class="text-lg flex flex-row justify-between gap-4">
-        <span>วันที่คอนเฟิร์ม : </span>
-        <span>{{workSheet.confirm_date ? formatTimeFull(workSheet.confirm_date) : '-'}}</span>
-      </div>
-      <hr class="my-2">
-      <div class="w-full">
-        <h2 class="text-2xl font-semibold text-gray-700 mb-4">📌 รายละเอียด</h2>
-        <div class="overflow-x-auto max-h-60">
-          <table class="min-w-full bg-white border border-gray-300">
-            <thead>
-              <tr class="bg-gray-200 text-gray-700 uppercase text-sm leading-normal">
-                <th class="py-2 px-4 text-center">ลําดับ</th>
-                <th class="py-2 px-4 text-center">ประเภท</th>
-                <th class="py-2 px-4 text-center">ความสูง</th>
-                <th class="py-2 px-4 text-center">ความกว้าง</th>
-                <th class="py-2 px-4 text-center">หน่วย</th>
-                <th class="py-2 px-4 text-center">ตัวเลือก</th>
-                <th class="py-2 px-4 text-center">จำนวน</th>
-                <th class="py-2 px-4 text-right">ราคารวม (บาท)</th>
-                <th class="py-2 px-4 text-right">หมายเหตุ</th>                  
-              </tr>
-            </thead>
-            <tbody class="text-gray-600 text-sm overflow-y-auto">
-              <tr class="border-b border-gray-300 hover:bg-gray-100"
-                *ngFor="let work of workSheet.workItems; let i = index">
-                <td class="py-2 px-4 text-center">{{i+1}}</td>
-                <td class="py-2 px-4 text-center">{{work.type}}</td>
-                <td class="py-2 px-4 text-center">{{work.height}}</td>
-                <td class="py-2 px-4 text-center">{{work.width}}</td>
-                <td class="py-2 px-4 text-center">{{work.unit_of_length}}</td>
-                <td class="py-2 px-4 text-center">{{work.option}}</td>
-                <td class="py-2 px-4 text-center">{{work.quantity}}</td>
-                <td class="py-2 px-4 text-right">{{work.total}}</td>
-                <td class="py-2 px-4 text-right">{{work.remark}}</td>
-              </tr>
-            </tbody>
-            <tfoot class="w-full text-sm ">
-              <td class="py-2 px-4 text-center whitespace-nowrap">รวมทั้งหมด</td>
-              <td class="py-2 px-4 text-center whitespace-nowrap">{{workSheet.workItems ? workSheet.workItems.length: 0}}
-              </td>
-              <td class="py-2 px-4 text-center whitespace-nowrap">รายการ</td>
-            </tfoot>
-          </table>
-        </div>
-      </div>
+<!--
+  Worksheet Info — neo-brutalist redesign.
+  Replaces the previous <app-header>/3-column ion layout with the prototype's
+  page-header + 8-status timeline + 3-panel grid (sales / graphic / production)
+  + comment thread. Opened as a full-screen modal from home + report.
 
-      <hr class="my-2">
-      <span>รูปที่ออกแบบ : </span><br>
-      <div class="flex overflow-x-auto space-x-4 scrollbar-hide">
-        <div *ngFor="let image of workSheet.design_images" class="flex-shrink-0">
-          <img [src]="image.url || 'https://placehold.co/300x300?text=No+Image'" alt="Reference Image"
-            class="w-40 h-40 object-cover border rounded-lg" (click)="openImage(image.url)">
-        </div>
-      </div>
-      <div *ngIf="!workSheet.design_images">
-        <img src="https://placehold.co/300x300?text=No+Image" alt="Reference Image"
-          class="w-40 h-40 object-cover border rounded-lg">
-      </div>
+  See redesign/extracted/assets/541b5f48-…js for the source design.
+-->
+<ion-content class="bg-surface-2">
+
+  <!-- ── Page header ──────────────────────────────────────────────────── -->
+  <app-page-header
+    [breadcrumb]="'HOME · ' + (workSheet?.serial_number || '')"
+    [title]="workSheet?.serial_number || 'ใบงาน'"
+    [subtitle]="workSheet?.customer_name || ''"
+    [yellow]="true"
+    [onBack]="goBack"
+  >
+    <div header-right class="flex items-center gap-2">
+      <app-badge [tone]="badgeTone" [dot]="true">{{ workSheet?.status || '-' }}</app-badge>
     </div>
-    <div class="w-full lg:w-1/3 h-full flex flex-col justify-between gap-2">
-      <div class="border rounded-lg p-4">
-        <div class="text-2xl">📦 ฝ่ายผลิต</div>
-        <div class="text-lg flex flex-row justify-between gap-4">
-          <span>วันที่ส่งพิมพ์ : </span>
-          <span>{{workSheet.print_by || '-'}}</span>
+  </app-page-header>
+
+  <!-- ── Status timeline ──────────────────────────────────────────────── -->
+  <app-timeline
+    [steps]="timelineSteps"
+    [currentStatus]="workSheet?.status || ''"
+  ></app-timeline>
+
+  <!-- ── Mobile panel tabs ────────────────────────────────────────────── -->
+  <div class="md:hidden flex border-b-2 border-ink bg-white flex-shrink-0">
+    <button
+      *ngFor="let t of [{k:'sales', l:'💼 ขาย'}, {k:'graphic', l:'🎨 กราฟิก'}, {k:'production', l:'📦 ผลิต'}]"
+      type="button"
+      (click)="setMobilePanel(t.k)"
+      class="flex-1 px-2 py-2.5 text-body-sm font-bold cursor-pointer border-b-[3px] transition-colors"
+      [class.bg-brand]="mobilePanel === t.k"
+      [class.bg-white]="mobilePanel !== t.k"
+      [class.border-ink]="mobilePanel === t.k"
+      [class.border-transparent]="mobilePanel !== t.k"
+    >{{ t.l }}</button>
+  </div>
+
+  <!-- ── Body grid ────────────────────────────────────────────────────── -->
+  <div class="p-4 md:p-5 grid grid-cols-1 md:grid-cols-3 gap-4">
+
+    <!-- ━━━ ฝ่ายขาย ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <section
+      *ngIf="mobilePanel === 'sales'"
+      class="bg-white border-2 border-ink rounded-lg shadow-brutal overflow-hidden md:block"
+    >
+      <!-- Panel header (brand-yellow accent) -->
+      <header class="bg-brand border-b-2 border-ink px-4 py-2.5 flex items-center gap-2.5">
+        <span class="text-[18px]" aria-hidden="true">💼</span>
+        <div class="flex-1">
+          <div class="text-[10px] font-bold tracking-[0.1em] opacity-65">DEPARTMENT</div>
+          <div class="text-h3">ฝ่ายขาย</div>
         </div>
-        <div class="text-lg flex flex-row justify-between gap-4">
-          <span>ผู้พิมพ์งาน : </span>
-          <span>{{workSheet.print_by || '-'}}</span>
+        <app-badge [tone]="badgeTone" [dot]="true">{{ workSheet?.status || '-' }}</app-badge>
+      </header>
+
+      <div class="p-4 text-body">
+        <div class="flex justify-between items-center py-1.5 border-b border-dashed border-line">
+          <span class="text-ink-3 font-semibold">ผู้ขาย</span>
+          <span class="font-bold">{{ workSheet?.seller_name || workSheet?.seller || '—' }}</span>
         </div>
-        <div class="text-lg flex flex-row justify-between gap-4">
-          <span>วันที่พิมพ์ : </span>
-          <span>{{workSheet.print_date ? formatTimeFull(workSheet.print_date) : '-'}}</span>
+        <div class="flex justify-between items-center py-1.5 border-b border-dashed border-line">
+          <span class="text-ink-3 font-semibold">ช่องทาง</span>
+          <span class="font-bold">{{ workSheet?.contact || '—' }}</span>
         </div>
-        <hr class="my-2">
-        <span>รูปที่พิมพ์ : </span><br>
-        <div class="flex overflow-x-auto space-x-4 scrollbar-hide">
-          <div *ngFor="let image of workSheet.print_images" class="flex-shrink-0">
-            <img [src]="image || 'https://placehold.co/300x300?text=No+Image'" alt="Reference Image"
-              class="w-40 h-40 object-cover border rounded-lg" (click)="openImage(image)">
+        <div class="flex justify-between items-center py-1.5 border-b border-dashed border-line">
+          <span class="text-ink-3 font-semibold">เบอร์โทร</span>
+          <span class="font-bold font-num">{{ workSheet?.phone_number || workSheet?.phone || '—' }}</span>
+        </div>
+        <div class="flex justify-between items-center py-1.5 border-b border-dashed border-line">
+          <span class="text-ink-3 font-semibold">ID ไลน์</span>
+          <span class="font-bold">{{ workSheet?.line_name || '—' }}</span>
+        </div>
+        <div class="flex justify-between items-center py-1.5 border-b border-dashed border-line">
+          <span class="text-ink-3 font-semibold">วันสั่งงาน</span>
+          <span class="font-bold font-num">{{ workSheet?.created_at ? formatTimeFull(workSheet.created_at) : '—' }}</span>
+        </div>
+        <div class="flex justify-between items-center py-1.5 border-b border-dashed border-line">
+          <span class="text-ink-3 font-semibold">วันรับงาน</span>
+          <span class="font-bold font-num text-danger">{{ workSheet?.date_of_acceptance ? formatTime(workSheet.date_of_acceptance) : '—' }}</span>
+        </div>
+
+        <!-- Payment summary -->
+        <div class="mt-3 p-3 bg-brand-50 border-[1.5px] border-ink rounded-md">
+          <div class="flex justify-between text-body mb-1">
+            <span class="text-ink-3">ยอดรวม</span>
+            <span class="font-bold font-num">฿{{ (workSheet?.payment?.total || 0) | number }}</span>
+          </div>
+          <div class="flex justify-between text-body mb-1.5">
+            <span class="text-ink-3">มัดจำ</span>
+            <span class="font-bold font-num">฿{{ (workSheet?.payment?.deposit || 0) | number }}</span>
+          </div>
+          <div class="flex justify-between pt-1.5 border-t border-line-2">
+            <span class="font-bold">คงเหลือ</span>
+            <span class="text-[18px] font-black font-num">฿{{ paymentRemaining | number }}</span>
           </div>
         </div>
-        <div *ngIf="!workSheet.print_images">
-          <img src="https://placehold.co/300x300?text=No+Image" alt="Reference Image"
-            class="w-40 h-40 object-cover border rounded-lg">
+
+        <!-- Worksheet image -->
+        <div *ngIf="workSheet?.worksheet_image" class="mt-3">
+          <div class="label-mono mb-1.5">รูปใบงาน</div>
+          <img
+            [src]="workSheet.worksheet_image"
+            alt="WorkSheet"
+            class="w-full max-w-[200px] h-32 object-cover border-2 border-ink rounded-md shadow-brutal-sm cursor-pointer"
+            (click)="openImage(workSheet.worksheet_image)"
+          />
+        </div>
+
+        <!-- Reference images -->
+        <div *ngIf="workSheet?.reference_images?.length" class="mt-3">
+          <div class="label-mono mb-1.5">รูปอ้างอิง</div>
+          <div class="flex overflow-x-auto gap-2 pb-1">
+            <img
+              *ngFor="let image of workSheet.reference_images"
+              [src]="image"
+              alt="Reference"
+              class="w-24 h-24 object-cover border-2 border-ink rounded-md shadow-brutal-sm cursor-pointer flex-shrink-0"
+              (click)="openImage(image)"
+            />
+          </div>
         </div>
       </div>
-      <div class="grow border rounded-lg p-4 overflow-y-auto">
-        <div class="text-2xl pb-2 flex flex-row justify-between items-center">
-          <div>📝 หมายเหตุ</div>
-          <ion-button fill="solid" color="primary" (click)="addComment()">
-            เพิ่มหมายเหตุ
-          </ion-button>
+    </section>
+
+    <!-- ━━━ ฝ่ายกราฟิก ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <section
+      *ngIf="mobilePanel === 'graphic'"
+      class="bg-white border-2 border-ink rounded-lg shadow-brutal overflow-hidden md:block"
+    >
+      <header class="border-b-2 border-ink px-4 py-2.5 flex items-center gap-2.5" style="background:#E0F2FE;">
+        <span class="text-[18px]" aria-hidden="true">🎨</span>
+        <div class="flex-1">
+          <div class="text-[10px] font-bold tracking-[0.1em] opacity-65">DEPARTMENT</div>
+          <div class="text-h3">ฝ่ายกราฟิก</div>
         </div>
-        <div class="max-w-xl mx-auto">
+      </header>
 
-          <!-- <h2 class="text-lg font-bold mb-4">หมายเหตุ</h2> -->
+      <div class="p-4 text-body">
+        <div class="flex justify-between items-center py-1.5 border-b border-dashed border-line">
+          <span class="text-ink-3 font-semibold">ผู้ออกแบบ</span>
+          <span class="font-bold" [class.text-ink-4]="!workSheet?.design_by || workSheet.design_by === '-'">
+            {{ workSheet?.design_by && workSheet.design_by !== '-' ? workSheet.design_by : 'ยังไม่มอบหมาย' }}
+          </span>
+        </div>
+        <div class="flex justify-between items-center py-1.5 border-b border-dashed border-line">
+          <span class="text-ink-3 font-semibold">วันรับออกแบบ</span>
+          <span class="font-bold font-num">{{ workSheet?.design_date ? formatTimeFull(workSheet.design_date) : '—' }}</span>
+        </div>
+        <div class="flex justify-between items-center py-1.5 border-b border-dashed border-line">
+          <span class="text-ink-3 font-semibold">แก้ไขแล้ว</span>
+          <span class="font-bold font-num text-warn">{{ workSheet?.modify || 0 }} ครั้ง</span>
+        </div>
+        <div class="flex justify-between items-center py-1.5 border-b border-dashed border-line">
+          <span class="text-ink-3 font-semibold">ส่งแบบล่าสุด</span>
+          <span class="font-bold font-num">{{ workSheet?.date_of_submission ? formatTimeFull(workSheet.date_of_submission) : '—' }}</span>
+        </div>
+        <div class="flex justify-between items-center py-1.5 border-b border-dashed border-line">
+          <span class="text-ink-3 font-semibold">ผู้คอนเฟิร์ม</span>
+          <span class="font-bold">{{ workSheet?.confirm_by || '—' }}</span>
+        </div>
+        <div class="flex justify-between items-center py-1.5 border-b border-dashed border-line">
+          <span class="text-ink-3 font-semibold">วันคอนเฟิร์ม</span>
+          <span class="font-bold font-num">{{ workSheet?.confirm_date ? formatTimeFull(workSheet.confirm_date) : '—' }}</span>
+        </div>
 
-          <!-- กล่องป้อนหมายเหตุ -->
-          <!-- <div class="bg-white p-4 rounded-lg shadow mb-4">
-              <ion-item class="border border-gray-300 rounded-lg">
-                <ion-textarea [(ngModel)]="newComment" placeholder="เพิ่มหมายเหตุ..." rows="2"
-                  class="w-full p-2"></ion-textarea>
-              </ion-item>
-              <div class="flex justify-end mt-2">
-                <ion-button fill="solid" color="primary" (click)="addComment()">
-                  ส่ง
-                </ion-button>
-              </div>
-            </div> -->
+        <!-- Design images -->
+        <div *ngIf="workSheet?.design_images?.length" class="mt-3">
+          <div class="label-mono mb-1.5">รูปที่ออกแบบ</div>
+          <div class="flex overflow-x-auto gap-2 pb-1">
+            <img
+              *ngFor="let image of workSheet.design_images"
+              [src]="image?.url || image"
+              alt="Design"
+              class="w-28 h-28 object-cover border-2 border-ink rounded-md shadow-brutal-sm cursor-pointer flex-shrink-0"
+              (click)="openImage(image?.url || image)"
+            />
+          </div>
+        </div>
+      </div>
+    </section>
 
-          <!-- รายการหมายเหตุ -->
-          <div *ngFor="let comment of comments" class="bg-white p-4 rounded-lg shadow mb-2">
-            <div class="flex items-start">
-              <!-- Avatar -->
-              <img src="https://placehold.co/300x300?text=U" alt="User Avatar" class="w-10 h-10 rounded-full mr-3" />
+    <!-- ━━━ ฝ่ายผลิต + หมายเหตุ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <div
+      *ngIf="mobilePanel === 'production'"
+      class="flex flex-col gap-4 md:flex"
+    >
+      <!-- Production panel -->
+      <section class="bg-white border-2 border-ink rounded-lg shadow-brutal overflow-hidden">
+        <header class="border-b-2 border-ink px-4 py-2.5 flex items-center gap-2.5" style="background:#EDE9FE;">
+          <span class="text-[18px]" aria-hidden="true">📦</span>
+          <div class="flex-1">
+            <div class="text-[10px] font-bold tracking-[0.1em] opacity-65">DEPARTMENT</div>
+            <div class="text-h3">ฝ่ายผลิต</div>
+          </div>
+        </header>
 
-              <div class="flex-1">
-                <div class="flex justify-between items-center">
-                  <h4 class="font-semibold">{{ comment.user }}</h4>
-                  <span class="text-xs text-gray-500">{{ formatDate(comment.date) }}</span>
-                </div>
-                <p class="text-gray-700 mt-1">{{ comment.text }}</p>
+        <div class="p-4 text-body">
+          <div class="flex justify-between items-center py-1.5 border-b border-dashed border-line">
+            <span class="text-ink-3 font-semibold">ผู้พิมพ์งาน</span>
+            <span class="font-bold" [class.text-ink-4]="!workSheet?.print_by">
+              {{ workSheet?.print_by || '—' }}
+            </span>
+          </div>
+          <div class="flex justify-between items-center py-1.5 border-b border-dashed border-line">
+            <span class="text-ink-3 font-semibold">วันที่พิมพ์</span>
+            <span class="font-bold font-num">{{ workSheet?.print_date ? formatTimeFull(workSheet.print_date) : '—' }}</span>
+          </div>
+          <div class="flex justify-between items-center py-1.5 border-b border-dashed border-line">
+            <span class="text-ink-3 font-semibold">วันส่งมอบ</span>
+            <span class="font-bold font-num">{{ workSheet?.date_of_completion ? formatTimeFull(workSheet.date_of_completion) : (workSheet?.date_of_acceptance ? formatTime(workSheet.date_of_acceptance) : '—') }}</span>
+          </div>
 
-                <!-- ปุ่มแอคชั่น -->
-                <div class="flex items-center mt-2 space-x-2 text-sm text-blue-500">
-                  <button (click)="likeComment(comment)" class="hover:underline">👍 {{comment.likes}} ถูกใจ</button>
-                  <button (click)="replyComment(comment)" class="hover:underline">💬 {{comment.replies.length}}
-                    ตอบกลับ</button>
-                  <button (click)="deleteComment(comment)" class="text-red-500 hover:underline">🗑️ ลบ</button>
-                </div>
-              </div>
+          <div *ngIf="workSheet?.print_images?.length; else printPlaceholder" class="mt-3">
+            <div class="label-mono mb-1.5">รูปที่พิมพ์</div>
+            <div class="flex overflow-x-auto gap-2 pb-1">
+              <img
+                *ngFor="let image of workSheet.print_images"
+                [src]="image"
+                alt="Print"
+                class="w-28 h-28 object-cover border-2 border-ink rounded-md shadow-brutal-sm cursor-pointer flex-shrink-0"
+                (click)="openImage(image)"
+              />
             </div>
-            <div *ngFor="let reply of comment.replies || []" class="ml-8 mt-2 p-2 bg-gray-200 rounded-lg">
-              <h5 class="font-semibold text-sm">{{ reply.user }}
-                <span class="text-xs text-gray-500">{{formatDate(reply.date) }}</span>
-              </h5>
-              <p class="text-gray-700 text-sm">{{ reply.text }}</p>
+          </div>
+          <ng-template #printPlaceholder>
+            <div class="mt-3 p-3 bg-surface-3 rounded-md text-body-sm text-ink-3 text-center font-semibold">
+              ยังไม่มีรูปงานพิมพ์
+            </div>
+          </ng-template>
+        </div>
+      </section>
+
+      <!-- Comments thread -->
+      <section class="bg-white border-2 border-ink rounded-lg shadow-brutal p-4">
+        <div class="flex justify-between items-center mb-3">
+          <span class="text-base font-extrabold">📝 หมายเหตุ · <span class="font-num">{{ comments.length }}</span></span>
+          <button
+            type="button"
+            (click)="addComment()"
+            class="px-2.5 py-1 bg-ink text-brand text-body-sm font-bold cursor-pointer rounded-md"
+          >+ เพิ่ม</button>
+        </div>
+
+        <div *ngIf="comments.length === 0" class="py-6 text-center text-body-sm text-ink-4 font-medium">
+          ยังไม่มีหมายเหตุ
+        </div>
+
+        <div
+          *ngFor="let comment of comments; let i = index; let isLast = last"
+          class="flex gap-2.5 pb-2.5"
+          [class.border-b]="!isLast"
+          [class.border-dashed]="!isLast"
+          [class.border-line]="!isLast"
+          [class.mb-2.5]="!isLast"
+        >
+          <div
+            class="w-[26px] h-[26px] rounded-full border-[1.5px] border-ink
+                   flex items-center justify-center text-[11px] font-extrabold flex-shrink-0
+                   bg-brand-50"
+          >{{ (comment.user || '?').charAt(0).toUpperCase() }}</div>
+          <div class="flex-1 min-w-0">
+            <div class="flex justify-between items-baseline gap-2">
+              <span class="text-body font-bold truncate">{{ comment.user }}</span>
+              <span class="text-[11px] text-ink-4 font-medium flex-shrink-0">{{ formatDate(comment.date) }}</span>
+            </div>
+            <p class="text-body-sm text-ink-2 mt-0.5 leading-relaxed">{{ comment.text }}</p>
+
+            <div class="flex items-center gap-3 mt-1.5 text-body-sm">
+              <button (click)="likeComment(comment)" class="text-info hover:underline cursor-pointer bg-transparent border-0 font-semibold">
+                👍 {{ comment.likes || 0 }}
+              </button>
+              <button (click)="replyComment(comment)" class="text-info hover:underline cursor-pointer bg-transparent border-0 font-semibold">
+                💬 {{ comment.replies?.length || 0 }}
+              </button>
+              <button (click)="deleteComment(comment)" class="text-danger hover:underline cursor-pointer bg-transparent border-0 font-semibold ml-auto">
+                ลบ
+              </button>
+            </div>
+
+            <!-- Replies -->
+            <div
+              *ngFor="let reply of comment.replies || []"
+              class="ml-2 mt-2 pl-2.5 py-1.5 bg-surface-3 rounded-md border-l-2 border-ink-4"
+            >
+              <div class="flex justify-between items-baseline">
+                <span class="text-body-sm font-bold">{{ reply.user }}</span>
+                <span class="text-[10px] text-ink-4">{{ formatDate(reply.date) }}</span>
+              </div>
+              <p class="text-body-sm text-ink-2">{{ reply.text }}</p>
             </div>
           </div>
         </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- ── Work items table (full-width below the panels) ───────────────── -->
+  <div *ngIf="workSheet?.workItems?.length" class="px-4 md:px-5 pb-6">
+    <div class="bg-white border-2 border-ink rounded-lg shadow-brutal overflow-hidden">
+      <div class="px-4 py-2.5 bg-brand border-b-2 border-ink flex items-center gap-2.5">
+        <span class="text-[18px]" aria-hidden="true">📌</span>
+        <h3 class="text-h3 m-0">รายละเอียดงาน</h3>
+        <span class="ml-auto bg-white border-[1.5px] border-ink px-2.5 py-0.5 rounded-full text-body-sm font-bold font-num">
+          {{ workSheet.workItems.length }} รายการ
+        </span>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="min-w-full text-body">
+          <thead class="bg-ink text-brand text-[11px] font-extrabold">
+            <tr>
+              <th class="px-3 py-2 text-left">#</th>
+              <th class="px-3 py-2 text-left">ประเภท</th>
+              <th class="px-3 py-2 text-left">ขนาด</th>
+              <th class="px-3 py-2 text-left">ตัวเลือก</th>
+              <th class="px-3 py-2 text-right">จำนวน</th>
+              <th class="px-3 py-2 text-right">ราคา</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let work of workSheet.workItems; let i = index" class="border-t border-line">
+              <td class="px-3 py-2 font-num text-ink-3 font-bold">{{ i + 1 }}</td>
+              <td class="px-3 py-2 font-bold">{{ work.type }}</td>
+              <td class="px-3 py-2 text-ink-2 font-num">{{ work.width }}×{{ work.height }} {{ work.unit_of_length }}</td>
+              <td class="px-3 py-2 text-ink-2">{{ work.option || '—' }}</td>
+              <td class="px-3 py-2 text-right font-bold font-num">{{ work.quantity | number }}</td>
+              <td class="px-3 py-2 text-right font-extrabold font-num">฿{{ (work.total || 0) | number }}</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
   </div>

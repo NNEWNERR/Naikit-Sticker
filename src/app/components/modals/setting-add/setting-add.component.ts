@@ -116,9 +116,9 @@ export class SettingAddComponent implements OnInit {
       project_id: this.firestoreService.user[0].project_id,
       group_id: '',
     }
-    this.firestoreService.addDatatoFirebase(collectionRef, data).then(() => {
-      this.dismiss()
-    })
+    this.firestoreService.addDatatoFirebase(collectionRef, data)
+      .then(() => this.dismiss())
+      .catch((err) => console.error('[setting-add] addUser failed', err));
   }
 
   addSite() {
@@ -129,9 +129,9 @@ export class SettingAddComponent implements OnInit {
       project_id: this.firestoreService.user[0].project_id,
       group_id: '',
     }
-    this.firestoreService.addDatatoFirebase(collectionRef, data).then(() => {
-      this.dismiss()
-    })
+    this.firestoreService.addDatatoFirebase(collectionRef, data)
+      .then(() => this.dismiss())
+      .catch((err) => console.error('[setting-add] addSite failed', err));
   }
 
   addGroup() {
@@ -157,7 +157,7 @@ export class SettingAddComponent implements OnInit {
         const data = {
           group_id: group_id,
         }
-        this.firestoreService.updateDatatoFirebase(docRef, data)
+        this.firestoreService.safeUpdate(docRef, data);
       })
     }).catch((error) => {
       console.error(error);

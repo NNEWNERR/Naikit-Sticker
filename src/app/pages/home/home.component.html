@@ -1,22 +1,126 @@
-<app-header title="Home"></app-header>
-<ion-content>
-  <ion-segment [value]="segment" mode="md" (ionChange)="segmentChanged($event)">
-    <ion-segment-button
-      [value]="option.value"
-      *ngFor="let option of segment_option"
-    >
-      <ion-label>{{ option.title }}</ion-label>
-    </ion-segment-button>
-  </ion-segment>
-  <div [ngSwitch]="segment">
-    <div *ngSwitchCase="'seller'">
-      <app-seller></app-seller>
+<!--
+  Home / Dashboard — unified neo-brutalist kanban (desktop) + list (mobile).
+  Replaces the previous ion-segment switcher between seller/graphic/production
+  sub-pages with a single board view, filtered by team chips.
+  See redesign/extracted/assets/100cc77b-…js for the source design.
+-->
+<ion-content class="bg-surface-2">
+
+  <!-- ── Page header (yellow chrome, full-bleed) ──────────────────────── -->
+  <app-page-header
+    breadcrumb="DASHBOARD · ใบงานวันนี้"
+    title="ใบงานวันนี้"
+    [subtitle]="todayLabel"
+    [yellow]="true"
+  >
+    <div header-right class="flex items-center gap-2.5">
+      <!-- Desktop search affordance (visual only — search input lives below) -->
+      <div class="hidden md:flex items-center gap-2 bg-white border-2 border-ink rounded-md
+                  px-3.5 py-2 shadow-brutal-sm text-body font-semibold text-ink-2">
+        <span aria-hidden="true">🔍</span>
+        <input
+          type="search"
+          [(ngModel)]="search"
+          placeholder="ค้นหา serial / ลูกค้า..."
+          class="bg-transparent border-0 outline-none w-44 placeholder:text-ink-4"
+        />
+      </div>
+      <app-button variant="dark" size="md" (clicked)="createWorkSheet()">
+        ➕ <span class="hidden md:inline">สร้างใบงาน</span>
+      </app-button>
     </div>
-    <div *ngSwitchCase="'graphic'">
-      <app-graphic></app-graphic>
+  </app-page-header>
+
+  <!-- ── DESKTOP: stats + team filter + kanban ────────────────────────── -->
+  <div class="hidden md:flex md:flex-col px-6 py-4 gap-4">
+
+    <!-- Stat row -->
+    <div class="flex gap-3">
+      <app-stat-card label="ใบงานทั้งหมด" icon="📋" [value]="totalCount" delta="งานในระบบ" deltaTone="neutral"></app-stat-card>
+      <app-stat-card label="งานด่วน ⚡" icon="🔥" [value]="urgentCount" delta="ต้องเร่ง" deltaTone="danger"></app-stat-card>
+      <app-stat-card label="รอออกแบบ" icon="🎨" [value]="pendingDesignCount"></app-stat-card>
+      <app-stat-card label="กำลังผลิต" icon="🖨️" [value]="printingCount"></app-stat-card>
+      <app-stat-card label="ส่งมอบแล้ว" icon="✅" [value]="deliveredCount" deltaTone="success"></app-stat-card>
     </div>
-    <div *ngSwitchCase="'production'">
-      <app-production></app-production>
+
+    <!-- Team filter -->
+    <div class="flex items-center gap-2">
+      <span class="text-[11px] font-extrabold text-ink-3 tracking-wider mr-1">ทีม:</span>
+      <app-segmented
+        size="md"
+        [value]="team"
+        [options]="[
+          { key: 'all',        label: 'ทั้งหมด',  count: workSheets.length },
+          { key: 'seller',     label: 'ฝ่ายขาย' },
+          { key: 'graphic',    label: 'กราฟิก' },
+          { key: 'production', label: 'ผลิต' }
+        ]"
+        (change)="setTeam($event)"
+      ></app-segmented>
+    </div>
+
+    <!-- Kanban board -->
+    <div class="flex gap-3.5 overflow-x-auto pb-2">
+      <app-kanban-column
+        *ngFor="let s of visibleColumns"
+        [status]="s"
+        [items]="byStatus(s)"
+        (open)="openWorksheet($event)"
+      ></app-kanban-column>
+    </div>
+  </div>
+
+  <!-- ── MOBILE: stats + filter chips + list ──────────────────────────── -->
+  <div class="md:hidden flex flex-col">
+
+    <!-- Stat tiles -->
+    <div class="px-3.5 pt-3 pb-2 grid grid-cols-3 gap-2">
+      <app-stat-card size="sm" label="ทั้งหมด" [value]="totalCount"></app-stat-card>
+      <app-stat-card size="sm" label="ด่วน ⚡" [value]="urgentCount" bg="#FFE9E9"></app-stat-card>
+      <app-stat-card size="sm" label="ส่งแล้ว" [value]="deliveredCount" bg="#DCFCE7"></app-stat-card>
+    </div>
+
+    <!-- Mobile search -->
+    <div class="px-3.5 pb-2">
+      <div class="flex items-center gap-2 bg-white border-2 border-ink rounded-md
+                  px-3 py-2 shadow-brutal-sm text-body font-semibold text-ink-2">
+        <span aria-hidden="true">🔍</span>
+        <input
+          type="search"
+          [(ngModel)]="search"
+          placeholder="ค้นหา serial / ลูกค้า..."
+          class="bg-transparent border-0 outline-none flex-1 placeholder:text-ink-4"
+        />
+      </div>
+    </div>
+
+    <!-- Filter chips -->
+    <div class="px-3.5 pb-2.5 overflow-x-auto">
+      <app-segmented
+        size="sm"
+        [value]="mobileTab"
+        [options]="[
+          { key: 'all',        label: 'ทั้งหมด' },
+          { key: 'รอออกแบบ',    label: 'รอแบบ' },
+          { key: 'กำลังผลิต',   label: 'ผลิต' },
+          { key: 'รอส่งมอบ',    label: 'ส่งมอบ' }
+        ]"
+        (change)="setMobileTab($event)"
+      ></app-segmented>
+    </div>
+
+    <!-- Card list -->
+    <div class="px-3.5 pb-6 flex flex-col">
+      <app-kanban-card
+        *ngFor="let ws of mobileList; trackBy: trackByKey"
+        [ws]="ws"
+        (open)="openWorksheet($event)"
+      ></app-kanban-card>
+
+      <div *ngIf="mobileList.length === 0"
+           class="py-10 text-center text-body text-ink-4 font-medium">
+        ไม่มีงาน
+      </div>
     </div>
   </div>
 </ion-content>
