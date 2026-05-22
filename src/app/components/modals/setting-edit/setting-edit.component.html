@@ -46,14 +46,16 @@
 
     <div *ngSwitchCase="'job'">
 
-      <!-- date -->
-      <mat-form-field class="w-full py-2">
-        <mat-label>กรุณาเลือกวันที่ต้องการย้าย</mat-label>
-        <input matInput [matDatepicker]="picker" formControlName="date" (dateChange)="searchJobs()">
-        <mat-hint>DD/MM/YYYY</mat-hint>
-        <mat-datepicker-toggle matTextSuffix [for]="picker"></mat-datepicker-toggle>
-        <mat-datepicker #picker></mat-datepicker>
-      </mat-form-field>
+      <!-- date — native input (migrated off mat-datepicker) -->
+      <div class="py-2">
+        <label class="block text-body-sm font-bold mb-1">กรุณาเลือกวันที่ต้องการย้าย</label>
+        <input
+          type="date"
+          formControlName="date"
+          (change)="searchJobs()"
+          class="w-full border-2 border-ink rounded-md px-3 py-2 text-body font-num font-semibold bg-white outline-none"
+        />
+      </div>
 
       <!-- time -->
       <app-select [parentForm]="form" label="เวลา" formControlName="time" placeholder="เลือกเวลา" [multiple]="false"

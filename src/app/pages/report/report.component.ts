@@ -5,7 +5,6 @@ import { SettingAddComponent } from 'src/app/components/modals/setting-add/setti
 import { SettingEditComponent } from 'src/app/components/modals/setting-edit/setting-edit.component';
 import { FirestoreService } from 'src/app/services/firestore.service';
 import { ServiceService } from 'src/app/services/service.service';
-import { EditWorkSheetComponent } from '../edit-work-sheet/edit-work-sheet.component';
 import { CreateWorkSheetComponent } from '../create-work-sheet/create-work-sheet.component';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { SEGMENT_OPTION, STATUS_OPTION, SELLER_OPTION, DESIGNER_OPTION } from 'src/app/data/data';
@@ -182,16 +181,6 @@ export class ReportComponent implements OnInit {
     }).then(modal => modal.present());
   }
 
-  editWorkSheet(workSheet) {
-    this.modalController.create({
-      component: EditWorkSheetComponent,
-      componentProps: {
-        type: 'job',
-        workSheet: workSheet
-      },
-      cssClass: 'my-custom-class',
-    }).then(modal => modal.present());
-  }
 
   formatTimeFull(timestamp: Timestamp) {
     const date = new Date(timestamp.seconds * 1000);
