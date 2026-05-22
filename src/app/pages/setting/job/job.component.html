@@ -1,53 +1,59 @@
-<div class="w-full grid grid-cols-12 gap-2">
-  <ion-searchbar class="col-span-12" mode="md" show-clear-button="focus"
-    (ionInput)="handleInput($event)"></ion-searchbar>
-  <!-- <ion-button class="col-span-3 my-2" mode="md" (click)="add()">เพิ่มงาน</ion-button> -->
+<!-- Job (worksheet) admin — brutal table inside the setting shell.
+     Note: no "add" button (worksheets are created via /create-work-sheet). -->
+<div class="flex justify-between items-center mb-4 gap-2 flex-wrap">
+  <h3 class="text-h2 m-0">ใบงานทั้งหมด</h3>
 </div>
-<ngx-datatable class="flex w-full. material expandable" [columnMode]="'force'" [rows]="results" [limit]="10"
-  rowHeight="auto" [headerHeight]="50" [footerHeight]="50" [scrollbarH]="true" (activate)="onActivate($event)"
-  [sorts]="[{prop: 'serial_number', dir: 'asc'}]" *ngIf="data.length > 0">
-  <ngx-datatable-column name="Status" prop="status">
-    <ng-template let-row="row" ngx-datatable-cell-template>
-      {{row.status}}
-      <!-- <div class="w-full h-full text-white text-center rounded-md ">
-      </div> -->
-    </ng-template>
-  </ngx-datatable-column>
-  <ngx-datatable-column name="Serial Number" prop="serial_number">
-    <ng-template let-row="row" ngx-datatable-cell-template>
-      {{row.serial_number ||''}}
-    </ng-template>
-  </ngx-datatable-column>
-  <ngx-datatable-column name="ชื่อลูกค้า" prop="customer_name">
-    <ng-template let-row="row" ngx-datatable-cell-template>
-      {{row.customer_name ||''}}
-    </ng-template>
-  </ngx-datatable-column>
-  <ngx-datatable-column name="ชื่อผู้ขาย" prop="seller_name">
-    <ng-template let-row="row" ngx-datatable-cell-template>
-      {{row.seller_name|| row.seller || '-' ||''}}
-    </ng-template>
-  </ngx-datatable-column>
-  <ngx-datatable-column name="ผู้ออกแบบ" prop="design_by">
-    <ng-template let-row="row" ngx-datatable-cell-template>
-      {{row.design_by ||''}}
-    </ng-template>
-  </ngx-datatable-column>
-  <ngx-datatable-column name="วันที่รับแบบ" prop="date_of_acceptance">
-    <ng-template let-row="row" ngx-datatable-cell-template>
-      {{row.date_of_acceptance ? formatTime(row.date_of_acceptance) : ''}}
-    </ng-template>
-  </ngx-datatable-column>
-  <ngx-datatable-column name="วันที่ส่งแบบ" prop="date_of_submission">
-    <ng-template let-row="row" ngx-datatable-cell-template>
-      {{row.date_of_submission ? formatTime(row.date_of_submission) : ''}}
-    </ng-template>
-  </ngx-datatable-column>
-  <ngx-datatable-column name="ACTION">
-    <ng-template let-row="row" ngx-datatable-cell-template>
-      <ion-text (click)="edit(row)" color="danger" class="cursor-pointer">
-        แก้ไข
-      </ion-text>
-    </ng-template>
-  </ngx-datatable-column>
-</ngx-datatable>
+
+<div class="flex items-center gap-2 bg-white border-2 border-ink rounded-md px-3 py-2 shadow-brutal-sm mb-4 max-w-md">
+  <span aria-hidden="true">🔍</span>
+  <input
+    type="search"
+    (input)="handleInput($event)"
+    placeholder="ค้นหา serial / ลูกค้า..."
+    class="bg-transparent border-0 outline-none flex-1 text-body font-semibold placeholder:text-ink-4"
+  />
+</div>
+
+<div class="border-2 border-ink rounded-md overflow-x-auto md:overflow-hidden">
+  <div class="grid grid-cols-[120px_120px_1fr_44px] md:grid-cols-[140px_120px_1.4fr_100px_100px_110px_44px]
+              bg-ink text-brand text-[11px] font-extrabold min-w-[420px] md:min-w-0">
+    <div class="px-3 py-2.5">สถานะ</div>
+    <div class="px-3 py-2.5">เลขใบงาน</div>
+    <div class="px-3 py-2.5">ลูกค้า</div>
+    <div class="hidden md:block px-3 py-2.5">ผู้ขาย</div>
+    <div class="hidden md:block px-3 py-2.5">ผู้ออกแบบ</div>
+    <div class="hidden md:block px-3 py-2.5">วันรับแบบ</div>
+    <div class="px-3 py-2.5"></div>
+  </div>
+
+  <div
+    *ngFor="let j of results; let i = index"
+    class="grid grid-cols-[120px_120px_1fr_44px] md:grid-cols-[140px_120px_1.4fr_100px_100px_110px_44px]
+           border-t border-line items-center min-w-[420px] md:min-w-0"
+    [class.bg-surface-2]="i % 2 === 1"
+    [class.bg-white]="i % 2 === 0"
+  >
+    <div class="px-3 py-2.5 text-body-sm">{{ j.status || '—' }}</div>
+    <div class="px-3 py-2.5 text-body-sm font-num font-bold">{{ j.serial_number || '—' }}</div>
+    <div class="px-3 py-2.5 text-body font-semibold truncate">{{ j.customer_name || '—' }}</div>
+    <div class="hidden md:block px-3 py-2.5 text-body">{{ j.seller_name || j.seller || '—' }}</div>
+    <div class="hidden md:block px-3 py-2.5 text-body" [class.text-ink-4]="!j.design_by">
+      {{ j.design_by || '—' }}
+    </div>
+    <div class="hidden md:block px-3 py-2.5 text-body-sm font-num text-ink-3">
+      {{ j.date_of_acceptance ? formatTime(j.date_of_acceptance) : '—' }}
+    </div>
+    <div class="px-2 py-2.5 text-center">
+      <button
+        type="button"
+        (click)="edit(j)"
+        class="text-[18px] text-ink-3 hover:text-ink cursor-pointer bg-transparent border-0"
+        aria-label="แก้ไข"
+      >✏️</button>
+    </div>
+  </div>
+
+  <div *ngIf="results.length === 0" class="py-10 text-center text-body text-ink-4 font-medium border-t border-line">
+    ไม่พบใบงาน
+  </div>
+</div>

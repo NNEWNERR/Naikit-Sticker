@@ -1,36 +1,66 @@
-<div class="w-full grid grid-cols-12 gap-2">
-    <ion-searchbar class="col-span-9" mode="md" show-clear-button="focus"
-        (ionInput)="handleInput($event)"></ion-searchbar>
-    <ion-button class="col-span-3 my-2" mode="md" (click)="add()">เพิ่มผู้ใช้</ion-button>
+<!-- User management — brutal table inside the setting shell. -->
+<div class="flex justify-between items-center mb-4 gap-2 flex-wrap">
+  <h3 class="text-h2 m-0">ผู้ใช้งานในระบบ</h3>
+  <app-button variant="primary" size="sm" (clicked)="add()">➕ เพิ่มผู้ใช้</app-button>
 </div>
-<ngx-datatable class="flex w-full. material expandable" [columnMode]="'force'" [rows]="results" [limit]="10"
-    rowHeight="auto" [headerHeight]="50" [footerHeight]="50" [scrollbarH]="true" (activate)="onActivate($event)"
-    *ngIf="data.length > 0">
-    <ngx-datatable-column name="User ID" prop="user_id">
-        <ng-template let-row="row" ngx-datatable-cell-template>
-            {{row.user_id}}
-        </ng-template>
-    </ngx-datatable-column>
-    <ngx-datatable-column name="ชื่อ-นามสกุล" prop="name">
-        <ng-template let-row="row" ngx-datatable-cell-template>
-            {{row.name}} {{row.last_name}}
-        </ng-template>
-    </ngx-datatable-column>
-    <ngx-datatable-column name="เบอร์มือถือ" prop="phone">
-        <ng-template let-row="row" ngx-datatable-cell-template>
-            {{row.phone}}
-        </ng-template>
-    </ngx-datatable-column>
-    <!-- <ngx-datatable-column name="รหัสกลุ่ม" prop="group_id">
-        <ng-template let-row="row" ngx-datatable-cell-template>
-            {{row.group_id}}
-        </ng-template>
-    </ngx-datatable-column> -->
-    <ngx-datatable-column name="ACTION">
-        <ng-template let-row="row" ngx-datatable-cell-template>
-            <ion-text (click)="edit(row)" color="danger" class="cursor-pointer">
-                แก้ไข
-            </ion-text>
-        </ng-template>
-    </ngx-datatable-column>
-</ngx-datatable>
+
+<div class="flex items-center gap-2 bg-white border-2 border-ink rounded-md px-3 py-2 shadow-brutal-sm mb-4 max-w-md">
+  <span aria-hidden="true">🔍</span>
+  <input
+    type="search"
+    (input)="handleInput($event)"
+    placeholder="ค้นหา ชื่อ / เบอร์โทร..."
+    class="bg-transparent border-0 outline-none flex-1 text-body font-semibold placeholder:text-ink-4"
+  />
+</div>
+
+<!-- Table -->
+<div class="border-2 border-ink rounded-md overflow-x-auto md:overflow-hidden">
+  <!-- Header -->
+  <div class="grid grid-cols-[44px_1fr_44px] md:grid-cols-[44px_1.5fr_1fr_1fr_44px]
+              bg-ink text-brand text-[11px] font-extrabold min-w-[360px] md:min-w-0">
+    <div class="px-3 py-2.5"></div>
+    <div class="px-3 py-2.5">ชื่อ</div>
+    <div class="hidden md:block px-3 py-2.5">เบอร์โทร</div>
+    <div class="px-3 py-2.5">User ID</div>
+    <div class="px-3 py-2.5"></div>
+  </div>
+
+  <!-- Rows -->
+  <div
+    *ngFor="let u of results; let i = index"
+    class="grid grid-cols-[44px_1fr_44px] md:grid-cols-[44px_1.5fr_1fr_1fr_44px]
+           border-t border-line items-center min-w-[360px] md:min-w-0"
+    [class.bg-surface-2]="i % 2 === 1"
+    [class.bg-white]="i % 2 === 0"
+  >
+    <!-- Avatar -->
+    <div class="px-2 py-2.5">
+      <div class="w-7 h-7 rounded-full border-2 border-ink bg-brand-50 flex items-center justify-center font-extrabold text-body-sm">
+        {{ (u.name || '?').charAt(0).toUpperCase() }}
+      </div>
+    </div>
+    <!-- Name -->
+    <div class="px-3 py-2.5 text-body-lg font-bold truncate">
+      {{ u.name }} {{ u.last_name }}
+    </div>
+    <!-- Phone (desktop) -->
+    <div class="hidden md:block px-3 py-2.5 text-body font-num text-ink-2">{{ u.phone || '—' }}</div>
+    <!-- User ID -->
+    <div class="px-3 py-2.5 text-body font-num text-ink-3 truncate">{{ u.user_id || '—' }}</div>
+    <!-- Edit -->
+    <div class="px-2 py-2.5 text-center">
+      <button
+        type="button"
+        (click)="edit(u)"
+        class="text-[18px] text-ink-3 hover:text-ink cursor-pointer bg-transparent border-0"
+        aria-label="แก้ไข"
+      >✏️</button>
+    </div>
+  </div>
+
+  <!-- Empty -->
+  <div *ngIf="results.length === 0" class="py-10 text-center text-body text-ink-4 font-medium border-t border-line">
+    ไม่พบผู้ใช้
+  </div>
+</div>

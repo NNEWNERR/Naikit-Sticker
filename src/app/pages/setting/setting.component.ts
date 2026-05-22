@@ -1,34 +1,58 @@
 import { Component, OnInit } from '@angular/core';
+import { FirestoreService } from 'src/app/services/firestore.service';
 
+type SettingTab = 'user' | 'site' | 'group' | 'job';
+
+/**
+ * Settings — neo-brutalist shell.
+ *
+ * Replaces the previous ion-segment switcher with the prototype's two-axis
+ * layout: left side-nav (desktop) + horizontal tab strip (mobile). The four
+ * sub-pages (<app-user>, <app-site>, <app-group>, <app-job>) keep their own
+ * data subscriptions and modal flows — this shell only changes the chrome
+ * and the active-tab routing.
+ *
+ * Reproduces redesign/extracted/assets/5e6a9d2a-…js ProtoSettingScreen.
+ */
 @Component({
   selector: 'app-setting',
   templateUrl: './setting.component.html',
   styleUrls: ['./setting.component.scss'],
 })
 export class SettingComponent implements OnInit {
-  segment = 'site';
-  segment_option = [
-    {
-      title: 'user',
-      value: 'user'
-    }, 
-    {
-      title: 'site',
-      value: 'site'
-    },
-    {
-      title: 'group',
-      value: 'group'
-    },
-    {
-      title: 'job',
-      value: 'job'
-    },
-  ]
-  constructor() { }
+  /** Default tab matches the prototype (users first). */
+  tab: SettingTab = 'user';
 
-  ngOnInit() { }
-  segmentChanged(event) {
-    this.segment = event.target.value;
+  readonly tabs: { key: SettingTab; icon: string; label: string }[] = [
+    { key: 'user',  icon: '👤', label: 'ผู้ใช้งาน' },
+    { key: 'group', icon: '👥', label: 'กลุ่มสิทธิ์' },
+    { key: 'job',   icon: '🏷️', label: 'ประเภทงาน' },
+    { key: 'site',  icon: '🏪', label: 'ข้อมูลร้าน' },
+  ];
+
+  constructor(private firestoreService: FirestoreService) {}
+
+  ngOnInit() {}
+
+  setTab(key: string) {
+    if (key === 'user' || key === 'site' || key === 'group' || key === 'job') {
+      this.tab = key;
+    }
+  }
+
+  /**
+   * Live count for the side-nav badge — reads from FirestoreService's
+   * in-memory caches (populated when each sub-page is first opened). Returns
+   * null when nothing's loaded yet so we can hide the badge.
+   */
+  countFor(key: SettingTab): number | null {
+    const fs = this.firestoreService;
+    switch (key) {
+      case 'user':  return fs.allUsers?.length || null;
+      case 'group': return (fs as any).groups?.length || null;
+      case 'job':   return fs.allJobs?.length || null;
+      case 'site':  return fs.sites?.length || null;
+      default:      return null;
+    }
   }
 }
