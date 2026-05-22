@@ -19,4 +19,9 @@ export class SelectGraphicComponent implements OnInit {
   onClickDesigner(employee) {
     this.modalController.dismiss(employee.value, 'confirm');
   }
+
+  /** Cancel — used by the header close button. */
+  cancel() {
+    this.modalController.dismiss(null, 'cancel');
+  }
 }
