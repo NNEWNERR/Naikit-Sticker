@@ -78,6 +78,19 @@ body { background: #FAFAFA; color: #0A0A0A; }
  * รายการไม่ได้". The dialog classes land on .cdk-overlay-pane (not the
  * container), and the component host renders display:inline. Lay it out as a
  * bounded flex column so the body scrolls and the footer stays pinned/visible. */
+/* Full-screen modal (worksheet-info / "ดูรายละเอียด"): its body uses the
+ * page-level .nk-content { min-height:100dvh }, so on long jobs the content
+ * grows past the 100dvh pane. The nk-modal/modal-fullscreen classes land on
+ * .cdk-overlay-pane (not .cdk-dialog-container), so the old container rules
+ * never constrained it — the overflow was clipped and unscrollable. Make the
+ * dialog container the scroll viewport. */
+.cdk-overlay-pane.modal-fullscreen .cdk-dialog-container {
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 .cdk-overlay-pane.work-item-modal {
   .cdk-dialog-container { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
   app-work-item-modal {
