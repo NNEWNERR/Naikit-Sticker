@@ -90,7 +90,7 @@ export class KanbanColumnComponent {
     );
   }
 
-  trackByKey(_idx: number, ws: KanbanCardData & { key?: string }): string | number {
-    return ws.key ?? ws.serial_number ?? _idx;
+  trackByKey(_idx: number, ws: KanbanCardData): string | number {
+    return ws.id ?? ws.key ?? ws.serial_number ?? _idx;
   }
 }

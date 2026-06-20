@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, Input } from '@angular/core';
 
 export type StatCardSize = 'sm' | 'md';
+export type StatCardTone = 'default' | 'danger' | 'success' | 'warning' | 'info';
 
 /**
  * <app-stat-card label="งานด่วน ⚡" value="6" icon="🔥" delta="ต้องเร่ง" deltaTone="danger" />
@@ -9,6 +10,10 @@ export type StatCardSize = 'sm' | 'md';
  * Stat tile shown in the home dashboard. The `value` renders in JetBrains
  * Mono (.font-num) at fontWeight 900. Mobile (`size="sm"`) compresses
  * padding and value font-size; desktop (`size="md"`) is the full prototype.
+ *
+ * `tone` picks the surface tint from the semantic palette (danger/success/
+ * warning/info) — used by the mobile stat row for the "urgent" and
+ * "delivered" tiles. Defaults to plain white.
  *
  * `delta` is an optional caption to the right of the value — typically
  * green (success) for positive deltas, red (danger) for urgent counts.
@@ -21,7 +26,6 @@ export type StatCardSize = 'sm' | 'md';
     <div
       class="border-2 border-ink rounded-md"
       [ngClass]="cardClasses"
-      [style.background]="bg || '#FFFFFF'"
     >
       <ng-container *ngIf="size === 'sm'; else fullTpl">
         <!-- Mobile compact: centered value + label -->
@@ -51,13 +55,20 @@ export class StatCardComponent {
   @Input() delta = '';
   @Input() deltaTone: 'success' | 'danger' | 'warning' | 'info' | 'neutral' = 'success';
   @Input() size: StatCardSize = 'md';
-  /** Optional override of card background (used for the mobile "urgent" or "delivered" tiles). */
-  @Input() bg = '';
+  /** Semantic surface tint — defaults to white. */
+  @Input() tone: StatCardTone = 'default';
 
   get cardClasses(): string {
-    return this.size === 'sm'
+    const sizing = this.size === 'sm'
       ? 'px-2 py-2.5 shadow-brutal-sm'
       : 'p-4 shadow-brutal flex-1 min-w-0';
+    const toneCls =
+      this.tone === 'danger'  ? 'bg-danger-bg'
+      : this.tone === 'success' ? 'bg-accent-bg'
+      : this.tone === 'warning' ? 'bg-warn-bg'
+      : this.tone === 'info'    ? 'bg-info-bg'
+      : 'bg-white';
+    return `${sizing} ${toneCls}`;
   }
 
   get deltaClass(): string {

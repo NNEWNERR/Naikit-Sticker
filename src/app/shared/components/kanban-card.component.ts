@@ -8,12 +8,22 @@ export interface KanbanCardItem {
 }
 
 export interface KanbanCardData {
+  /** Firestore doc ID (v2 schema uses `id`; v1 used `key`). */
+  id?: string;
+  key?: string;
   serial_number?: string;
   customer_name?: string;
   is_urgent?: boolean;
+  /** v1 schema field — v2 uses seller_uid. */
   seller_name?: string;
+  seller_uid?: string;
+  /** v1 schema total flat field — v2 nests it under payment.total. */
   total?: number;
+  payment?: { total?: number };
+  /** v1 items array. */
   items?: KanbanCardItem[];
+  /** v2 work_items array. */
+  work_items?: Array<{ type?: string; quantity?: number; qty?: number }>;
 }
 
 /**
@@ -65,10 +75,10 @@ export interface KanbanCardData {
           >
             {{ sellerInitial }}
           </div>
-          <span class="text-[11px] font-semibold text-ink-2 truncate">{{ ws?.seller_name || '—' }}</span>
+          <span class="text-[11px] font-semibold text-ink-2 truncate">{{ sellerDisplay }}</span>
         </div>
         <span class="text-[11px] font-bold font-num flex-shrink-0 ml-2">
-          ฿<ng-container *ngIf="ws?.total != null; else dash">{{ ws!.total! | number }}</ng-container>
+          ฿<ng-container *ngIf="displayTotal != null; else dash">{{ displayTotal | number }}</ng-container>
           <ng-template #dash>—</ng-template>
         </span>
       </div>
@@ -79,17 +89,28 @@ export class KanbanCardComponent {
   @Input() ws: KanbanCardData | null = null;
   @Output() open = new EventEmitter<KanbanCardData | null>();
 
+  get displayTotal(): number | null {
+    const v2 = this.ws?.payment?.total;
+    const v1 = this.ws?.total;
+    return v2 != null ? v2 : (v1 != null ? v1 : null);
+  }
+
   get firstItem(): KanbanCardItem | null {
+    const v2 = this.ws?.work_items?.[0];
+    if (v2) return { type: v2.type, qty: v2.quantity ?? v2.qty };
     return this.ws?.items?.[0] ?? null;
   }
 
   get extraItems(): number {
-    const len = this.ws?.items?.length ?? 0;
+    const len = (this.ws?.work_items ?? this.ws?.items)?.length ?? 0;
     return len > 1 ? len - 1 : 0;
   }
 
+  get sellerDisplay(): string {
+    return this.ws?.seller_name ?? this.ws?.seller_uid?.substring(0, 6) ?? '—';
+  }
+
   get sellerInitial(): string {
-    const name = this.ws?.seller_name?.trim();
-    return name ? name.charAt(0).toUpperCase() : '?';
+    return this.sellerDisplay.charAt(0).toUpperCase();
   }
 }
