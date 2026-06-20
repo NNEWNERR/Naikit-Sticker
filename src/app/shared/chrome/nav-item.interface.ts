@@ -11,6 +11,8 @@
  * SYSTEM; bottom-nav ignores it.
  * `fab` flags the special centre FAB slot on the mobile bottom-nav.
  */
+import { Role } from 'src/app/core/models/session';
+
 export interface NavItem {
   /** Stable key — useful for trackBy. */
   key: string;
@@ -26,6 +28,9 @@ export interface NavItem {
   badge?: number | string;
   /** If true, this item renders as the centre FAB on mobile bottom-nav. */
   fab?: boolean;
+  /** Roles allowed to see this item (must mirror the route guard). Omit =
+   * visible to every authenticated role. */
+  roles?: Role[];
 }
 
 /** Heuristic — return true if the icon string looks like an emoji rather
