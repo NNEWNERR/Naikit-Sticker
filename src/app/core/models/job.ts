@@ -95,6 +95,8 @@ export interface Job {
   reference_images: string[];
   design_images: JobImageDoc[];
   print_images: JobImageDoc[];
+  /** Optional payment slips attached at delivery. */
+  delivery_slips?: JobImageDoc[];
   date_of_acceptance: Timestamp;
   design_date: Timestamp | null;
   date_of_submission: Timestamp | null;

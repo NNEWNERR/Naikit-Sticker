@@ -135,13 +135,18 @@
           </button>
         </div>
 
-        <!-- รอส่งมอบ: Mark delivered -->
-        <button *ngIf="canMarkDelivered()" type="button"
-          class="px-3 py-1.5 bg-status-delivered-bg border-2 border-ink rounded font-bold text-body-sm cursor-pointer disabled:opacity-50"
-          [disabled]="actionLoading()"
-          (click)="onMarkDelivered()">
-          🎉 ส่งมอบงานแล้ว
-        </button>
+        <!-- รอส่งมอบ: Mark delivered (+ optional payment slip) -->
+        <div *ngIf="canMarkDelivered()" class="flex flex-col gap-1.5 w-full">
+          <label class="text-body-sm font-semibold">แนบสลิป (ถ้ามี)</label>
+          <input type="file" accept="image/*" multiple class="text-body-sm" (change)="onSlipFilesChange($event)">
+          <span *ngIf="slipFiles.length" class="text-body-sm text-ink-3">เลือก {{ slipFiles.length }} ไฟล์</span>
+          <button type="button"
+            class="self-start px-3 py-1.5 bg-status-delivered-bg border-2 border-ink rounded font-bold text-body-sm cursor-pointer disabled:opacity-50"
+            [disabled]="actionLoading()"
+            (click)="onMarkDelivered()">
+            🎉 ส่งมอบงานแล้ว
+          </button>
+        </div>
 
         <!-- Admin: Delete / Restore -->
         <button *ngIf="canDelete()" type="button"
@@ -363,6 +368,20 @@
             <ng-template #printPlaceholder>
               <div class="mt-3 p-3 bg-surface-3 rounded-md text-body-sm text-ink-3 text-center font-semibold">ยังไม่มีรูปงานพิมพ์</div>
             </ng-template>
+
+            <!-- Payment slips (optional, attached at delivery) -->
+            <div *ngIf="j.delivery_slips?.length" class="mt-3">
+              <div class="label-mono mb-1.5">สลิป</div>
+              <div class="flex overflow-x-auto gap-2 pb-1">
+                <img
+                  *ngFor="let img of j.delivery_slips"
+                  [src]="img.url"
+                  alt="Slip"
+                  class="w-28 h-28 object-cover border-2 border-ink rounded-md shadow-brutal-sm cursor-pointer flex-shrink-0"
+                  (click)="openImage(img.url)"
+                />
+              </div>
+            </div>
           </div>
         </section>
 

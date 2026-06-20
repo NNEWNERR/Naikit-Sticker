@@ -86,6 +86,8 @@ export class WorksheetInfoComponent implements OnInit, OnDestroy {
   designFiles: File[] = [];
   /** Files staged for print image upload (uploadPrint). */
   printFiles: File[] = [];
+  /** Optional payment slips staged for markDelivered. */
+  slipFiles: File[] = [];
 
   private detachJob?: () => void;
   private detachEvents?: () => void;
@@ -325,7 +327,14 @@ export class WorksheetInfoComponent implements OnInit, OnDestroy {
   }
 
   async onMarkDelivered() {
-    await this._run(() => this.jobsSvc.markDelivered(this.jobId));
+    await this._run(async () => {
+      // Slips are optional — upload only if the user attached any.
+      const urls = this.slipFiles.length
+        ? await this.jobsSvc.uploadImages(this.jobId, 'slip', this.slipFiles)
+        : [];
+      await this.jobsSvc.markDelivered(this.jobId, urls);
+      this.slipFiles = [];
+    });
   }
 
   async onDeleteJob() {
@@ -347,6 +356,11 @@ export class WorksheetInfoComponent implements OnInit, OnDestroy {
   onPrintFilesChange(event: Event) {
     const input = event.target as HTMLInputElement;
     this.printFiles = Array.from(input.files ?? []);
+  }
+
+  onSlipFilesChange(event: Event) {
+    const input = event.target as HTMLInputElement;
+    this.slipFiles = Array.from(input.files ?? []);
   }
 
   // ── Comments ───────────────────────────────────────────────────────────

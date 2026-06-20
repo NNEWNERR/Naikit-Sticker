@@ -62,8 +62,8 @@ export class JobsService {
     await this._call('uploadPrint', { job_id: jobId, print_images: printImageUrls });
   }
 
-  async markDelivered(jobId: string): Promise<void> {
-    await this._call('markDelivered', { job_id: jobId });
+  async markDelivered(jobId: string, slipUrls: string[] = []): Promise<void> {
+    await this._call('markDelivered', { job_id: jobId, delivery_slips: slipUrls });
   }
 
   async editJob(jobId: string, patch: Record<string, unknown>): Promise<void> {
@@ -84,7 +84,7 @@ export class JobsService {
 
   // ── Image upload helper (Storage → URL) ─────────────────────────────────
 
-  async uploadImages(jobId: string, type: 'design' | 'print', files: File[]): Promise<string[]> {
+  async uploadImages(jobId: string, type: 'design' | 'print' | 'slip', files: File[]): Promise<string[]> {
     const urls: string[] = [];
     for (const file of files) {
       const ext = file.name.includes('.') ? file.name.split('.').pop() : 'bin';
