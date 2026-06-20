@@ -25,7 +25,7 @@ export interface KanbanStatusPalette {
   template: `
     <div
       class="w-[240px] flex-shrink-0 bg-surface-2 rounded-lg border-2 border-ink flex flex-col"
-      style="max-height: calc(100vh - 285px);"
+      style="height: calc(100vh - 285px); max-height: calc(100vh - 285px);"
     >
       <!-- Column header -->
       <div
