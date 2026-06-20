@@ -1,95 +1,135 @@
-import { ServiceService } from './../../../services/service.service';
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, signal } from '@angular/core';
 import { ModalController } from 'src/app/services/modal.service';
-import { SettingAddComponent } from 'src/app/components/modals/setting-add/setting-add.component';
-import { SettingEditComponent } from 'src/app/components/modals/setting-edit/setting-edit.component';
-import { FirestoreService } from 'src/app/services/firestore.service';
+import { AppStateService } from 'src/app/services/app-state.service';
+import { AdminUser, UserAdminError, UsersService } from 'src/app/services/users.service';
+import { Role } from 'src/app/core/models/session';
+import { ServiceService } from 'src/app/services/service.service';
+import { UserCreateModalComponent } from 'src/app/components/modals/user-admin/user-create.modal';
+import { UserChangeRoleModalComponent } from 'src/app/components/modals/user-admin/user-change-role.modal';
+import { UserResetPasswordModalComponent } from 'src/app/components/modals/user-admin/user-reset-password.modal';
+
+const ROLE_LABEL: Record<Role, string> = {
+  seller: 'พนักงานขาย',
+  graphic: 'กราฟิก',
+  production: 'ผลิต',
+  admin: 'แอดมิน',
+};
 
 @Component({
   selector: 'app-user',
   templateUrl: './user.component.html',
   styleUrls: ['./user.component.scss'],
 })
-export class UserComponent implements OnInit {
-  search: any
-  public data = [];
-  public results = [...this.data];
+export class UserComponent implements OnInit, OnDestroy {
+  private searchTerm = signal<string>('');
 
-  subscription;
+  readonly users = this.usersService.users;
+  readonly isLoading = this.usersService.loading;
+
+  /** Filtered list = users() ∩ matches(searchTerm). */
+  readonly results = computed<AdminUser[]>(() => {
+    const q = this.searchTerm().trim().toLowerCase();
+    const all = this.users();
+    if (!q) return all;
+    return all.filter(
+      (u) =>
+        u.username.toLowerCase().includes(q) ||
+        u.display_name.toLowerCase().includes(q),
+    );
+  });
+
+  private detachListener: (() => void) | null = null;
 
   constructor(
-    private serviceService: ServiceService,
+    private usersService: UsersService,
     private modalController: ModalController,
-    private firestoreService: FirestoreService
-  ) { }
+    private appState: AppStateService,
+    private service: ServiceService,
+  ) {}
 
   ngOnInit() {
-    this.subscription = this.firestoreService.allUsersChange.subscribe(allUsers => {
-      this.data = allUsers;
-      this.results = [...this.data];
-      this.serviceService.dismissLoading();
-    })
-    const allUsers = this.firestoreService.allUsers;
-    if (allUsers.length > 0) {
-      this.data = allUsers
-      this.results = [...this.data];
-    } else {
-      this.serviceService.presentLoadingWithOutTime('กําลังโหลดข้อมูล...');
-      this.firestoreService.fetchDataAllUser(this.firestoreService.user[0].project_id)
-    }
-
-
-    // this.serviceService.presentLoadingWithOutTime('กําลังโหลดข้อมูล...');
-    // const interval = setInterval(() => {
-    //   if (this.firestoreService.user.length > 0) {
-    //     clearInterval(interval);
-    //     this.firestoreService.fetchDataAllUser(this.firestoreService.user[0].project_id)
-    //   }
-    // }, 1000);
-    // this.subscription = this.firestoreService.allUsersChange.subscribe(users => {
-    //   this.serviceService.dismissLoading();
-    //   this.data = users;
-    //   this.results = [...this.data];
-    // })
+    this.detachListener = this.usersService.attachListener();
   }
 
   ngOnDestroy() {
-    this.subscription.unsubscribe();
+    this.detachListener?.();
   }
 
-  closeModal() {
-    this.modalController.dismiss();
+  // ── UI helpers ──────────────────────────────────────────────────────────
+
+  roleLabel(r: Role): string {
+    return ROLE_LABEL[r] ?? r;
   }
 
-  handleInput(event) {
-    const query = event.target.value.toLowerCase();
-    this.results = this.data.filter((d) => d.name.toLowerCase().indexOf(query) > -1 || d.phone.toLowerCase().indexOf(query) > -1);
-  }
-
-  onActivate(event) {
-    if (event.type === "click") {
-      // console.log(event.row)
+  /** Tailwind tones per role for the badge pill. */
+  roleBadgeClass(r: Role): string {
+    switch (r) {
+      case 'admin':      return 'bg-ink text-brand border-ink';
+      case 'seller':     return 'bg-brand text-ink border-ink';
+      case 'graphic':    return 'bg-blue-100 text-blue-900 border-blue-900';
+      case 'production': return 'bg-green-100 text-green-900 border-green-900';
+      default:           return 'bg-surface-2 text-ink border-ink';
     }
   }
 
-  add() {
-    this.modalController.create({
-      component: SettingAddComponent,
-      cssClass: 'my-custom-class',
-      componentProps: {
-        type: 'user'
-      }
-    }).then(modal => modal.present());
+  isSelf(u: AdminUser): boolean {
+    return this.appState.uid() === u.uid;
   }
 
-  edit(user) {
+  handleInput(query: string) {
+    this.searchTerm.set(query ?? '');
+  }
+
+  // ── Actions ─────────────────────────────────────────────────────────────
+
+  add() {
     this.modalController.create({
-      component: SettingEditComponent,
-      componentProps: {
-        type: 'user',
-        user: user
+      component: UserCreateModalComponent,
+    }).then((modal) => modal.present());
+  }
+
+  changeRole(u: AdminUser) {
+    if (this.isSelf(u)) {
+      this.warnSelfBlocked('แอดมินไม่สามารถเปลี่ยนสิทธิ์ของบัญชีตัวเองได้');
+      return;
+    }
+    this.modalController.create({
+      component: UserChangeRoleModalComponent,
+      componentProps: { user: u },
+    }).then((modal) => modal.present());
+  }
+
+  resetPassword(u: AdminUser) {
+    this.modalController.create({
+      component: UserResetPasswordModalComponent,
+      componentProps: { user: u },
+    }).then((modal) => modal.present());
+  }
+
+  async toggleActive(u: AdminUser) {
+    if (this.isSelf(u) && u.is_active) {
+      this.warnSelfBlocked('ปิดบัญชีของตัวเองไม่ได้');
+      return;
+    }
+    const next = !u.is_active;
+    const verb = next ? 'เปิดใช้งาน' : 'ปิดใช้งาน';
+    this.service.showAlert(
+      `${verb}บัญชี`,
+      `ยืนยัน${verb}บัญชี "${u.display_name}" (${u.username}) หรือไม่?`,
+      async () => {
+        try {
+          await this.usersService.setUserActive(u.uid, next);
+        } catch (e: unknown) {
+          const msg =
+            e instanceof UserAdminError ? e.message : 'เกิดข้อผิดพลาด กรุณาลองอีกครั้ง';
+          this.service.showAlert('ผิดพลาด', msg, () => {}, { confirmOnly: true });
+        }
       },
-      cssClass: 'my-custom-class',
-    }).then(modal => modal.present());
+      { confirmOnly: false },
+    );
+  }
+
+  private warnSelfBlocked(msg: string) {
+    this.service.showAlert('ไม่อนุญาต', msg, () => {}, { confirmOnly: true });
   }
 }

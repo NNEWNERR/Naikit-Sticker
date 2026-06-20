@@ -1,64 +1,132 @@
-<!-- User management — brutal table inside the setting shell. -->
+<!-- User management — admin CRUD over users/{uid} via Cloud Functions. -->
 <div class="flex justify-between items-center mb-4 gap-2 flex-wrap">
   <h3 class="text-h2 m-0">ผู้ใช้งานในระบบ</h3>
   <app-button variant="primary" size="sm" (clicked)="add()">➕ เพิ่มผู้ใช้</app-button>
 </div>
 
-<div class="flex items-center gap-2 bg-white border-2 border-ink rounded-md px-3 py-2 shadow-brutal-sm mb-4 max-w-md">
-  <span aria-hidden="true">🔍</span>
-  <input
-    type="search"
-    (input)="handleInput($event)"
-    placeholder="ค้นหา ชื่อ / เบอร์โทร..."
-    class="bg-transparent border-0 outline-none flex-1 text-body font-semibold placeholder:text-ink-4"
-  />
+<div class="mb-4">
+  <app-search
+    label="ค้นหา ชื่อ หรือ username ของผู้ใช้"
+    placeholder="ค้นหา ชื่อ / username..."
+    name="user-search"
+    (valueChange)="handleInput($event)">
+  </app-search>
 </div>
 
 <!-- Table -->
 <div class="border-2 border-ink rounded-md overflow-x-auto md:overflow-hidden">
   <!-- Header -->
-  <div class="grid grid-cols-[44px_1fr_44px] md:grid-cols-[44px_1.5fr_1fr_1fr_44px] bg-ink text-brand text-[11px] font-extrabold min-w-[360px] md:min-w-0">
+  <div class="grid grid-cols-[44px_1fr_120px] md:grid-cols-[44px_1.4fr_1fr_120px_180px] bg-ink text-brand text-[11px] font-extrabold min-w-[520px] md:min-w-0">
     <div class="px-3 py-2.5"></div>
-    <div class="px-3 py-2.5">ชื่อ</div>
-    <div class="hidden md:block px-3 py-2.5">เบอร์โทร</div>
-    <div class="px-3 py-2.5">User ID</div>
-    <div class="px-3 py-2.5"></div>
+    <div class="px-3 py-2.5">ชื่อที่แสดง</div>
+    <div class="hidden md:block px-3 py-2.5">USERNAME</div>
+    <div class="px-3 py-2.5">สิทธิ์</div>
+    <div class="hidden md:block px-3 py-2.5 text-right">การจัดการ</div>
   </div>
+
+  <!-- Loading skeleton -->
+  <app-skeleton *ngIf="isLoading()" variant="row" [rows]="6" ariaLabel="กำลังโหลดผู้ใช้"></app-skeleton>
 
   <!-- Rows -->
-  <div
-    *ngFor="let u of results; let i = index"
-    class="grid grid-cols-[44px_1fr_44px] md:grid-cols-[44px_1.5fr_1fr_1fr_44px] border-t border-line items-center min-w-[360px] md:min-w-0"
-    [class.bg-surface-2]="i % 2 === 1"
-    [class.bg-white]="i % 2 === 0"
-  >
-    <!-- Avatar -->
-    <div class="px-2 py-2.5">
-      <div class="w-7 h-7 rounded-full border-2 border-ink bg-brand-50 flex items-center justify-center font-extrabold text-body-sm">
-        {{ (u.name || '?').charAt(0).toUpperCase() }}
+  <ng-container *ngIf="!isLoading()">
+    <div
+      *ngFor="let u of results(); let i = index"
+      class="grid grid-cols-[44px_1fr_120px] md:grid-cols-[44px_1.4fr_1fr_120px_180px] border-t border-line items-center min-w-[520px] md:min-w-0"
+      [class.bg-surface-2]="i % 2 === 1"
+      [class.bg-white]="i % 2 === 0"
+      [class.opacity-60]="!u.is_active"
+    >
+      <!-- Avatar -->
+      <div class="px-2 py-2.5">
+        <div class="w-7 h-7 rounded-full border-2 border-ink bg-brand-50 flex items-center justify-center font-extrabold text-body-sm">
+          {{ (u.display_name || u.username || '?').charAt(0).toUpperCase() }}
+        </div>
+      </div>
+      <!-- Display name + status pill -->
+      <div class="px-3 py-2.5 text-body-lg font-bold truncate flex items-center gap-2 min-w-0">
+        <span class="truncate">{{ u.display_name || '—' }}</span>
+        <span
+          *ngIf="!u.is_active"
+          class="shrink-0 text-[10px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded border-2 border-red-700 bg-red-50 text-red-700"
+        >ปิด</span>
+        <span
+          *ngIf="isSelf(u)"
+          class="shrink-0 text-[10px] font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded border-2 border-ink bg-brand"
+        >คุณ</span>
+      </div>
+      <!-- Username (desktop) -->
+      <div class="hidden md:block px-3 py-2.5 text-body font-num text-ink-2 truncate">
+        {{ u.username || '—' }}
+      </div>
+      <!-- Role badge -->
+      <div class="px-2 py-2.5">
+        <span
+          class="inline-flex items-center text-[11px] font-extrabold px-2 py-0.5 rounded-full border-2"
+          [ngClass]="roleBadgeClass(u.role)"
+        >{{ roleLabel(u.role) }}</span>
+      </div>
+      <!-- Actions (desktop) -->
+      <div class="hidden md:flex px-2 py-2.5 gap-1 justify-end">
+        <button
+          type="button"
+          (click)="changeRole(u)"
+          class="text-[12px] font-extrabold border-2 border-ink rounded px-2 py-1 bg-white hover:bg-surface-2 cursor-pointer"
+          [disabled]="isSelf(u)"
+          [class.opacity-40]="isSelf(u)"
+          [class.cursor-not-allowed]="isSelf(u)"
+          aria-label="เปลี่ยนสิทธิ์"
+        >ROLE</button>
+        <button
+          type="button"
+          (click)="resetPassword(u)"
+          class="text-[12px] font-extrabold border-2 border-ink rounded px-2 py-1 bg-white hover:bg-surface-2 cursor-pointer"
+          aria-label="ตั้งรหัสผ่านใหม่"
+        >🔑</button>
+        <button
+          type="button"
+          (click)="toggleActive(u)"
+          class="text-[12px] font-extrabold border-2 border-ink rounded px-2 py-1 cursor-pointer"
+          [class.bg-brand]="!u.is_active"
+          [class.bg-white]="u.is_active"
+          [disabled]="isSelf(u) && u.is_active"
+          [class.opacity-40]="isSelf(u) && u.is_active"
+          [class.cursor-not-allowed]="isSelf(u) && u.is_active"
+        >{{ u.is_active ? 'ปิด' : 'เปิด' }}</button>
+      </div>
+      <!-- Mobile: compact actions row spans cols (next row visually via grid) -->
+      <div class="md:hidden col-span-3 px-3 pb-3 -mt-1 flex gap-1 flex-wrap">
+        <button
+          type="button"
+          (click)="changeRole(u)"
+          class="text-[11px] font-extrabold border-2 border-ink rounded px-2 py-1 bg-white cursor-pointer"
+          [disabled]="isSelf(u)"
+          [class.opacity-40]="isSelf(u)"
+        >เปลี่ยนสิทธิ์</button>
+        <button
+          type="button"
+          (click)="resetPassword(u)"
+          class="text-[11px] font-extrabold border-2 border-ink rounded px-2 py-1 bg-white cursor-pointer"
+        >รีเซ็ตรหัส</button>
+        <button
+          type="button"
+          (click)="toggleActive(u)"
+          class="text-[11px] font-extrabold border-2 border-ink rounded px-2 py-1 cursor-pointer"
+          [class.bg-brand]="!u.is_active"
+          [class.bg-white]="u.is_active"
+          [disabled]="isSelf(u) && u.is_active"
+          [class.opacity-40]="isSelf(u) && u.is_active"
+        >{{ u.is_active ? 'ปิดบัญชี' : 'เปิดบัญชี' }}</button>
       </div>
     </div>
-    <!-- Name -->
-    <div class="px-3 py-2.5 text-body-lg font-bold truncate">
-      {{ u.name }} {{ u.last_name }}
-    </div>
-    <!-- Phone (desktop) -->
-    <div class="hidden md:block px-3 py-2.5 text-body font-num text-ink-2">{{ u.phone || '—' }}</div>
-    <!-- User ID -->
-    <div class="px-3 py-2.5 text-body font-num text-ink-3 truncate">{{ u.user_id || '—' }}</div>
-    <!-- Edit -->
-    <div class="px-2 py-2.5 text-center">
-      <button
-        type="button"
-        (click)="edit(u)"
-        class="text-[18px] text-ink-3 hover:text-ink cursor-pointer bg-transparent border-0"
-        aria-label="แก้ไข"
-      >✏️</button>
-    </div>
-  </div>
+  </ng-container>
 
   <!-- Empty -->
-  <div *ngIf="results.length === 0" class="py-10 text-center text-body text-ink-4 font-medium border-t border-line">
-    ไม่พบผู้ใช้
+  <div *ngIf="!isLoading() && results().length === 0" class="border-t border-line bg-white">
+    <app-empty-state
+      size="sm"
+      icon="👤"
+      title="ไม่พบผู้ใช้"
+      helper="ลองค้นหาด้วยคำอื่น หรือเพิ่มผู้ใช้ใหม่ด้วยปุ่มด้านบน">
+    </app-empty-state>
   </div>
 </div>

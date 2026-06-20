@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { FirestoreService } from 'src/app/services/firestore.service';
+import { UsersService } from 'src/app/services/users.service';
 
 type SettingTab = 'user' | 'site' | 'group' | 'job';
 
@@ -30,7 +31,10 @@ export class SettingComponent implements OnInit {
     { key: 'site',  icon: '🏪', label: 'ข้อมูลร้าน' },
   ];
 
-  constructor(private firestoreService: FirestoreService) {}
+  constructor(
+    private firestoreService: FirestoreService,
+    private usersService: UsersService,
+  ) {}
 
   ngOnInit() {}
 
@@ -48,10 +52,10 @@ export class SettingComponent implements OnInit {
   countFor(key: SettingTab): number | null {
     const fs = this.firestoreService;
     switch (key) {
-      case 'user':  return fs.allUsers?.length || null;
+      case 'user':  return this.usersService.users()?.length || null;
       case 'group': return (fs as any).groups?.length || null;
       case 'job':   return fs.allJobs?.length || null;
-      case 'site':  return fs.sites?.length || null;
+      case 'site':  return null;
       default:      return null;
     }
   }
