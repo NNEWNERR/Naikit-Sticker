@@ -164,6 +164,36 @@ export class JobsService {
     return () => cleanups.forEach((fn) => fn());
   }
 
+  /**
+   * Live query of every job the current user is allowed to see, for the
+   * report + diary pages (both gated to admin + seller only).
+   *
+   * - admin:  all non-deleted jobs
+   * - seller: own non-deleted jobs (seller_uid == uid)
+   * - other:  empty (those roles can't reach these pages; fail closed)
+   *
+   * Predicates mirror firestore.rules so the list query is never rejected.
+   * Returns a cleanup fn.
+   */
+  watchVisibleJobs(role: Role, uid: string, onUpdate: (jobs: Job[]) => void): () => void {
+    const base = collection(db, 'jobs');
+    const notDeleted = where('is_deleted', '==', false);
+
+    let q: Query;
+    if (role === 'admin') {
+      q = query(base, notDeleted);
+    } else if (role === 'seller') {
+      q = query(base, notDeleted, where('seller_uid', '==', uid));
+    } else {
+      onUpdate([]);
+      return () => undefined;
+    }
+
+    return onSnapshot(q, (snap) =>
+      onUpdate(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Job))),
+    );
+  }
+
   /** Subscribe to the audit log for a job, newest first. Returns a cleanup fn. */
   watchJobEvents(jobId: string, onUpdate: (events: JobEvent[]) => void): () => void {
     return onSnapshot(

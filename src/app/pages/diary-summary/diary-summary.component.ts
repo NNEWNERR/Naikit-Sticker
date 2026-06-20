@@ -1,31 +1,46 @@
-import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Timestamp } from 'firebase/firestore';
-import { FirestoreService } from 'src/app/services/firestore.service';
+import { AppStateService } from 'src/app/services/app-state.service';
+import { JobsService } from 'src/app/services/jobs.service';
+import { UsersService } from 'src/app/services/users.service';
+import { Job } from 'src/app/core/models/job';
 import { WorksheetInfoComponent } from '../worksheet-info/worksheet-info.component';
 import { ModalController } from 'src/app/services/modal.service';
 import { NkBadgeTone } from 'src/app/shared/components';
+
+/** Flattened, display-ready row derived from a v2 `Job`. */
+interface DiaryRow {
+  id: string;
+  serial_number: string;
+  customer_name: string;
+  is_urgent: boolean;
+  status: string;
+  seller_name: string;
+  design_name: string;
+  total: number;
+  date_of_acceptance: Timestamp | null;
+  work_items: Job['work_items'];
+}
 
 @Component({
   selector: 'app-diary-summary',
   templateUrl: './diary-summary.component.html',
   styleUrls: ['./diary-summary.component.scss'],
 })
-export class DiarySummaryComponent implements OnInit {
+export class DiarySummaryComponent implements OnInit, OnDestroy {
 
-  workSheets = [];
-  date = new Date()
-  designer = [];
-  form: FormGroup;
-  searchTerm: string = '';
-  selectedStatus: string = '';
-  startDate: Date;
-  endDate: Date;
-  confirmedWorkSheets: any[] = [];
+  /** The selected "นัดรับ" day — diary shows post-confirm jobs due this date. */
+  date = new Date();
+
+  /** Raw jobs visible to the current user (admin = all, seller = own). */
+  private rawJobs: Job[] = [];
+
+  private jobsCleanup?: () => void;
+  private usersCleanup?: () => void;
 
   /**
-   * The 5 "post-confirm" statuses surfaced by the prototype's diary summary —
-   * worksheets the seller already locked in. Drives the filter chips below.
+   * The 5 "post-confirm" statuses surfaced by the diary summary — worksheets
+   * the seller already locked in. Drives the filter chips below.
    */
   readonly confirmedStatuses = ['คอนเฟิร์มแล้ว', 'รอผลิต', 'กำลังผลิต', 'รอส่งมอบ', 'ส่งมอบแล้ว'] as const;
 
@@ -40,6 +55,48 @@ export class DiarySummaryComponent implements OnInit {
   /** Currently active chip — 'all' shows every confirmed worksheet. */
   selectedFilter: 'all' | string = 'all';
 
+  constructor(
+    private appState: AppStateService,
+    private jobs: JobsService,
+    private users: UsersService,
+    private modalController: ModalController,
+  ) { }
+
+  ngOnInit() {
+    const role = this.appState.role();
+    const uid = this.appState.uid();
+    if (!role || !uid) return;
+
+    // Only admin may read the full users collection (firestore.rules).
+    if (role === 'admin') {
+      this.usersCleanup = this.users.attachListener();
+    }
+
+    this.jobsCleanup = this.jobs.watchVisibleJobs(role, uid, (jobs) => {
+      this.rawJobs = jobs;
+    });
+  }
+
+  ngOnDestroy() {
+    this.jobsCleanup?.();
+    this.usersCleanup?.();
+  }
+
+  // ── Derived data ──────────────────────────────────────────────────────────
+
+  /** Post-confirm worksheets due on the selected นัดรับ date, role-scoped. */
+  get confirmedWorkSheets(): DiaryRow[] {
+    const allowed = new Set<string>(this.confirmedStatuses);
+    return this.rawJobs
+      .filter((j) => allowed.has(j.status) && this.isSameDay(j.date_of_acceptance, this.date))
+      .map((j) => this.toRow(j));
+  }
+
+  get visibleRows(): DiaryRow[] {
+    if (this.selectedFilter === 'all') return this.confirmedWorkSheets;
+    return this.confirmedWorkSheets.filter((w) => w.status === this.selectedFilter);
+  }
+
   setFilter(key: string) {
     this.selectedFilter = key;
   }
@@ -48,23 +105,30 @@ export class DiarySummaryComponent implements OnInit {
     return this.confirmedWorkSheets.filter((w) => w.status === status).length;
   }
 
-  get visibleRows(): any[] {
-    if (this.selectedFilter === 'all') return this.confirmedWorkSheets;
-    return this.confirmedWorkSheets.filter((w) => w.status === this.selectedFilter);
-  }
-
   get urgentCount(): number {
-    return this.confirmedWorkSheets.filter((w) => !!w.is_urgent).length;
+    return this.confirmedWorkSheets.filter((w) => w.is_urgent).length;
   }
 
   get deliveredCount(): number {
     return this.confirmedWorkSheets.filter((w) => w.status === 'ส่งมอบแล้ว').length;
   }
 
+  getTotalAmount(): number {
+    return this.confirmedWorkSheets.reduce((sum, w) => sum + (w.total || 0), 0);
+  }
+
+  toneFor(status: string): NkBadgeTone {
+    return this.statusLabels[status]?.tone || 'neutral';
+  }
+
+  trackByKey = (_i: number, w: DiaryRow): string => w?.id ?? String(_i);
+
+  // ── Date input adapter ────────────────────────────────────────────────────
+
   /**
    * String adapter for <input type="date">. The component stores `date` as a
-   * Date; the input speaks ISO yyyy-MM-dd. Setting normalizes to noon to
-   * dodge timezone drift across the day boundary.
+   * Date; the input speaks ISO yyyy-MM-dd. Setting normalizes to noon to dodge
+   * timezone drift across the day boundary.
    */
   get dateInputValue(): string {
     const d = this.date instanceof Date ? this.date : new Date(this.date);
@@ -82,122 +146,62 @@ export class DiarySummaryComponent implements OnInit {
     }
   }
 
-  /** Period label for the SUMMARY block — Thai month + year (current). */
+  resetFilters() {
+    this.date = new Date();
+    this.selectedFilter = 'all';
+  }
+
+  /** Period label for the SUMMARY block — Thai month + พ.ศ. of selected date. */
   get monthLabel(): string {
     const months = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
     const d = new Date(this.date);
     return `${months[d.getMonth()]} ${d.getFullYear() + 543}`;
   }
 
-  toneFor(status: string): NkBadgeTone {
-    return this.statusLabels[status]?.tone || 'neutral';
+  // ── Helpers ───────────────────────────────────────────────────────────────
+
+  private isSameDay(ts: Timestamp | null | undefined, day: Date): boolean {
+    if (!ts) return false;
+    const d = new Date(ts.seconds * 1000);
+    return d.getFullYear() === day.getFullYear()
+        && d.getMonth() === day.getMonth()
+        && d.getDate() === day.getDate();
   }
 
-  trackByKey = (_i: number, w: any): string => w?.key ?? w?.serial_number ?? String(_i);
-
-  constructor(
-    private firestoreService: FirestoreService,
-    private formBuilder: FormBuilder,
-     private modalController: ModalController
-  ) { }
-
-  ngOnInit() {
-    this.initForm();
-  }
-
-  initForm() {
-    this.form = this.formBuilder.group({
-      designer: ['', Validators.required],
-    })
-  }
-
-  search() {
-    if (this.form.valid) {
-      this.firestoreService.unsubscribeSubscriptions();
-      this.firestoreService.fetchWorkSheetSummaryDiary(this.date, this.form.value.designer.value).then((res: any[]) => {
-        this.workSheets = res;
-        // The redesigned summary screen is specifically about post-confirm
-        // workflow (พร้อมผลิต → ส่งมอบแล้ว). Filter at the client to match
-        // the prototype's intent; the fetch query is left as-is so callers
-        // and Firestore indexes don't need to change.
-        const allowed = new Set(this.confirmedStatuses as readonly string[]);
-        this.confirmedWorkSheets = (res || []).filter((w) => allowed.has(w.status));
-      });
-    } else {
-      this.form.markAllAsTouched();
-    }
-  }
-
-  formatTime(timestamp: Timestamp) {
-    const date = new Date(timestamp.seconds * 1000);
-    const options: Intl.DateTimeFormatOptions = {
-      // year: 'numeric',
-      // month: 'long',
-      // day: 'numeric',
-      // hour: 'numeric',
-      // minute: 'numeric',
-      // second: 'numeric',
-      // timeZoneName: 'short'
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      // hour: '2-digit',
-      // minute: '2-digit',
-      // second: '2-digit'
+  private toRow(j: Job): DiaryRow {
+    return {
+      id: j.id,
+      serial_number: j.serial_number,
+      customer_name: j.customer_name,
+      is_urgent: !!j.is_urgent,
+      status: j.status,
+      seller_name: this.nameOf(j.seller_uid),
+      design_name: j.design_uid ? this.nameOf(j.design_uid) : '',
+      total: j.payment?.total ?? 0,
+      date_of_acceptance: j.date_of_acceptance ?? null,
+      work_items: j.work_items ?? [],
     };
-    const formattedDate = date.toLocaleDateString('th-TH', options);
-    return formattedDate;
   }
 
-  onActivate(event) {
-    if (event.type === "click") {
-      // console.log(event.row)
-    }
+  private nameOf(uid: string | null | undefined): string {
+    if (!uid) return '—';
+    if (uid === this.appState.uid()) return this.appState.displayName() || '—';
+    const u = this.users.users().find((x) => x.uid === uid);
+    return u?.display_name || '—';
   }
 
-  workSheetInfo(workSheet) {
-    this.modalController.create({
+  async workSheetInfo(row: DiaryRow) {
+    if (!row?.id) return;
+    const modal = await this.modalController.create({
       component: WorksheetInfoComponent,
-      componentProps: {
-        workSheet: workSheet
-      },
+      componentProps: { jobId: row.id },
       cssClass: 'modal-fullscreen',
-    }).then(modal => modal.present());
-  }
-
-  getDesignerCount(): number {
-    if (!this.form.value.designer?.value) return 0;
-    return this.workSheets?.filter(ws => ws.design_by === this.form.value.designer.value).length || 0;
-  }
-
-  resetFilters() {
-    this.searchTerm = '';
-    this.selectedStatus = '';
-    this.startDate = null;
-    this.endDate = null;
-    this.form.get('designer').reset();
-    this.search();
-  }
-
-  onSearch() {
-    // Implement search logic
-  }
-
-  exportWorkSheet(row: any) {
-    // Implement PDF export logic
-  }
-
-  getTotalAmount(): number {
-    return this.confirmedWorkSheets.reduce((sum, ws) => sum + (ws.total || 0), 0);
-  }
-
-  getDesignerConfirmedCount(): number {
-    if (!this.form.value.designer?.value) return 0;
-    return this.confirmedWorkSheets.filter(ws => ws.design_by === this.form.value.designer.value).length;
+    });
+    await modal.present();
   }
 
   exportToExcel() {
-    // TODO: Implement Excel export logic
-    console.log('Exporting to Excel:', this.confirmedWorkSheets);
+    // TODO: Implement Excel export logic for the v2 schema.
+    console.log('Exporting diary:', this.confirmedWorkSheets);
   }
 }

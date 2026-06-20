@@ -93,11 +93,11 @@
         </div>
         <div class="px-3 py-2.5">
           <div class="text-body font-semibold truncate">{{ w.customer_name }}</div>
-          <div *ngIf="w.workItems?.length" class="text-[11px] text-ink-4 truncate">{{ w.workItems[0].type }}</div>
+          <div *ngIf="w.work_items?.length" class="text-[11px] text-ink-4 truncate">{{ w.work_items[0].type }}</div>
         </div>
         <div class="hidden md:block px-3 py-2.5 text-body">{{ w.seller_name || '—' }}</div>
-        <div class="hidden md:block px-3 py-2.5 text-body" [class.text-ink-4]="!w.design_by || w.design_by === '-'">
-          {{ w.design_by && w.design_by !== '-' ? w.design_by : '—' }}
+        <div class="hidden md:block px-3 py-2.5 text-body" [class.text-ink-4]="!w.design_name">
+          {{ w.design_name || '—' }}
         </div>
         <div class="hidden md:block px-3 py-2.5 text-body-sm font-num text-ink-3">{{ shortDate(w.created_at) }}</div>
         <div class="hidden md:block px-3 py-2.5 text-body-sm font-num"

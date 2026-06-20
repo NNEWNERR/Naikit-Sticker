@@ -23,35 +23,22 @@
 
   <div class="px-4 md:px-5 py-4 md:py-5">
 
-    <!-- ── Designer + date filters (gating row) ───────────────────────── -->
-    <form [formGroup]="form" class="grid grid-cols-1 md:grid-cols-[1fr_220px_auto] gap-3 mb-4">
+    <!-- ── Date filter (นัดรับ) ────────────────────────────────────────── -->
+    <div class="grid grid-cols-1 md:grid-cols-[220px_auto] gap-3 mb-4">
       <div>
-        <label class="label-mono block mb-1.5">ผู้ออกแบบ</label>
-        <app-select
-          [parentForm]="form"
-          formControlName="designer"
-          [multiple]="false"
-          [options]="designer"
-          placeholder="เลือกผู้ออกแบบ"
-          (selectChange)="search()"
-        ></app-select>
-      </div>
-
-      <div>
-        <label class="label-mono block mb-1.5">วันที่อ้างอิง</label>
+        <label class="label-mono block mb-1.5">วันนัดรับ</label>
         <input
           type="date"
           [(ngModel)]="dateInputValue"
-          (ngModelChange)="search()"
           [ngModelOptions]="{standalone: true}"
           class="input-base focus-ring w-full font-num font-semibold"
         />
       </div>
 
       <div class="self-end">
-        <app-button variant="ghost" size="md" (clicked)="resetFilters()">↻ รีเซ็ต</app-button>
+        <app-button variant="ghost" size="md" (clicked)="resetFilters()">↻ วันนี้</app-button>
       </div>
-    </form>
+    </div>
 
     <!-- ── Summary hero + stat tiles ──────────────────────────────────── -->
     <div class="grid grid-cols-2 md:grid-cols-[1.5fr_1fr_1fr] gap-3 mb-4">
@@ -125,19 +112,19 @@
         </div>
         <div class="px-3 py-3">
           <div class="text-body font-semibold truncate">{{ w.customer_name }}</div>
-          <div *ngIf="w.workItems?.length" class="text-[11px] text-ink-4 truncate">{{ w.workItems[0].type }}</div>
+          <div *ngIf="w.work_items?.length" class="text-[11px] text-ink-4 truncate">{{ w.work_items[0].type }}</div>
         </div>
         <div class="hidden md:block px-3 py-3">
           <app-badge [tone]="toneFor(w.status)" [dot]="true">{{ w.status }}</app-badge>
         </div>
         <div class="hidden md:block px-3 py-3 text-body">{{ w.seller_name || '—' }}</div>
-        <div class="hidden md:block px-3 py-3 text-body">{{ w.design_by || '—' }}</div>
+        <div class="hidden md:block px-3 py-3 text-body">{{ w.design_name || '—' }}</div>
         <div class="px-3 py-3 text-body font-extrabold font-num">฿{{ (w.total || 0) | number }}</div>
         <div class="hidden md:block px-3 py-3 text-body font-bold underline">เปิด</div>
       </div>
 
       <div *ngIf="visibleRows.length === 0" class="py-12 text-center text-body text-ink-4 font-medium border-t border-line">
-        <span *ngIf="confirmedWorkSheets.length === 0">เลือกผู้ออกแบบเพื่อดูข้อมูล</span>
+        <span *ngIf="confirmedWorkSheets.length === 0">ไม่มีงานคอนเฟิร์มที่นัดรับวันนี้</span>
         <span *ngIf="confirmedWorkSheets.length > 0">ไม่มีใบงานในสถานะที่เลือก</span>
       </div>
     </div>
