@@ -10,6 +10,7 @@
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "lint": "ng lint",
+    "design:lint": "node scripts/lint-templates.js",
     "hosting:prod": "ng build --configuration production && firebase deploy",
     "app:android": "ng build && npx cap sync android"
   },

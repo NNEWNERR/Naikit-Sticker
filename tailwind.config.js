@@ -46,6 +46,10 @@ module.exports = {
         warn:    { DEFAULT: '#CA8A04', bg: '#FFF7CC' }, // warning (yellow-600/100)
         danger:  { DEFAULT: '#DC2626', bg: '#FFE9E9' }, // danger (red-600 + tint)
         info:    { DEFAULT: '#0284C7' , bg: '#E0F2FE' }, // info (sky-600/100)
+        // Urgent — the prototype's create-screen "ด่วน" CTA uses a more orange
+        // red than --danger (#DC2626) so it sits visually next to it on the
+        // job-priority strip without clashing. Source: prototype `UrgentBadge`.
+        urgent:  { DEFAULT: '#E63946' },
         // Worksheet status palette — 8 pairs, sourced verbatim from prototype
         // assets/71f8a03f-…js STATUS_COLORS. Use via class plumbing in app code
         // rather than ad-hoc bg-* utilities so the pill component remains the
