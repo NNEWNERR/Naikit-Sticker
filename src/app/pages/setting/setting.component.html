@@ -1,62 +1,20 @@
 <!--
   Settings — neo-brutalist shell.
-  Left side-nav (desktop) + horizontal tab strip (mobile). Four sub-pages
-  render inside a brutal card on the right.
+  v2: settings is user management only (group / job-type / site tabs removed
+  with their collections). <app-user> renders directly in the card.
 -->
 <div class="nk-content bg-surface-2">
 
   <app-page-header
     breadcrumb="SETTING · ตั้งค่า"
     title="ตั้งค่า"
-    subtitle="จัดการผู้ใช้, ประเภทงาน, ราคา"
+    subtitle="จัดการผู้ใช้งาน"
     [yellow]="true"
   ></app-page-header>
 
-  <!-- Mobile tab strip -->
-  <div class="md:hidden flex border-b-2 border-ink bg-white overflow-x-auto flex-shrink-0">
-    <button
-      *ngFor="let t of tabs"
-      type="button"
-      (click)="setTab(t.key)"
-      class="px-3.5 py-2.5 text-body-sm font-bold cursor-pointer border-b-[3px] transition-colors whitespace-nowrap"
-      [class.bg-brand]="tab === t.key"
-      [class.bg-white]="tab !== t.key"
-      [class.border-ink]="tab === t.key"
-      [class.border-transparent]="tab !== t.key"
-    >{{ t.icon }} {{ t.label }}</button>
-  </div>
-
-  <!-- Body -->
-  <div class="px-4 md:px-6 py-5 grid grid-cols-1 md:grid-cols-[200px_1fr] gap-5 items-start">
-
-    <!-- Desktop side-nav -->
-    <nav class="hidden md:block bg-white border-2 border-ink rounded-lg p-2 shadow-brutal" aria-label="Setting sections">
-      <button
-        *ngFor="let it of tabs"
-        type="button"
-        (click)="setTab(it.key)"
-        class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-md mb-1 cursor-pointer text-body border-2 transition-colors"
-        [class.bg-brand]="tab === it.key"
-        [class.border-ink]="tab === it.key"
-        [class.font-extrabold]="tab === it.key"
-        [class.bg-transparent]="tab !== it.key"
-        [class.border-transparent]="tab !== it.key"
-        [class.font-semibold]="tab !== it.key"
-      >
-        <span aria-hidden="true">{{ it.icon }}</span>
-        <span class="flex-1 text-left">{{ it.label }}</span>
-        <span *ngIf="countFor(it.key) as c" class="text-[11px] text-ink-3 font-num">{{ c }}</span>
-      </button>
-    </nav>
-
-    <!-- Tab content -->
+  <div class="px-4 md:px-6 py-5">
     <div class="bg-white border-2 border-ink rounded-lg p-5 md:p-[22px] shadow-brutal min-w-0">
-      <div [ngSwitch]="tab">
-        <app-user *ngSwitchCase="'user'"></app-user>
-        <app-site *ngSwitchCase="'site'"></app-site>
-        <app-group *ngSwitchCase="'group'"></app-group>
-        <app-job *ngSwitchCase="'job'"></app-job>
-      </div>
+      <app-user></app-user>
     </div>
   </div>
 </div>
