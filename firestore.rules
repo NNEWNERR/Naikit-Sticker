@@ -1,104 +1,92 @@
 rules_version = '2';
 
 // =============================================================================
-// Naikit-Sticker Firestore security rules
+// Naikit-Sticker Firestore security rules — v2 (RBAC)
 // -----------------------------------------------------------------------------
-// TEMPORARY rules — these are scoped to the current architecture where the app
-// uses a custom localStorage session (NO Firebase Auth). Because `request.auth`
-// is always null, we CANNOT do per-user authorization in these rules.
+// Architecture (see SCHEMA.md — source of truth):
+//   * Identity = Firebase Auth uid. request.auth is NON-null for any signed-in
+//     staff member. The old plain-text-password / custom-localStorage login is
+//     GONE (A1 landed) — there is no public `users` read hole anymore.
+//   * Role = custom claim `request.auth.token.role`
+//     ('seller' | 'graphic' | 'production' | 'admin').
+//   * ALL writes go through Cloud Functions (Admin SDK), which bypass these
+//     rules. Therefore every collection here is `write: if false` for clients —
+//     create/update/delete are impossible from the browser. This guarantees
+//     atomic (job + job_events) updates and server-verified status transitions.
+//   * Reads go directly from the client and are scoped per-role below.
 //
-// !!! CRITICAL — READ BEFORE DEPLOYING !!!
-// The `users` collection is currently PUBLICLY READABLE. The client-side login
-// flow (`firestore.service.ts: signInWithUsernameAndPassword`) does a raw
-// `getDocs(where username==X && password==Y)` query, which requires read
-// access. We CANNOT close this hole at the rules layer without first moving
-// the login server-side. That is tracked as backlog item A1 (Firebase Auth
-// migration). Deploying THIS rules file does NOT close the password-leak
-// vector — A2 (these rules) only protects the OTHER collections (jobs,
-// comments, sites, groups, etc.) against arbitrary writes and exfiltration.
-// Until A1 lands:
-//   * passwords stored on user documents are reachable by anyone with the
-//     Firestore project ID;
-//   * client writes to `users` are blocked here (only Cloud Functions /
-//     Admin SDK can create or modify user docs).
-// Treat A1 as the gating fix. A2 is harm-reduction, not a remedy.
+// Read model per RBAC matrix:
+//   users        — self, or any if admin
+//   jobs         — seller: seller_uid==self
+//                  graphic: design_uid==self OR status=='รอออกแบบ' (design queue)
+//                  production: print_uid==self OR status in
+//                              ['คอนเฟิร์มแล้ว','รอผลิต'] (production queue)
+//                  admin: all
+//   job_events   — any signed-in staff (audit log; queried by job_id only,
+//                  ids are non-enumerable; doing a parent-job get() per doc
+//                  would blow the rules document-access limit on busy jobs)
+//   comments     — same as job_events
 // =============================================================================
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
     // ---- helpers -----------------------------------------------------------
-    function isReasonableString(v, max) {
-      return v is string && v.size() <= max;
+    function isSignedIn() {
+      return request.auth != null;
     }
-    function isOptionalString(v, max) {
-      return !(v is string) || v.size() <= max;
+    function role() {
+      return request.auth.token.role;
+    }
+    function isAdmin() {
+      return isSignedIn() && role() == 'admin';
+    }
+    function isStaff() {
+      return isSignedIn()
+          && role() in ['seller', 'graphic', 'production', 'admin'];
     }
 
     // ---- users -------------------------------------------------------------
-    // TEMPORARY: client-side login (signInWithUsernameAndPassword) needs to
-    // query this collection to authenticate; until A1 (Firebase Auth) lands,
-    // we MUST allow public read or login dies. The password-leak risk is
-    // documented at the top of this file. Writes are blocked — only Cloud
-    // Functions / Admin SDK should create or modify user documents.
+    // A user can read their own doc; admin can read anyone. Never client-write —
+    // username/password/custom-claim must be set together in admin context via
+    // the createUser / setUserRole / setUserActive / resetPassword callables.
     match /users/{userId} {
-      allow read: if true;
+      allow read: if isSignedIn() && (request.auth.uid == userId || isAdmin());
       allow write: if false;
     }
 
     // ---- jobs (work orders) ------------------------------------------------
+    // Read is role-scoped. Each home-kanban query (see jobs.service.ts)
+    // constrains its where-clauses so every returned doc satisfies the predicate
+    // below; single-doc detail reads (watchJob) are checked the same way.
     match /jobs/{jobId} {
-      allow read: if true;  // currently public-ish; tighten under A1
-      allow create: if
-        request.resource.data.keys().hasAll(['status', 'created_at']) &&
-        isReasonableString(request.resource.data.status, 64) &&
-        isOptionalString(request.resource.data.serial_number, 64) &&
-        isOptionalString(request.resource.data.customer_name, 200) &&
-        isOptionalString(request.resource.data.phone, 32) &&
-        isOptionalString(request.resource.data.remark, 2000);
-      allow update: if
-        isReasonableString(request.resource.data.status, 64) &&
-        isOptionalString(request.resource.data.remark, 2000);
-      allow delete: if false; // soft-delete via flag, never hard delete
+      allow read: if isSignedIn() && (
+        isAdmin() ||
+        (role() == 'seller'     && resource.data.seller_uid == request.auth.uid) ||
+        (role() == 'graphic'    && (resource.data.design_uid == request.auth.uid
+                                    || resource.data.status == 'รอออกแบบ')) ||
+        (role() == 'production'  && (resource.data.print_uid == request.auth.uid
+                                    || resource.data.status in ['คอนเฟิร์มแล้ว', 'รอผลิต']))
+      );
+      allow write: if false; // all mutations via Cloud Functions
+    }
+
+    // ---- job_events (audit log) --------------------------------------------
+    match /job_events/{eventId} {
+      allow read: if isStaff();
+      allow write: if false;
     }
 
     // ---- comments ----------------------------------------------------------
     match /comments/{commentId} {
-      allow read: if true;
-      allow create: if
-        request.resource.data.keys().hasAll(['worksheet_id', 'user', 'text']) &&
-        isReasonableString(request.resource.data.worksheet_id, 128) &&
-        isReasonableString(request.resource.data.user, 64) &&
-        isReasonableString(request.resource.data.text, 2000);
-      // Allow soft-delete + like updates only. Disallow rewriting user/text.
-      allow update: if
-        request.resource.data.diff(resource.data).affectedKeys()
-          .hasOnly(['likes', 'is_deleted', 'deleted_at', 'replies']);
-      allow delete: if false;
-    }
-
-    // ---- job_drafts --------------------------------------------------------
-    match /job_drafts/{draftId} {
-      allow read: if true;
-      allow create, update: if
-        isOptionalString(request.resource.data.status, 64) &&
-        isOptionalString(request.resource.data.remark, 2000);
-      allow delete: if false;
-    }
-
-    // ---- sites / groups (reference data; admin-managed) --------------------
-    // Until A1, these are read-only from the client and write-only via console
-    // / Cloud Functions.
-    match /sites/{siteId} {
-      allow read: if true;
-      allow write: if false;
-    }
-    match /groups/{groupId} {
-      allow read: if true;
+      allow read: if isStaff();
       allow write: if false;
     }
 
     // ---- default deny ------------------------------------------------------
+    // Legacy v1 collections (groups/sites/schedules/slots/broadcasts/services,
+    // job_drafts) are intentionally NOT matched → denied. Delete them from the
+    // Firebase console; nothing reads them anymore.
     match /{document=**} {
       allow read, write: if false;
     }

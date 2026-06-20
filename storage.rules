@@ -1,37 +1,52 @@
 rules_version = '2';
 
 // =============================================================================
-// Naikit-Sticker Cloud Storage rules
+// Naikit-Sticker Cloud Storage rules — v2
 // -----------------------------------------------------------------------------
-// TEMPORARY rules — request.auth is null because the app uses a custom
-// localStorage session (see firestore.rules for context). These rules at
-// minimum:
-//   - cap upload size at 10MB per file
-//   - restrict content-type to image/* and application/pdf
-//   - confine writes to the application's known path pattern
+// Firebase Auth has landed (A1), so request.auth is non-null for signed-in
+// staff. Uploads are done directly from the client (uploadBytes) by an
+// authenticated user, then the resulting download URL is handed to a Cloud
+// Function. These rules enforce: signed-in only, 10MB/file cap, image|pdf
+// content-type, and the two known path patterns.
 //
-// Replace `allow read: if true` with auth checks once A1 (Firebase Auth)
-// lands and the upload flow attaches the user id.
+// Upload paths (must match FE):
+//   images/{year}/{month}/{bucket}/{worksheet|reference}/{file}
+//     — create-work-sheet.component.ts (bucket = per-submission UUID)
+//   jobs/{jobId}/{design|print}/{file}
+//     — jobs.service.ts uploadImages() (submitDesign / uploadPrint)
 // =============================================================================
 
 service firebase.storage {
   match /b/{bucket}/o {
 
+    function isSignedIn() {
+      return request.auth != null;
+    }
     function isAllowedContentType() {
       return request.resource.contentType.matches('image/.*')
           || request.resource.contentType == 'application/pdf';
     }
-
     function isUnderSizeCap() {
       return request.resource.size < 10 * 1024 * 1024; // 10MB per file
     }
 
-    // App writes follow this pattern (see create-work-sheet.component.ts:707):
-    //   images/{year}/{month}/{serial}/{worksheet|reference}/{filename}
-    match /images/{year}/{month}/{serial}/{kind}/{filename} {
-      allow read: if true;
+    // Worksheet + reference images (create flow).
+    match /images/{year}/{month}/{slug}/{kind}/{filename} {
+      allow read: if isSignedIn();
       allow create, update: if
+        isSignedIn() &&
         (kind == 'worksheet' || kind == 'reference') &&
+        isAllowedContentType() &&
+        isUnderSizeCap();
+      allow delete: if false;
+    }
+
+    // Design + print images (worksheet-info workflow uploads).
+    match /jobs/{jobId}/{kind}/{filename} {
+      allow read: if isSignedIn();
+      allow create, update: if
+        isSignedIn() &&
+        (kind == 'design' || kind == 'print') &&
         isAllowedContentType() &&
         isUnderSizeCap();
       allow delete: if false;
