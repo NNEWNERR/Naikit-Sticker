@@ -24,6 +24,11 @@
                 "glob": "**/*",
                 "input": "src/assets",
                 "output": "assets"
+              },
+              {
+                "glob": "*.js",
+                "input": "src/sw-kill",
+                "output": ""
               }
             ],
             "styles": ["src/global.scss"],
