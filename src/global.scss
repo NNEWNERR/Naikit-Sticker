@@ -400,6 +400,10 @@ html, body {
 html,
 body {
   height: 100%;
+  /* Standard property — Tailwind preflight only emits the -webkit- prefix,
+   * which modern Chrome/Edge/Firefox/Safari flag as unsupported. */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
