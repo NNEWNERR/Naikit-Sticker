@@ -46,17 +46,7 @@ export class AppStateService {
 
     onIdTokenChanged(auth, async (user) => {
       try {
-        if (!user) {
-          this._session.set(null);
-          return;
-        }
-        const next = await this.resolveSession(user);
-        if (!next) {
-          // Either no role claim or account deactivated — sign out and stay logged out.
-          await this.forceSignOut();
-          return;
-        }
-        this._session.set(next);
+        await this.applyUser(user);
       } finally {
         if (!this._readyResolved) {
           this._readyResolved = true;
@@ -64,6 +54,33 @@ export class AppStateService {
         }
       }
     });
+  }
+
+  /**
+   * Resolve + apply the session for the currently signed-in user (or clear it
+   * when signed out). Returns the resolved session, or null when rejected
+   * (no role claim / missing doc / deactivated — caller already signed out).
+   *
+   * Used by the login flow so it can deterministically wait for the post-sign-in
+   * session to settle, instead of racing the boot-time `ready()` promise.
+   */
+  async refreshSession(): Promise<SessionUser | null> {
+    return this.applyUser(auth.currentUser);
+  }
+
+  private async applyUser(user: FirebaseUser | null): Promise<SessionUser | null> {
+    if (!user) {
+      this._session.set(null);
+      return null;
+    }
+    const next = await this.resolveSession(user);
+    if (!next) {
+      // Either no role claim or account deactivated — sign out and stay logged out.
+      await this.forceSignOut();
+      return null;
+    }
+    this._session.set(next);
+    return next;
   }
 
   /**

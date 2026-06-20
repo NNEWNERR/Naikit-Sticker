@@ -44,13 +44,13 @@ export class AuthService {
     } catch (e: unknown) {
       throw this.mapFirebaseError(e);
     }
-    // AppStateService.onIdTokenChanged populates session asynchronously.
-    // Wait until it has resolved at least once so the caller can navigate
-    // and the destination guard sees a populated session.
-    await this.appState.ready();
-    if (!this.appState.isLoggedIn()) {
-      // AppStateService already signed us out (no role claim, doc missing,
-      // or is_active=false). Surface as no_role so the UI can explain.
+    // Deterministically resolve the session for the user we just signed in —
+    // don't rely on the boot-time `ready()` promise (already resolved with a
+    // null user), which would race the async onIdTokenChanged resolution and
+    // intermittently report "no role" / hang before the session settles.
+    const session = await this.appState.refreshSession();
+    if (!session) {
+      // No role claim, doc missing, or is_active=false — already signed out.
       throw new AuthError(
         'no_role',
         'บัญชีนี้ยังไม่ได้ตั้งสิทธิ์การใช้งาน กรุณาติดต่อแอดมิน'
