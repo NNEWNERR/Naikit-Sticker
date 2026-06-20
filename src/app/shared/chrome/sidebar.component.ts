@@ -51,7 +51,7 @@ import { NavItem, isEmojiIcon } from './nav-item.interface';
       [class.top-0]="true"
       [class.left-0]="true"
       [class.h-screen]="true"
-      [class.md:h-auto]="true"
+      [class.md:h-full]="true"
       [class.z-50]="true"
       [class.md:z-auto]="true"
       [class.transition-transform]="true"
