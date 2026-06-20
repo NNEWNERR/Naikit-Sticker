@@ -115,7 +115,6 @@ export class SettingAddComponent implements OnInit {
       nick_name: this.form.value.nick_name,
       phone: this.form.value.phone,
       user_id: uuidv4(),
-      project_id: this.firestoreService.user[0].project_id,
       group_id: '',
     }
     this.firestoreService.addDatatoFirebase(collectionRef, data)
@@ -128,7 +127,6 @@ export class SettingAddComponent implements OnInit {
     const data = {
       name: this.form.value.name,
       site_id: uuidv4(),
-      project_id: this.firestoreService.user[0].project_id,
       group_id: '',
     }
     this.firestoreService.addDatatoFirebase(collectionRef, data)
@@ -139,7 +137,7 @@ export class SettingAddComponent implements OnInit {
   addGroup() {
     const group_id = uuidv4();
     const site_id = []
-    this.form.value.site_groups.forEach((site) => {
+    this.form.value.site_groups?.forEach((site) => {
       site_id.push(site.value)
     })
     const collectionRef = collection(db, "groups");
@@ -147,18 +145,15 @@ export class SettingAddComponent implements OnInit {
       name: this.form.value.name,
       reader: this.form.value.reader,
       limit: this.form.value.limit,
-      color: this.form.value.color.value,
+      color: this.form.value.color?.value,
       image: this.form.value.image,
       site_groups: { site_id: site_id },
       id: group_id,
-      project_id: this.firestoreService.user[0].project_id,
     }
     this.firestoreService.addDatatoFirebase(collectionRef, data).then(() => {
-      this.form.value.site_groups.forEach((site) => {
+      this.form.value.site_groups?.forEach((site) => {
         const docRef = doc(db, "sites", site.key);
-        const data = {
-          group_id: group_id,
-        }
+        const data = { group_id: group_id }
         this.firestoreService.safeUpdate(docRef, data);
       })
     }).catch((error) => {
@@ -177,10 +172,7 @@ export class SettingAddComponent implements OnInit {
   }
 
   async setSite() {
-    const sites = await this.firestoreService.fetchDataSiteNoGroup();
-    this.sites = sites.map((site) => {
-      return { title: site.name, value: site.site_id, disbled: false, key: site.key }
-    })
-    this.sites.sort((a, b) => a.title.localeCompare(b.title));
+    // sites collection removed in v2
+    this.sites = [];
   }
 }

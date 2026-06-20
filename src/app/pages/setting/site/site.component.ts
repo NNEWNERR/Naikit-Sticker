@@ -16,8 +16,6 @@ export class SiteComponent implements OnInit {
   public data = [];
   public results = [...this.data];
 
-  subscription;
-
   constructor(
     private serviceService: ServiceService,
     private modalController: ModalController,
@@ -25,44 +23,18 @@ export class SiteComponent implements OnInit {
   ) { }
 
   ngOnInit() {
-    this.subscription = this.firestoreService.sitesChange.subscribe(sites => {
-      this.data = sites;
-      this.results = [...this.data];
-      this.serviceService.dismissLoading();
-    })
-    const sites = this.firestoreService.sites;
-    if (sites.length > 0) {
-      this.data = sites
-      this.results = [...this.data];
-    } else {
-      this.serviceService.presentLoadingWithOutTime('กําลังโหลดข้อมูล...');
-      this.firestoreService.fetchDataSite('1')
-    }
-    // this.serviceService.presentLoadingWithOutTime('กําลังโหลดข้อมูล...');
-    // const interval = setInterval(() => {
-    //   if (this.firestoreService.user.length > 0) {
-    //     clearInterval(interval);
-    //     this.firestoreService.fetchDataSite(this.firestoreService.user[0].project_id)
-    //   }
-    // }, 1000);
-    // this.subscription = this.firestoreService.sitesChange.subscribe(sites => {
-    //   this.serviceService.dismissLoading();
-    //   this.data = sites;
-    //   this.results = [...this.data];
-    // })
-  }
-
-  ngOnDestroy() {
-    this.subscription.unsubscribe();
+    // sites collection removed in v2 — page kept for routing compat only
+    this.data = [];
+    this.results = [];
   }
 
   closeModal() {
     this.modalController.dismiss();
   }
 
-  handleInput(event) {
-    const query = event.target.value.toLowerCase();
-    this.results = this.data.filter((d) => d.name.toLowerCase().indexOf(query) > -1);
+  handleInput(query: string) {
+    const q = (query || '').toLowerCase();
+    this.results = this.data.filter((d) => (d.name || '').toLowerCase().indexOf(q) > -1);
   }
 
   onActivate(event) {

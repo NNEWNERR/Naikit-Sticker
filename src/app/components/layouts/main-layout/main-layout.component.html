@@ -13,8 +13,8 @@
 <app-shell
   [navItems]="navItems"
   [bottomNavItems]="primaryTabs"
-  [userName]="userName"
-  [userRole]="userRole"
+  [userName]="userName()"
+  [userRole]="userRole()"
   [hasTopbar]="false"
   (logoutRequested)="logout()"
 >

@@ -61,9 +61,13 @@ export class JobComponent implements OnInit {
     this.modalController.dismiss();
   }
 
-  handleInput(event) {
-    const query = event.target.value.toLowerCase();
-    this.results = this.data.filter((d) => d.serial_number.toLowerCase().indexOf(query) > -1 || d.customer_name.toLowerCase().indexOf(query) > -1);
+  handleInput(query: string) {
+    const q = (query || '').toLowerCase();
+    this.results = this.data.filter(
+      (d) =>
+        (d.serial_number || '').toLowerCase().indexOf(q) > -1 ||
+        (d.customer_name || '').toLowerCase().indexOf(q) > -1
+    );
   }
 
   onActivate(event) {

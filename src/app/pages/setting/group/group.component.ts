@@ -16,8 +16,6 @@ export class GroupComponent implements OnInit {
   public data = [];
   public results = [...this.data];
 
-  subscription;
-
   constructor(
     private serviceService: ServiceService,
     private modalController: ModalController,
@@ -25,45 +23,18 @@ export class GroupComponent implements OnInit {
   ) { }
 
   ngOnInit() {
-    this.subscription = this.firestoreService.groupsChange.subscribe(groups => {
-      this.data = groups;
-      this.results = [...this.data];
-      this.serviceService.dismissLoading();
-    })
-    const groups = this.firestoreService.groups;
-    if (groups.length > 0) {
-      this.data = groups
-      this.results = [...this.data];
-    } else {
-      this.serviceService.presentLoadingWithOutTime('กําลังโหลดข้อมูล...');
-      this.firestoreService.fetchDataGroup(this.firestoreService.user[0].project_id)
-    }
-
-    // this.serviceService.presentLoadingWithOutTime('กําลังโหลดข้อมูล...');
-    // const interval = setInterval(() => {
-    //   if (this.firestoreService.user.length > 0) {
-    //     clearInterval(interval);
-    //     this.firestoreService.fetchDataGroup(this.firestoreService.user[0].project_id)
-    //   }
-    // }, 1000);
-    // this.subscription = this.firestoreService.groupsChange.subscribe(groups => {
-    //   this.serviceService.dismissLoading();
-    //   this.data = groups;
-    //   this.results = [...this.data];
-    // })
-  }
-
-  ngOnDestroy() {
-    this.subscription.unsubscribe();
+    // groups collection removed in v2 — page kept for routing compat only
+    this.data = [];
+    this.results = [];
   }
 
   closeModal() {
     this.modalController.dismiss();
   }
 
-  handleInput(event) {
-    const query = event.target.value.toLowerCase();
-    this.results = this.data.filter((d) => d.name.toLowerCase().indexOf(query) > -1);
+  handleInput(query: string) {
+    const q = (query || '').toLowerCase();
+    this.results = this.data.filter((d) => (d.name || '').toLowerCase().indexOf(q) > -1);
   }
 
   onActivate(event) {

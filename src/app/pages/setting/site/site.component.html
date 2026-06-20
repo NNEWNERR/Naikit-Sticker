@@ -4,14 +4,13 @@
   <app-button variant="primary" size="sm" (clicked)="add()">➕ เพิ่มสถานที่</app-button>
 </div>
 
-<div class="flex items-center gap-2 bg-white border-2 border-ink rounded-md px-3 py-2 shadow-brutal-sm mb-4 max-w-md">
-  <span aria-hidden="true">🔍</span>
-  <input
-    type="search"
-    (input)="handleInput($event)"
+<div class="mb-4">
+  <app-search
+    label="ค้นหา ชื่อสาขา"
     placeholder="ค้นหา ชื่อสาขา..."
-    class="bg-transparent border-0 outline-none flex-1 text-body font-semibold placeholder:text-ink-4"
-  />
+    name="site-search"
+    (valueChange)="handleInput($event)">
+  </app-search>
 </div>
 
 <div class="border-2 border-ink rounded-md overflow-x-auto md:overflow-hidden">
@@ -47,7 +46,12 @@
     </div>
   </div>
 
-  <div *ngIf="results.length === 0" class="py-10 text-center text-body text-ink-4 font-medium border-t border-line">
-    ไม่พบสาขา
+  <div *ngIf="results.length === 0" class="border-t border-line bg-white">
+    <app-empty-state
+      size="sm"
+      icon="📍"
+      title="ไม่พบสาขา"
+      helper="ลองค้นหาด้วยคำอื่น หรือเพิ่มสาขาใหม่ด้วยปุ่มด้านบน">
+    </app-empty-state>
   </div>
 </div>

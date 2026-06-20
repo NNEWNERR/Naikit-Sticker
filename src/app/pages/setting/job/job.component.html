@@ -4,14 +4,13 @@
   <h3 class="text-h2 m-0">ใบงานทั้งหมด</h3>
 </div>
 
-<div class="flex items-center gap-2 bg-white border-2 border-ink rounded-md px-3 py-2 shadow-brutal-sm mb-4 max-w-md">
-  <span aria-hidden="true">🔍</span>
-  <input
-    type="search"
-    (input)="handleInput($event)"
+<div class="mb-4">
+  <app-search
+    label="ค้นหา เลขใบงาน หรือ ชื่อลูกค้า"
     placeholder="ค้นหา serial / ลูกค้า..."
-    class="bg-transparent border-0 outline-none flex-1 text-body font-semibold placeholder:text-ink-4"
-  />
+    name="job-search"
+    (valueChange)="handleInput($event)">
+  </app-search>
 </div>
 
 <div class="border-2 border-ink rounded-md overflow-x-auto md:overflow-hidden">
@@ -51,7 +50,12 @@
     </div>
   </div>
 
-  <div *ngIf="results.length === 0" class="py-10 text-center text-body text-ink-4 font-medium border-t border-line">
-    ไม่พบใบงาน
+  <div *ngIf="results.length === 0" class="border-t border-line bg-white">
+    <app-empty-state
+      size="sm"
+      icon="📋"
+      title="ไม่พบใบงาน"
+      helper="ลองค้นหาด้วยคำอื่น — ใบงานสร้างได้จากเมนู 'สร้างใบงาน'">
+    </app-empty-state>
   </div>
 </div>

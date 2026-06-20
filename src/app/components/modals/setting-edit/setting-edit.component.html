@@ -1,6 +1,6 @@
 <div class="flex items-center justify-between gap-3 px-4 py-3 bg-brand border-b-[3px] border-ink">
   <h1 class="text-h1 m-0 truncate">{{ title }}</h1>
-  <button type="button" (click)="closeModal()" class="btn-ghost">à¸›à¸´à¸” âœ•</button>
+  <button type="button" (click)="closeModal()" class="btn-ghost">ปิด ✕</button>
 </div>
 <div class="nk-content">
   <form [formGroup]="form" (ngSubmit)="submit()" [ngSwitch]="type">
@@ -22,9 +22,6 @@
       <app-input [parentForm]="form" label="ชื่อกลุ่ม" typeInput="text" formControlName="name"
         placeholder="ชื่อกลุ่ม"></app-input>
 
-      <!-- <app-input [parentForm]="form" label="รูปภาพ" typeInput="text" formControlName="image"
-        placeholder="เลือกรูปภาพ"></app-input> -->
-
       <app-input [parentForm]="form" label="ผู้รับผิดชอบ" typeInput="text" formControlName="reader"
         placeholder="ผู้รับผิดชอบ"></app-input>
 
@@ -36,7 +33,6 @@
 
       <app-select [parentForm]="form" label="สถานที่" formControlName="site_groups" placeholder="เลือกสถานที่"
         [multiple]="true" [options]="sites"></app-select>
-
     </div>
 
     <div *ngSwitchCase="'site'">
@@ -46,76 +42,8 @@
       <app-input [parentForm]="form" label="กลุ่ม" typeInput="text" formControlName="group_id"
         placeholder="กลุ่ม"></app-input>
     </div>
-
-    <div *ngSwitchCase="'job'">
-
-      <!-- date — native input (migrated off mat-datepicker) -->
-      <div class="py-2">
-        <label class="block text-body-sm font-bold mb-1">กรุณาเลือกวันที่ต้องการย้าย</label>
-        <input
-          type="date"
-          formControlName="date"
-          (change)="searchJobs()"
-          class="w-full border-2 border-ink rounded-md px-3 py-2 text-body font-num font-semibold bg-white outline-none"
-        />
-      </div>
-
-      <!-- time -->
-      <app-select [parentForm]="form" label="เวลา" formControlName="time" placeholder="เลือกเวลา" [multiple]="false"
-        [options]="times" (selectChange)="timeChange()"></app-select>
-
-      <!-- address -->
-      <app-input [parentForm]="form" label="อาคาร/ชั้น/ห้อง" typeInput="text" formControlName="address"
-        placeholder="ระบุอาคาร/ชั้น/ห้อง"></app-input>
-
-      <!-- phone -->
-      <app-input [parentForm]="form" label="เบอร์โทรศัพท์" typeInput="text" formControlName="phone"
-        placeholder="เบอร์โทรศัพท์"></app-input>
-
-      <!-- type -->
-      <app-select [parentForm]="form" label="ประเภทงาน" formControlName="type" placeholder="เลือกประเภทงาน"
-        [multiple]="false" [options]="types"></app-select>
-
-      <app-input [parentForm]="form" label="อื่นๆ(โปรดระบุ)" typeInput="text" formControlName="type_other"
-        placeholder="อื่นๆ(โปรดระบุ)" *ngIf="form.value.type.value=== 'อื่นๆ'"></app-input>
-
-      <!-- qty -->
-      <label class="block my-1 text-sm font-medium text-black">
-        <span>จํานวน<span class="text-red-500">*</span><span class="text-gray-400">( 1 ตัว = 1 ชั่วโมง )</span></span>
-      </label>
-      <div class="flex items-center">
-        <button (click)="subQty()">
-          <!--  -->
-          -
-        </button>
-        <span class="px-4 text-2xl">{{form.value.qty}}</span>
-        <button (click)="addQty()">
-          <!--  -->
-          +
-        </button>
-      </div>
-
-      <app-input [parentForm]="form" label="เพิ่มโดย" typeInput="text" formControlName="created_by"
-        placeholder="เพิ่มโดย"></app-input>
-
-      <!-- status -->
-      <app-select [parentForm]="form" label="สถานะงาน" formControlName="status" placeholder="เลือกสถานะงาน"
-        [multiple]="false" [options]="statuses"></app-select>
-
-      <!-- remark -->
-      <app-input [parentForm]="form" label="หมายเหตุ" typeInput="text" formControlName="remark"
-        placeholder="หมายเหตุ"></app-input>
-    </div>
   </form>
 </div>
 <div class="nk-footer">
-  <div class="grid grid-cols-1 gap-4" *ngIf="job"
-    [ngClass]="{ 'grid-cols-2': job.status === 'PENDING'|| job.status  === 'BOOKED' }">
-    <button *ngIf="job?.status === 'PENDING'" type="submit"
-      (click)="rejectJob(job)">ปฏิเสธ</button>
-    <button *ngIf="job?.status=== 'BOOKED'" type="submit"
-      (click)="cancelJob(job)">ยกเลิก</button>
-    <button type="submit" (click)="submit()" [disabled]="form.invalid">บันทึก</button>
-  </div>
-  <button *ngIf="!job" type="submit" (click)="submit()" [disabled]="form.invalid">บันทึก</button>
+  <button type="submit" (click)="submit()" [disabled]="form?.invalid">บันทึก</button>
 </div>

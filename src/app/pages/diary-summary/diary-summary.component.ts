@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Timestamp } from 'firebase/firestore';
-import { DESIGNER_OPTION } from 'src/app/data/data';
 import { FirestoreService } from 'src/app/services/firestore.service';
 import { WorksheetInfoComponent } from '../worksheet-info/worksheet-info.component';
 import { ModalController } from 'src/app/services/modal.service';
@@ -16,7 +15,7 @@ export class DiarySummaryComponent implements OnInit {
 
   workSheets = [];
   date = new Date()
-  designer = DESIGNER_OPTION.slice(1);
+  designer = [];
   form: FormGroup;
   searchTerm: string = '';
   selectedStatus: string = '';
@@ -164,34 +163,6 @@ export class DiarySummaryComponent implements OnInit {
       },
       cssClass: 'modal-fullscreen',
     }).then(modal => modal.present());
-  }
-
-  getStatusClass(status: string): string {
-    const classes = {
-      'รอดำเนินการ': 'px-2 py-1 rounded-full bg-yellow-100 text-yellow-800',
-      'กำลังดำเนินการ': 'px-2 py-1 rounded-full bg-blue-100 text-blue-800',
-      'เสร็จสิ้น': 'px-2 py-1 rounded-full bg-green-100 text-green-800',
-      'ยกเลิก': 'px-2 py-1 rounded-full bg-red-100 text-red-800'
-    };
-    return classes[status] || '';
-  }
-
-  getConfirmedCount(): number {
-    return this.workSheets?.filter(ws => ws.status === 'เสร็จสิ้น').length || 0;
-  }
-
-  getPendingCount(): number {
-    return this.workSheets?.filter(ws => ws.status === 'รอดำเนินการ').length || 0;
-  }
-
-  getStatusIcon(status: string): string {
-    const icons = {
-      'รอดำเนินการ': 'time-outline',
-      'กำลังดำเนินการ': 'reload-outline',
-      'เสร็จสิ้น': 'checkmark-circle-outline',
-      'ยกเลิก': 'close-circle-outline'
-    };
-    return icons[status] || 'help-outline';
   }
 
   getDesignerCount(): number {

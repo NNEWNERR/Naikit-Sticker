@@ -1,13 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { ModalController } from 'src/app/services/modal.service';
 import { Timestamp } from 'firebase/firestore';
-import { SettingAddComponent } from 'src/app/components/modals/setting-add/setting-add.component';
-import { SettingEditComponent } from 'src/app/components/modals/setting-edit/setting-edit.component';
 import { FirestoreService } from 'src/app/services/firestore.service';
 import { ServiceService } from 'src/app/services/service.service';
 import { CreateWorkSheetComponent } from '../create-work-sheet/create-work-sheet.component';
 import { FormBuilder, FormGroup } from '@angular/forms';
-import { SEGMENT_OPTION, STATUS_OPTION, SELLER_OPTION, DESIGNER_OPTION } from 'src/app/data/data';
+import { STATUS_OPTION } from 'src/app/data/data';
 import { WorksheetInfoComponent } from '../worksheet-info/worksheet-info.component';
 import { NkBadgeTone } from 'src/app/shared/components';
 
@@ -17,10 +15,9 @@ import { NkBadgeTone } from 'src/app/shared/components';
   styleUrls: ['./report.component.scss'],
 })
 export class ReportComponent implements OnInit {
-  segment_option = SEGMENT_OPTION;
   statuses = STATUS_OPTION;
-  sellers = SELLER_OPTION;
-  designers = DESIGNER_OPTION;
+  sellers = [];
+  designers = [];
   workSheet = [];
   filterWorkSheet = [];
   currentSearch = '';
