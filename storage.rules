@@ -26,29 +26,30 @@ service firebase.storage {
       return request.resource.contentType.matches('image/.*')
           || request.resource.contentType == 'application/pdf';
     }
-    function isUnderSizeCap() {
-      return request.resource.size < 10 * 1024 * 1024; // 10MB per file
+    function isUnderSizeCap(maxMb) {
+      return request.resource.size < maxMb * 1024 * 1024;
     }
 
-    // Worksheet + reference images (create flow).
+    // Worksheet + reference images (create flow) — photos/screenshots.
     match /images/{year}/{month}/{slug}/{kind}/{filename} {
       allow read: if isSignedIn();
       allow create, update: if
         isSignedIn() &&
         (kind == 'worksheet' || kind == 'reference') &&
         isAllowedContentType() &&
-        isUnderSizeCap();
+        isUnderSizeCap(20);
       allow delete: if false;
     }
 
-    // Design + print images (worksheet-info workflow uploads).
+    // Design + print images (worksheet-info workflow uploads). Print-ready
+    // artwork is high-resolution, so allow a larger cap than plain photos.
     match /jobs/{jobId}/{kind}/{filename} {
       allow read: if isSignedIn();
       allow create, update: if
         isSignedIn() &&
         (kind == 'design' || kind == 'print') &&
         isAllowedContentType() &&
-        isUnderSizeCap();
+        isUnderSizeCap(50);
       allow delete: if false;
     }
 
