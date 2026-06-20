@@ -200,8 +200,22 @@ export class DiarySummaryComponent implements OnInit, OnDestroy {
     await modal.present();
   }
 
-  exportToExcel() {
-    // TODO: Implement Excel export logic for the v2 schema.
-    console.log('Exporting diary:', this.confirmedWorkSheets);
+  async exportToExcel() {
+    const rows = this.confirmedWorkSheets;
+    if (rows.length === 0) return;
+    const XLSX = await import('xlsx');
+    const data = rows.map((w) => ({
+      'เลขใบงาน': w.serial_number,
+      'ลูกค้า': w.customer_name,
+      'สถานะ': w.status,
+      'ด่วน': w.is_urgent ? '⚡' : '',
+      'ผู้ขาย': w.seller_name,
+      'ผู้ออกแบบ': w.design_name || '-',
+      'ยอด (บาท)': w.total,
+    }));
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'สรุปงานคอนเฟิร์ม');
+    XLSX.writeFile(wb, `naikit-diary-${this.dateInputValue}.xlsx`);
   }
 }

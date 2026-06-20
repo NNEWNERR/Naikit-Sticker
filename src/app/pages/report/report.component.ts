@@ -118,6 +118,28 @@ export class ReportComponent implements OnInit, OnDestroy {
   /** No-op: search term is two-way bound via ngModel; rows recompute reactively. */
   onWorkSheetSearchChange(_event?: unknown) { /* intentionally empty */ }
 
+  /** Export the currently visible rows to an .xlsx file (xlsx lazy-loaded). */
+  async exportExcel() {
+    const rows = this.visibleRows;
+    if (rows.length === 0) return;
+    const XLSX = await import('xlsx');
+    const data = rows.map((r) => ({
+      'สถานะ': r.status,
+      'เลขใบงาน': r.serial_number,
+      'ลูกค้า': r.customer_name,
+      'ด่วน': r.is_urgent ? '⚡' : '',
+      'ผู้ขาย': r.seller_name,
+      'ออกแบบ': r.design_name || '-',
+      'ยอด (บาท)': r.total,
+      'วันสั่ง': this.shortDate(r.created_at),
+      'วันนัดรับ': r.date_of_acceptance ? this.formatTime(r.date_of_acceptance) : '-',
+    }));
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'รายงาน');
+    XLSX.writeFile(wb, `naikit-report-${new Date().toISOString().slice(0, 10)}.xlsx`);
+  }
+
   /** Final rows shown in the table — combines tile-filter + search filter. */
   get visibleRows(): ReportRow[] {
     const q = this.currentSearch.trim().toLowerCase();

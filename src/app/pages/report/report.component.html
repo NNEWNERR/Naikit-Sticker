@@ -24,11 +24,24 @@
           class="bg-transparent border-0 outline-none w-44 placeholder:text-ink-4"
         />
       </div>
-      <app-button variant="dark" size="md"><span>📥 <span class="hidden md:inline">Export</span></span></app-button>
+      <app-button variant="dark" size="md" (clicked)="exportExcel()"><span>📥 <span class="hidden md:inline">Export</span></span></app-button>
     </div>
   </app-page-header>
 
   <div class="px-4 md:px-5 py-4 md:py-5">
+
+    <!-- ── Mobile search (desktop search lives in the header) ──────────── -->
+    <div class="md:hidden flex items-center gap-2 bg-white border-2 border-ink rounded-md px-3 py-2 shadow-brutal-sm text-body font-semibold text-ink-2 mb-4">
+      <span aria-hidden="true">🔍</span>
+      <input
+        type="search"
+        name="report-search-mobile"
+        [(ngModel)]="currentSearch"
+        (ngModelChange)="onWorkSheetSearchChange($event)"
+        placeholder="ค้นหา serial / ลูกค้า..."
+        class="bg-transparent border-0 outline-none flex-1 placeholder:text-ink-4"
+      />
+    </div>
 
     <!-- ── Status breakdown grid ──────────────────────────────────────── -->
     <div class="mb-4">

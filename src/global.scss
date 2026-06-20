@@ -255,7 +255,10 @@ html, body {
 .bg-panel-2 { background: var(--panel-2); }
 .border-line   { border-color: var(--line); }
 .border-line-2 { border-color: var(--line-2); }
-.text-brand    { color: var(--brand-ink); }            /* text on yellow is ink */
+/* NOTE: do NOT redefine .text-brand here — every usage is `bg-ink text-brand`
+ * (yellow text on dark). The old `.text-brand { color: var(--brand-ink) }`
+ * (black) shadowed Tailwind's yellow utility and rendered that text invisible
+ * (black-on-black). Let Tailwind's .text-brand (yellow) apply. */
 .bg-brand      { background: var(--brand); color: var(--brand-ink); }
 .bg-brand-bg   { background: var(--brand-bg); }
 .bg-brand-bg-2 { background: var(--brand-bg-2); }

@@ -665,16 +665,9 @@ export class CreateWorkSheetComponent implements OnInit {
     const files = type === 'worksheet' ? this.workSheetFiles : this.referenceFiles;
     const index = (type === 'worksheet' ? this.workSheetPreviews : this.referencePreviews).indexOf(preview);
 
-    if (index > -1) {
-      const file = files[index];
-      if (file.type.startsWith('image/')) {
-        // แสดง preview รูปภาพ
-        console.log('Preview image:', preview);
-      } else if (file.type === 'application/pdf') {
-        // แสดง preview PDF
-        console.log('Preview PDF:', file);
-      }
-    }
+    // Preview thumbnails are rendered from the *Previews arrays in the template;
+    // nothing to compute here once the index is resolved.
+    void index;
   }
 
   isFieldInvalid(fieldName: string): boolean {
@@ -957,10 +950,8 @@ export class CreateWorkSheetComponent implements OnInit {
   }
 
   showOption(index: number, item: any) {
-    const workItem = this.workItems.controls[index];
-    console.log(workItem);
-    console.log(item.value.type);
-
+    // no-op (debug logging removed)
+    void index; void item;
   }
 
   hasPresetOptions(type: string): boolean {
