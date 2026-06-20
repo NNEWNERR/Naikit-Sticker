@@ -72,6 +72,29 @@ body { background: #FAFAFA; color: #0A0A0A; }
 }
 .cdk-overlay-dark-backdrop { background: rgba(10, 10, 10, 0.55); }
 
+/* work-item-modal: the page-level `.nk-content { min-height: 100dvh }` forces
+ * the body taller than the dialog (pane is capped at 90dvh), so the .nk-footer
+ * (บันทึก button) overflowed below the viewport and was unclickable — "เพิ่ม
+ * รายการไม่ได้". The dialog classes land on .cdk-overlay-pane (not the
+ * container), and the component host renders display:inline. Lay it out as a
+ * bounded flex column so the body scrolls and the footer stays pinned/visible. */
+.cdk-overlay-pane.work-item-modal {
+  .cdk-dialog-container { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+  app-work-item-modal {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .nk-content {
+    flex: 1 1 auto;
+    min-height: 0;        /* override the page-level 100dvh */
+    overflow-y: auto;
+  }
+  .nk-footer { flex: 0 0 auto; }
+}
+
 /* ===================================================================
  * Naikit Sticker — Design tokens (redesign foundation)
  * Source: redesign/extracted/prototype.html + extracted/assets/*.js
