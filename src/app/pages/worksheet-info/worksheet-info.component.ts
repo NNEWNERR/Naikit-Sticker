@@ -6,6 +6,7 @@ import { Timestamp } from 'firebase/firestore';
 import { AppStateService } from 'src/app/services/app-state.service';
 import { CommentsService } from 'src/app/services/comments.service';
 import { JobsService } from 'src/app/services/jobs.service';
+import { UsersService } from 'src/app/services/users.service';
 import { ModalController } from 'src/app/services/modal.service';
 import {
   BadgeComponent,
@@ -64,6 +65,7 @@ export class WorksheetInfoComponent implements OnInit, OnDestroy {
   private commentsSvc = inject(CommentsService);
   private modalCtrl = inject(ModalController);
   private appState = inject(AppStateService);
+  private usersSvc = inject(UsersService);
 
   job = signal<Job | null>(null);
   jobLoading = signal(true);
@@ -88,6 +90,7 @@ export class WorksheetInfoComponent implements OnInit, OnDestroy {
   private detachJob?: () => void;
   private detachEvents?: () => void;
   private detachComments?: () => void;
+  private detachUsers?: () => void;
 
   readonly timelineSteps: TimelineStep[] = [
     { key: 'รอออกแบบ',      short: 'รอแบบ' },
@@ -217,6 +220,19 @@ export class WorksheetInfoComponent implements OnInit, OnDestroy {
     return ROLE_LABELS[role] ?? role;
   }
 
+  /**
+   * Resolve a uid to a display name. Returns null when no uid (caller shows its
+   * own "unassigned" label). Self resolves from the session; others from the
+   * admin-only users listener. Non-admins can't read other users' docs
+   * (firestore.rules), so an assigned-but-unresolvable uid falls back to a
+   * generic label instead of leaking the raw Firebase uid.
+   */
+  personName(uid: string | null | undefined): string | null {
+    if (!uid) return null;
+    if (uid === this.appState.uid()) return this.appState.displayName() || 'คุณ';
+    return this.usersSvc.users().find((u) => u.uid === uid)?.display_name ?? 'ผู้ใช้งาน';
+  }
+
   openImage(url: string) {
     window.open(url, '_blank');
   }
@@ -246,12 +262,18 @@ export class WorksheetInfoComponent implements OnInit, OnDestroy {
       this.jobId,
       (c) => this.comments.set(c),
     );
+    // Only admin may read the full users collection (firestore.rules) — attach
+    // so design/print/confirm uids resolve to names. Others resolve self only.
+    if (this.appState.role() === 'admin') {
+      this.detachUsers = this.usersSvc.attachListener();
+    }
   }
 
   ngOnDestroy() {
     this.detachJob?.();
     this.detachEvents?.();
     this.detachComments?.();
+    this.detachUsers?.();
   }
 
   // ── Workflow actions ───────────────────────────────────────────────────

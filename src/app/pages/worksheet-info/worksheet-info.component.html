@@ -280,7 +280,7 @@
           <div class="flex justify-between items-center py-1.5 border-b border-dashed border-line">
             <span class="text-ink-3 font-semibold">ผู้ออกแบบ</span>
             <span class="font-bold" [class.text-ink-4]="!j.design_uid">
-              {{ j.design_uid || 'ยังไม่มอบหมาย' }}
+              {{ personName(j.design_uid) || 'ยังไม่มอบหมาย' }}
             </span>
           </div>
           <div class="flex justify-between items-center py-1.5 border-b border-dashed border-line">
@@ -293,7 +293,7 @@
           </div>
           <div class="flex justify-between items-center py-1.5 border-b border-dashed border-line">
             <span class="text-ink-3 font-semibold">ผู้คอนเฟิร์ม</span>
-            <span class="font-bold">{{ j.confirm_uid || '—' }}</span>
+            <span class="font-bold">{{ personName(j.confirm_uid) || '—' }}</span>
           </div>
           <div class="flex justify-between items-center py-1.5 border-b border-dashed border-line">
             <span class="text-ink-3 font-semibold">วันคอนเฟิร์ม</span>
@@ -337,7 +337,7 @@
           <div class="p-4 text-body">
             <div class="flex justify-between items-center py-1.5 border-b border-dashed border-line">
               <span class="text-ink-3 font-semibold">ผู้พิมพ์งาน</span>
-              <span class="font-bold" [class.text-ink-4]="!j.print_uid">{{ j.print_uid || '—' }}</span>
+              <span class="font-bold" [class.text-ink-4]="!j.print_uid">{{ personName(j.print_uid) || '—' }}</span>
             </div>
             <div class="flex justify-between items-center py-1.5 border-b border-dashed border-line">
               <span class="text-ink-3 font-semibold">วันที่พิมพ์</span>
