@@ -1,32 +1,25 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
-import { IonicModule } from '@ionic/angular';
+import { RouterTestingModule } from '@angular/router/testing';
 
 import { LoginComponent } from './login.component';
 import { ButtonComponent, FieldComponent, IconComponent } from '../../shared/components';
-import { FirestoreService } from '../../services/firestore.service';
-import { ServiceService } from '../../services/service.service';
+import { AuthService } from '../../services/auth.service';
 
 describe('LoginComponent', () => {
   let component: LoginComponent;
   let fixture: ComponentFixture<LoginComponent>;
 
-  // Stubs — login form rendering does not need real Firestore / Ionic services
-  const firestoreStub = {
-    signInWithUsernameAndPassword: () => Promise.resolve([]),
-    CheckUserOnSite: () => Promise.resolve([]),
-  };
-  const serviceStub = {
-    presentLoadingWithOutTime: () => Promise.resolve(),
-    dismissLoading: () => Promise.resolve(),
-    showAlert: () => {},
+  const authStub: Pick<AuthService, 'signIn' | 'logout'> = {
+    signIn: () => Promise.resolve(),
+    logout: () => Promise.resolve(),
   };
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
       declarations: [LoginComponent],
       imports: [
-        IonicModule.forRoot(),
+        RouterTestingModule,
         ReactiveFormsModule,
         FormsModule,
         ButtonComponent,
@@ -34,8 +27,7 @@ describe('LoginComponent', () => {
         IconComponent,
       ],
       providers: [
-        { provide: FirestoreService, useValue: firestoreStub },
-        { provide: ServiceService, useValue: serviceStub },
+        { provide: AuthService, useValue: authStub },
       ],
     }).compileComponents();
 
@@ -48,13 +40,9 @@ describe('LoginComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('defaults to password mode', () => {
-    expect(component.mode).toBe('password');
-  });
-
-  it('switchMode(phone) flips mode and preserves OTP state cleared', () => {
-    component.switchMode('phone');
-    expect(component.mode).toBe('phone');
-    expect(component.has_user).toBe(false);
+  it('starts with an empty form and submitting=false', () => {
+    expect(component.form.invalid).toBe(true);
+    expect(component.submitting).toBe(false);
+    expect(component.errorMessage).toBe('');
   });
 });

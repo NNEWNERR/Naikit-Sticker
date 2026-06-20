@@ -1,12 +1,8 @@
 <!--
-  Naikit Sticker — Login screen (neo-brutalist redesign)
-  Layout: mobile-first single column with yellow hero on top, form below;
-          on md+ the hero becomes a left brand panel (46%) and the form sits
-          on a soft-grey right panel.
-  Logic preserved: username/password (default), phone+OTP (toggle), reCAPTCHA
-  container id="sign-in-button" (required by signInWithPhoneNumber).
+  Naikit Sticker — Login screen (neo-brutalist).
+  Phase 1.3: username + password only (Firebase Auth). Phone/OTP removed.
 -->
-<div class="min-h-[100dvh] flex flex-col md:flex-row bg-[#FAFAFA] font-['IBM_Plex_Sans_Thai',sans-serif]">
+<div class="min-h-[100dvh] flex flex-col md:flex-row bg-surface-2 font-sans">
 
   <!-- ───── BRAND PANEL (mobile hero / desktop left) ───── -->
   <aside
@@ -83,7 +79,7 @@
   </aside>
 
   <!-- ───── FORM PANEL ───── -->
-  <main class="flex-1 flex flex-col items-center justify-center px-[22px] py-7 md:px-14 md:py-12 bg-[#FAFAFA]">
+  <main class="flex-1 flex flex-col items-center justify-center px-[22px] py-7 md:px-14 md:py-12 bg-surface-2">
     <div class="w-full max-w-[380px]">
 
       <!-- Eyebrow -->
@@ -97,13 +93,7 @@
       <h2 class="text-[36px] font-black leading-none tracking-[-0.025em] mb-1.5">ยินดีต้อนรับ</h2>
       <p class="text-sm font-medium text-ink-3 mb-8">เข้าสู่ระบบเพื่อจัดการใบงานของคุณ</p>
 
-      <!-- ── Username + Password form ── -->
-      <form
-        *ngIf="mode === 'password'"
-        [formGroup]="form"
-        (ngSubmit)="signIn()"
-        novalidate
-      >
+      <form [formGroup]="form" (ngSubmit)="signIn()" novalidate>
         <app-field label="USERNAME · ชื่อผู้ใช้" [required]="true">
           <div class="input-brutal focus-ring flex items-center gap-2.5">
             <span class="opacity-40 text-base" aria-hidden="true">👤</span>
@@ -112,6 +102,8 @@
               formControlName="username"
               placeholder="ระบุชื่อผู้ใช้"
               autocomplete="username"
+              autocapitalize="none"
+              autocorrect="off"
               class="flex-1 bg-transparent border-0 outline-none text-[15px] font-semibold placeholder:text-ink-4 placeholder:font-medium"
             />
           </div>
@@ -140,121 +132,27 @@
           </div>
         </app-field>
 
-        <!-- Remember me -->
-        <label class="flex items-center gap-2.5 mt-3 mb-7 cursor-pointer select-none">
-          <input type="checkbox" [(ngModel)]="remember" [ngModelOptions]="{standalone: true}" class="sr-only peer" />
-          <span
-            class="w-[18px] h-[18px] rounded border-2 border-ink bg-white flex items-center justify-center text-[11px] font-black flex-shrink-0 peer-checked:bg-brand peer-focus-visible:shadow-[0_0_0_3px_rgba(255,212,0,0.6)]"
-            aria-hidden="true"
-          >{{ remember ? '✓' : '' }}</span>
-          <span class="text-[13px] font-semibold text-ink-2">จำฉันไว้ในอุปกรณ์นี้</span>
-        </label>
+        <!-- Inline error -->
+        <p
+          *ngIf="errorMessage"
+          class="mt-3 text-[13px] font-semibold text-red-700 bg-red-50 border-2 border-red-700 rounded-md px-3 py-2"
+          role="alert"
+        >
+          {{ errorMessage }}
+        </p>
+
+        <div class="h-6"></div>
 
         <app-button
           variant="primary"
           size="lg"
           type="submit"
           [block]="true"
-          [disabled]="form.invalid"
+          [disabled]="form.invalid || submitting"
         >
-          เข้าสู่ระบบ
-          <span class="bg-ink text-brand text-sm font-black px-2.5 py-0.5 rounded ml-1">→</span>
+          {{ submitting ? 'กำลังเข้าสู่ระบบ…' : 'เข้าสู่ระบบ' }}
+          <span *ngIf="!submitting" class="bg-ink text-brand text-sm font-black px-2.5 py-0.5 rounded ml-1">→</span>
         </app-button>
-
-        <button
-          type="button"
-          (click)="switchMode('phone')"
-          class="block w-full text-center mt-4 text-[12px] font-bold text-ink-3 hover:text-ink underline underline-offset-2 bg-transparent border-0 cursor-pointer"
-        >
-          เข้าสู่ระบบด้วยเบอร์โทร (OTP)
-        </button>
-      </form>
-
-      <!-- ── Phone (OTP step 1: request) ── -->
-      <form
-        *ngIf="mode === 'phone' && !has_user"
-        [formGroup]="formPhone"
-        (ngSubmit)="submitPhone()"
-        novalidate
-      >
-        <app-field label="PHONE · เบอร์โทรศัพท์" [required]="true">
-          <div class="input-brutal focus-ring flex items-center gap-2.5">
-            <span class="opacity-40 text-base" aria-hidden="true">📱</span>
-            <input
-              type="tel"
-              inputmode="numeric"
-              formControlName="phone"
-              placeholder="08X-XXX-XXXX"
-              autocomplete="tel"
-              class="flex-1 bg-transparent border-0 outline-none text-[15px] font-semibold font-num placeholder:text-ink-4 placeholder:font-medium tracking-wide"
-            />
-          </div>
-        </app-field>
-
-        <div class="h-7"></div>
-
-        <app-button
-          variant="primary"
-          size="lg"
-          type="submit"
-          [block]="true"
-          [disabled]="formPhone.invalid"
-        >
-          ขอรหัส OTP
-          <span class="bg-ink text-brand text-sm font-black px-2.5 py-0.5 rounded ml-1">→</span>
-        </app-button>
-
-        <button
-          type="button"
-          (click)="switchMode('password')"
-          class="block w-full text-center mt-4 text-[12px] font-bold text-ink-3 hover:text-ink underline underline-offset-2 bg-transparent border-0 cursor-pointer"
-        >
-          กลับไปเข้าสู่ระบบด้วยรหัสผ่าน
-        </button>
-      </form>
-
-      <!-- ── Phone (OTP step 2: verify) ── -->
-      <form
-        *ngIf="mode === 'phone' && has_user"
-        [formGroup]="formOTP"
-        (ngSubmit)="submitOTP()"
-        novalidate
-      >
-        <app-field label="OTP · รหัสยืนยัน" [required]="true" hint="6 หลัก">
-          <div class="input-brutal focus-ring flex items-center gap-2.5">
-            <span class="opacity-40 text-base" aria-hidden="true">🔢</span>
-            <input
-              type="tel"
-              inputmode="numeric"
-              maxlength="6"
-              formControlName="otp"
-              placeholder="••••••"
-              autocomplete="one-time-code"
-              class="flex-1 bg-transparent border-0 outline-none text-[15px] font-semibold font-num placeholder:text-ink-4 placeholder:font-medium tracking-[0.4em]"
-            />
-          </div>
-        </app-field>
-
-        <div class="h-7"></div>
-
-        <app-button
-          variant="primary"
-          size="lg"
-          type="submit"
-          [block]="true"
-          [disabled]="formOTP.invalid"
-        >
-          ยืนยัน OTP
-          <span class="bg-ink text-brand text-sm font-black px-2.5 py-0.5 rounded ml-1">→</span>
-        </app-button>
-
-        <button
-          type="button"
-          (click)="resetPhoneFlow()"
-          class="block w-full text-center mt-4 text-[12px] font-bold text-ink-3 hover:text-ink underline underline-offset-2 bg-transparent border-0 cursor-pointer"
-        >
-          เปลี่ยนเบอร์โทร
-        </button>
       </form>
 
       <!-- ── Help divider + tip ── -->
@@ -285,10 +183,4 @@
       </div>
     </div>
   </main>
-
-  <!--
-    reCAPTCHA invisible container — must be a stable DOM node (not *ngIf'd)
-    because RecaptchaVerifier renders into it at runtime. Hidden but present.
-  -->
-  <div id="sign-in-button" aria-hidden="true" style="display:none"></div>
 </div>

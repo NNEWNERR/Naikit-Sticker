@@ -1,105 +1,83 @@
 import { Injectable } from '@angular/core';
-import { onAuthStateChanged, signInAnonymously, signOut } from 'firebase/auth';
-// import {  auth } from 'src/config';
-import { Router } from '@angular/router';
-import { parseSession, Session, SESSION_STORAGE_KEY } from '../interfaces/session.interface';
+import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from './firebase-config';
-import { ServiceService } from './service.service';
+import { AppStateService } from './app-state.service';
 
-@Injectable({
-  providedIn: 'root'
-})
+const EMAIL_DOMAIN = 'naikit.local';
+
+/**
+ * Error code surfaced to the login UI. Caller maps to a Thai message.
+ */
+export type SignInError =
+  | 'invalid_credentials'  // wrong username/password or user not found
+  | 'disabled'             // Firebase Auth disabled the account
+  | 'no_role'              // signed in but custom claim missing
+  | 'network'
+  | 'unknown';
+
+export class AuthError extends Error {
+  constructor(public readonly code: SignInError, message: string) {
+    super(message);
+  }
+}
+
+/**
+ * Thin wrapper around Firebase Auth. Real session state lives in
+ * AppStateService — this service only handles the sign-in action.
+ *
+ * Username is mapped to a synthetic email `${username}@naikit.local` to
+ * reuse Firebase email/password auth (no separate username store needed —
+ * username uniqueness is enforced by `createUser` on the BE).
+ */
+@Injectable({ providedIn: 'root' })
 export class AuthService {
-  userFormFirestore: any;
-  userFormAuth: any;
-  isLogedIn: boolean;
-  constructor(private router: Router,
-    private service: ServiceService,
-  ) { }
+  constructor(private appState: AppStateService) {}
 
-  /**
-   * Read + shape-check the stored session. If the stored value is missing or
-   * fails shape validation (e.g. legacy raw access-token string left behind
-   * from older auth code), the bad value is removed from localStorage and
-   * null is returned. Callers should treat a null return as "not authed" and
-   * redirect to /login.
-   *
-   * Centralizing this here so the guard and the layout component don't
-   * diverge on what "valid session" means.
-   */
-  getValidSession(): Session | null {
-    const raw = localStorage.getItem(SESSION_STORAGE_KEY);
-    const session = parseSession(raw);
-    if (!session) {
-      if (raw !== null) {
-        // Had something stored but it doesn't parse — purge it.
-        localStorage.removeItem(SESSION_STORAGE_KEY);
-      }
-      return null;
+  async signIn(username: string, password: string): Promise<void> {
+    const u = (username ?? '').trim().toLowerCase();
+    if (!u || !password) {
+      throw new AuthError('invalid_credentials', 'กรุณากรอก username และ password');
     }
-    return session;
-  }
-
-  SessionIsLogedIn(): Promise<boolean> {
-    return new Promise((resolve) => {
-      const isLogedIn = localStorage.getItem('token');
-      if (isLogedIn) {
-        // this.service.dismissLoading();
-        resolve(true);
-      } else {
-        setTimeout(() => {
-          this.service.dismissLoading();
-        }, 1000);
-        resolve(false);
-      }
-    });
-  }
-  async checkAuth(): Promise<boolean> {
-    return new Promise(async (resolve) => {
-      await onAuthStateChanged(auth, (user: any) => {
-        if (user) {
-          if (user.isAnonymous == false) {
-            localStorage.setItem('token', user.accessToken);
-            this.userFormAuth = user;
-            resolve(true);
-          } else {
-            resolve(false);
-          }
-        } else {
-          resolve(false);
-        }
-      });
-    });
-  }
-  confirmOTP(confirmationResult: any, otp: string): Promise<any> {
-    return new Promise((resolve) => {
-      confirmationResult.confirm(otp).then(async (result: any) => {
-        this.userFormFirestore = result.user;
-        resolve(this.userFormFirestore);
-      }).catch((error: any) => {
-        resolve(false);
-      });
+    const email = `${u}@${EMAIL_DOMAIN}`;
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+    } catch (e: unknown) {
+      throw this.mapFirebaseError(e);
     }
-    );
-  }
-  async signout() {
-    await signOut(auth).then(() => {
-      localStorage.removeItem('token');
-      this.router.navigate(['/login']);
-    }).catch((error) => {
-      // // console.log(error);
-    });
-  }
-  signInAnonymously() {
-    signInAnonymously(auth).then(() => {
-    }).catch((error) => {
-    });
-  }
-  getUserFormFirestore() {
-    return this.userFormFirestore;
-  }
-  getUserFormAuth() {
-    return this.userFormAuth;
+    // AppStateService.onIdTokenChanged populates session asynchronously.
+    // Wait until it has resolved at least once so the caller can navigate
+    // and the destination guard sees a populated session.
+    await this.appState.ready();
+    if (!this.appState.isLoggedIn()) {
+      // AppStateService already signed us out (no role claim, doc missing,
+      // or is_active=false). Surface as no_role so the UI can explain.
+      throw new AuthError(
+        'no_role',
+        'บัญชีนี้ยังไม่ได้ตั้งสิทธิ์การใช้งาน กรุณาติดต่อแอดมิน'
+      );
+    }
   }
 
+  logout(): Promise<void> {
+    return this.appState.logout();
+  }
+
+  private mapFirebaseError(e: unknown): AuthError {
+    const code = (e as { code?: string } | null)?.code ?? '';
+    switch (code) {
+      case 'auth/invalid-credential':
+      case 'auth/wrong-password':
+      case 'auth/user-not-found':
+      case 'auth/invalid-email':
+        return new AuthError('invalid_credentials', 'username หรือ password ไม่ถูกต้อง');
+      case 'auth/user-disabled':
+        return new AuthError('disabled', 'บัญชีนี้ถูกระงับการใช้งาน');
+      case 'auth/network-request-failed':
+        return new AuthError('network', 'เครือข่ายขัดข้อง กรุณาลองอีกครั้ง');
+      case 'auth/too-many-requests':
+        return new AuthError('invalid_credentials', 'ลองผิดหลายครั้งเกินไป กรุณารอสักครู่');
+      default:
+        return new AuthError('unknown', 'เกิดข้อผิดพลาด กรุณาลองอีกครั้ง');
+    }
+  }
 }

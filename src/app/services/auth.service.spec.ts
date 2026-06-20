@@ -1,16 +1,27 @@
 import { TestBed } from '@angular/core/testing';
 
-import { AuthService } from './auth.service';
+import { AuthError, AuthService } from './auth.service';
+import { AppStateService } from './app-state.service';
 
 describe('AuthService', () => {
-  let service: AuthService;
+  const appStateStub: Pick<AppStateService, 'ready' | 'isLoggedIn' | 'logout'> = {
+    ready: () => Promise.resolve(),
+    isLoggedIn: () => false,
+    logout: () => Promise.resolve(),
+  };
 
   beforeEach(() => {
-    TestBed.configureTestingModule({});
-    service = TestBed.inject(AuthService);
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: AppStateService, useValue: appStateStub },
+      ],
+    });
   });
 
-  it('should be created', () => {
-    expect(service).toBeTruthy();
+  it('rejects empty credentials with invalid_credentials', async () => {
+    const service = TestBed.inject(AuthService);
+    await expectAsync(service.signIn('', '')).toBeRejectedWith(
+      jasmine.any(AuthError) as unknown as AuthError,
+    );
   });
 });

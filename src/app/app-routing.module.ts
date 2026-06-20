@@ -1,7 +1,8 @@
 import { NgModule } from '@angular/core';
 import { PreloadAllModules, RouterModule, Routes } from '@angular/router';
-import { AuthGuard } from './common/guards/auth.guard';
-import { LoggedInGuard } from './common/guards/logged-in.guard';
+import { authGuard } from './common/guards/auth.guard';
+import { loggedInGuard } from './common/guards/logged-in.guard';
+import { roleGuard } from './common/guards/role.guard';
 import { MainLayoutComponent } from './components/layouts/main-layout/main-layout.component';
 import { HomeComponent } from './pages/home/home.component';
 import { LoginComponent } from './pages/login/login.component';
@@ -10,50 +11,53 @@ import { ReportComponent } from './pages/report/report.component';
 import { DiarySummaryComponent } from './pages/diary-summary/diary-summary.component';
 import { CreateWorkSheetComponent } from './pages/create-work-sheet/create-work-sheet.component';
 
+// RBAC per SCHEMA.md — home is open to every authenticated role
+// (component renders the queue relevant to that role).
 export const routes: Routes = [
   {
     path: '',
     redirectTo: 'naikit-sticker/home',
-    pathMatch: 'full'
+    pathMatch: 'full',
   },
   {
     path: 'naikit-sticker',
     component: MainLayoutComponent,
-    canActivate: [AuthGuard],
+    canActivate: [authGuard],
     children: [
-      {
-        path: 'home',
-        component: HomeComponent
-      },
+      { path: 'home', component: HomeComponent },
       {
         path: 'all',
-        component: ReportComponent
+        component: ReportComponent,
+        canActivate: [roleGuard(['admin', 'seller'])],
       },
       {
         path: 'setting',
-        component: SettingComponent
+        component: SettingComponent,
+        canActivate: [roleGuard(['admin'])],
       },
       {
         path: 'diary-summary',
-        component: DiarySummaryComponent
+        component: DiarySummaryComponent,
+        canActivate: [roleGuard(['admin', 'seller'])],
       },
       {
         path: 'create-work-sheet',
-        component: CreateWorkSheetComponent 
-      }
+        component: CreateWorkSheetComponent,
+        canActivate: [roleGuard(['seller', 'admin'])],
+      },
     ],
   },
   {
     path: 'login',
     component: LoginComponent,
-    canActivate: [LoggedInGuard]
-  }
+    canActivate: [loggedInGuard],
+  },
 ];
 
 @NgModule({
   imports: [
-    RouterModule.forRoot(routes, { preloadingStrategy: PreloadAllModules })
+    RouterModule.forRoot(routes, { preloadingStrategy: PreloadAllModules }),
   ],
-  exports: [RouterModule]
+  exports: [RouterModule],
 })
 export class AppRoutingModule { }
