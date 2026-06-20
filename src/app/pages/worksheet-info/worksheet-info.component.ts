@@ -1,35 +1,94 @@
-import { ServiceService } from 'src/app/services/service.service';
-import { FirestoreService } from './../../services/firestore.service';
-import { Component, Input, OnInit } from '@angular/core';
-import { ModalController } from 'src/app/services/modal.service';
-import { arrayUnion, collection, doc, Timestamp } from 'firebase/firestore';
-import { STATUS_OPTION } from 'src/app/data/data';
-import { Comment } from 'src/app/data/interfaces/firebase';
-import { db } from 'src/app/services/firebase-config';
-import { parseSession, SESSION_STORAGE_KEY } from 'src/app/interfaces/session.interface';
-import { TimelineStep } from 'src/app/shared/components';
+import { CommonModule } from '@angular/common';
+import { Component, computed, inject, Input, OnDestroy, OnInit, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { Timestamp } from 'firebase/firestore';
 
-import { v4 as uuidv4 } from 'uuid';
+import { AppStateService } from 'src/app/services/app-state.service';
+import { CommentsService } from 'src/app/services/comments.service';
+import { JobsService } from 'src/app/services/jobs.service';
+import { ModalController } from 'src/app/services/modal.service';
+import {
+  BadgeComponent,
+  EmptyStateComponent,
+  PageHeaderComponent,
+  SkeletonComponent,
+  TimelineComponent,
+  TimelineStep,
+} from 'src/app/shared/components';
+import { Job, JobAction, JobComment, JobEvent } from 'src/app/core/models/job';
+
+const ACTION_LABELS: Record<JobAction, string> = {
+  create:           'สร้างใบงาน',
+  edit:             'แก้ไขข้อมูล',
+  claim_design:     'รับงานออกแบบ',
+  claim_print:      'รับงานผลิต',
+  submit_design:    'ส่งแบบ',
+  confirm_design:   'คอนเฟิร์มแบบ',
+  request_revision: 'ขอแก้ไขแบบ',
+  start_print:      'ส่งเข้าผลิต',
+  upload_print:     'อัพโหลดงานพิมพ์',
+  mark_delivered:   'ส่งมอบแล้ว',
+  comment_add:      'เพิ่มหมายเหตุ',
+  comment_delete:   'ลบหมายเหตุ',
+  admin_reassign:   'มอบหมายงาน (admin)',
+  delete:           'ลบใบงาน',
+  restore:          'กู้คืนใบงาน',
+};
+
+const ROLE_LABELS: Record<string, string> = {
+  seller:     'ฝ่ายขาย',
+  graphic:    'กราฟิก',
+  production: 'ผลิต',
+  admin:      'แอดมิน',
+};
+
 @Component({
   selector: 'app-worksheet-info',
   templateUrl: './worksheet-info.component.html',
   styleUrls: ['./worksheet-info.component.scss'],
+  standalone: true,
+  imports: [
+    CommonModule,
+    FormsModule,
+    PageHeaderComponent,
+    TimelineComponent,
+    BadgeComponent,
+    EmptyStateComponent,
+    SkeletonComponent,
+  ],
 })
-export class WorksheetInfoComponent implements OnInit {
-  @Input() workSheet: any;
-  statuses = STATUS_OPTION.slice(1);
-  newComment = '';
+export class WorksheetInfoComponent implements OnInit, OnDestroy {
+  @Input() jobId!: string;
 
-  /**
-   * Mobile-only panel selector. The desktop layout shows all three side-by-side,
-   * but mobile collapses to a tab strip per the prototype.
-   */
+  private jobsSvc = inject(JobsService);
+  private commentsSvc = inject(CommentsService);
+  private modalCtrl = inject(ModalController);
+  private appState = inject(AppStateService);
+
+  job = signal<Job | null>(null);
+  jobLoading = signal(true);
+  events = signal<JobEvent[]>([]);
+  comments = signal<JobComment[]>([]);
+
+  actionLoading = signal(false);
+  actionError = signal('');
+
   mobilePanel: 'sales' | 'graphic' | 'production' = 'sales';
+  showAuditLog = false;
+  commentText = '';
+  commentLoading = false;
+  revisionNote = '';
+  showRevisionInput = false;
 
-  /**
-   * 8-status timeline shown at the top of the screen. Order + short labels
-   * match the prototype's STATUS_LIST.short (assets/541b5f48-…js).
-   */
+  /** Files staged for design image upload (submitDesign). */
+  designFiles: File[] = [];
+  /** Files staged for print image upload (uploadPrint). */
+  printFiles: File[] = [];
+
+  private detachJob?: () => void;
+  private detachEvents?: () => void;
+  private detachComments?: () => void;
+
   readonly timelineSteps: TimelineStep[] = [
     { key: 'รอออกแบบ',      short: 'รอแบบ' },
     { key: 'กำลังออกแบบ',    short: 'ออกแบบ' },
@@ -41,57 +100,75 @@ export class WorksheetInfoComponent implements OnInit {
     { key: 'ส่งมอบแล้ว',     short: 'ส่งแล้ว' },
   ];
 
-  /** Bound to [onBack] of <app-page-header>. */
-  goBack = () => this.dismiss();
+  goBack = () => this.modalCtrl.dismiss();
 
-  comments: Comment[] = [
-    // {
-    //   id: '',
-    //   user: 'Admin',
-    //   text: 'แก้ไขขนาดแล้ว',
-    //   date: new Date(),
-    //   likes: 2,
-    //   replies: [
-    //     {
-    //       id: '',
-    //       user: 'Admin',
-    //       text: 'รับทราบครับ',
-    //       date: new Date(),
-    //       likes: 2
-    //     },
-    //   ]
-    // },
-  ];
-  constructor(
-    private firestoreService: FirestoreService,
-    private serviceService: ServiceService,
-    private modalCtrl: ModalController,
-  ) { }
+  // ── Session shortcuts ──────────────────────────────────────────────────
 
-  /** Close the modal — opened from home / report. */
-  dismiss() {
-    this.modalCtrl.dismiss();
-  }
+  private uid   = computed(() => this.appState.uid());
+  private role  = computed(() => this.appState.role());
 
-  /** Mobile panel switcher — takes a loose string from the template loop. */
-  setMobilePanel(k: string) {
-    if (k === 'sales' || k === 'graphic' || k === 'production') {
-      this.mobilePanel = k;
-    }
-  }
+  // ── Action visibility ──────────────────────────────────────────────────
 
-  /** คงเหลือ = ยอดรวม − มัดจำ, used by the sales panel summary. */
-  get paymentRemaining(): number {
-    const p = this.workSheet?.payment || {};
-    return (Number(p.total) || 0) - (Number(p.deposit) || 0);
-  }
+  canClaimDesign = computed(() => {
+    const j = this.job(); const r = this.role();
+    return !!j && !j.is_deleted && (r === 'graphic' || r === 'admin')
+      && j.status === 'รอออกแบบ' && j.design_uid === null;
+  });
 
-  /** Map workSheet.status to the BadgeComponent tone for the status pill. */
+  canSubmitDesign = computed(() => {
+    const j = this.job(); const r = this.role(); const uid = this.uid();
+    return !!j && !j.is_deleted && j.status === 'กำลังออกแบบ'
+      && (r === 'admin' || j.design_uid === uid);
+  });
+
+  canConfirmDesign = computed(() => {
+    const j = this.job(); const r = this.role(); const uid = this.uid();
+    return !!j && !j.is_deleted && j.status === 'รอคอนเฟิร์มแบบ'
+      && (r === 'admin' || (r === 'seller' && j.seller_uid === uid));
+  });
+
+  canRequestRevision = computed(() => this.canConfirmDesign());
+
+  canSendToProduction = computed(() => {
+    const j = this.job(); const r = this.role(); const uid = this.uid();
+    return !!j && !j.is_deleted && j.status === 'คอนเฟิร์มแล้ว'
+      && (r === 'admin' || (r === 'seller' && j.seller_uid === uid));
+  });
+
+  canClaimPrint = computed(() => {
+    const j = this.job(); const r = this.role();
+    return !!j && !j.is_deleted && j.status === 'รอผลิต'
+      && (r === 'production' || r === 'admin') && j.print_uid === null;
+  });
+
+  canUploadPrint = computed(() => {
+    const j = this.job(); const r = this.role(); const uid = this.uid();
+    return !!j && !j.is_deleted && j.status === 'กำลังผลิต'
+      && (r === 'admin' || j.print_uid === uid);
+  });
+
+  canMarkDelivered = computed(() => {
+    const j = this.job(); const r = this.role(); const uid = this.uid();
+    return !!j && !j.is_deleted && j.status === 'รอส่งมอบ'
+      && (r === 'admin' || j.seller_uid === uid || j.print_uid === uid);
+  });
+
+  canDelete = computed(() => this.role() === 'admin' && !!this.job() && !this.job()!.is_deleted);
+  canRestore = computed(() => this.role() === 'admin' && !!this.job()?.is_deleted);
+
+  hasAnyAction = computed(() =>
+    this.canClaimDesign() || this.canSubmitDesign() || this.canConfirmDesign() ||
+    this.canRequestRevision() || this.canSendToProduction() || this.canClaimPrint() ||
+    this.canUploadPrint() || this.canMarkDelivered() || this.canDelete() || this.canRestore()
+  );
+
+  // ── Display helpers ────────────────────────────────────────────────────
+
   get badgeTone():
     | 'status-design' | 'status-designing' | 'status-await' | 'status-confirmed'
     | 'status-printq' | 'status-printing' | 'status-deliverq' | 'status-delivered'
     | 'neutral' {
-    switch (this.workSheet?.status) {
+    switch (this.job()?.status) {
       case 'รอออกแบบ':      return 'status-design';
       case 'กำลังออกแบบ':    return 'status-designing';
       case 'รอคอนเฟิร์มแบบ': return 'status-await';
@@ -104,165 +181,191 @@ export class WorksheetInfoComponent implements OnInit {
     }
   }
 
-  async ngOnInit() {
-    this.firestoreService.fetchCommentById(this.workSheet.id)
-    this.firestoreService.commentsChange.subscribe(comments => {
-      this.comments = comments
-      this.sortComments(this.comments)
-    })
+  get paymentRemaining(): number {
+    const p = this.job()?.payment;
+    return (Number(p?.total) || 0) - (Number(p?.deposit) || 0);
   }
 
-  ngDestroy() {
-    this.firestoreService.unsubscribeSubscriptions()
-  }
-
-  sortComments(comments) {
-    comments.sort((a, b) => {
-      const dateA = new Date(a.date.seconds * 1000);
-      const dateB = new Date(b.date.seconds * 1000);
-      return dateB.getTime() - dateA.getTime();
-    });
-  }
-
-  formatTime(timestamp: Timestamp) {
-    const date = new Date(timestamp.seconds * 1000);
-    const options: Intl.DateTimeFormatOptions = {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      // hour: '2-digit',
-      // minute: '2-digit',
-      // second: '2-digit'
+  formatTs(ts: Timestamp | null | undefined, withTime = false): string {
+    if (!ts) return '—';
+    const d = ts.toDate();
+    const opts: Intl.DateTimeFormatOptions = {
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      ...(withTime ? { hour: '2-digit', minute: '2-digit' } : {}),
     };
-    const formattedDate = date.toLocaleDateString('th-TH', options);
-    return formattedDate;
+    return d.toLocaleDateString('th-TH', opts);
   }
 
-  formatTimeFull(timestamp: Timestamp) {
-    const date = new Date(timestamp.seconds * 1000);
-    const options: Intl.DateTimeFormatOptions = {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      // second: '2-digit'
-    };
-    const formattedDate = date.toLocaleDateString('th-TH', options);
-    return formattedDate;
+  formatRelative(ts: Timestamp | null | undefined): string {
+    if (!ts) return '';
+    const diff = Date.now() - ts.toMillis();
+    const s = Math.floor(diff / 1000);
+    const m = Math.floor(s / 60);
+    const h = Math.floor(m / 60);
+    const d = Math.floor(h / 24);
+    if (d > 0) return `${d} วันที่แล้ว`;
+    if (h > 0) return `${h} ชั่วโมงที่แล้ว`;
+    if (m > 0) return `${m} นาทีที่แล้ว`;
+    return `${s} วินาทีที่แล้ว`;
   }
 
-  selectClass(status) {
-    let color = '';
-    this.statuses.forEach((s) => {
-      if (s.value === status) {
-        color = s.class;
-      }
-    });
-    return color;
+  actionLabel(action: JobAction): string {
+    return ACTION_LABELS[action] ?? action;
   }
 
-  openImage(image) {
-    window.open(image, '_blank');
+  roleLabel(role: string): string {
+    return ROLE_LABELS[role] ?? role;
   }
 
-  private currentUsername(): string {
-    const session = parseSession(localStorage.getItem(SESSION_STORAGE_KEY));
-    if (!session) {
-      console.warn('[worksheet-info] no session; using "unknown" for comment user');
-      return 'unknown';
+  openImage(url: string) {
+    window.open(url, '_blank');
+  }
+
+  setMobilePanel(k: string) {
+    if (k === 'sales' || k === 'graphic' || k === 'production') {
+      this.mobilePanel = k;
     }
-    return session.username || session.phone || 'unknown';
   }
 
-  addComment() {
-    this.serviceService.presentRemarkAlert('หมายเหตุ', (data) => {
-      console.log(data);
-      const collectionRef = collection(db, "comments");
-      const comment: Comment = {
-        id: uuidv4(),
-        user: this.currentUsername(),
-        text: data,
-        date: new Date(),
-        likes: 0,
-        worksheet_id: this.workSheet.id,
-        is_deleted: false,
-        deleted_at: null,
-        replies: [],
-      }
-      this.firestoreService.addDatatoFirebase(collectionRef, comment)
-        .then(() => {
-          console.log('Comment added successfully');
-        })
-        .catch((err) => {
-          console.error('[worksheet-info] addComment failed', err);
-        });
-    });
+  // ── Lifecycle ──────────────────────────────────────────────────────────
+
+  ngOnInit() {
+    this.detachJob = this.jobsSvc.watchJob(
+      this.jobId,
+      (j) => {
+        this.job.set(j);
+        this.jobLoading.set(false);
+      },
+      () => this.jobLoading.set(false),
+    );
+    this.detachEvents = this.jobsSvc.watchJobEvents(
+      this.jobId,
+      (evts) => this.events.set(evts),
+    );
+    this.detachComments = this.commentsSvc.watchComments(
+      this.jobId,
+      (c) => this.comments.set(c),
+    );
   }
 
+  ngOnDestroy() {
+    this.detachJob?.();
+    this.detachEvents?.();
+    this.detachComments?.();
+  }
 
+  // ── Workflow actions ───────────────────────────────────────────────────
 
-  likeComment(comment: any) {
-    const docRef = doc(db, "comments", comment.key);
-    const data = {
-      likes: comment.likes + 1
+  async onClaimDesign() {
+    await this._run(() => this.jobsSvc.claimDesign(this.jobId));
+  }
+
+  async onSubmitDesign() {
+    if (this.designFiles.length === 0) {
+      this.actionError.set('กรุณาเลือกรูปแบบงานอย่างน้อย 1 รูป');
+      return;
     }
-    this.firestoreService.safeUpdate(docRef, data);
-  }
-
-  deleteComment(comment: any) {
-    // this.comments = this.comments.filter(c => c !== comment);
-    const docRef = doc(db, "comments", comment.key);
-    const data = {
-      is_deleted: true,
-      deleted_at: new Date()
-    }
-    this.firestoreService.safeUpdate(docRef, data);
-  }
-
-  replyComment(comment: any) {
-    const docRef = doc(db, "comments", comment.key);
-    this.serviceService.presentRemarkAlert('ตอบกลับ', (data) => {
-      console.log(data);
-      const comment = {
-        replies: arrayUnion({
-          id: uuidv4(),
-          user: this.currentUsername(),
-          text: data,
-          date: new Date(),
-          likes: 0,
-          is_deleted: false,
-          deleted_at: null,
-        }),
-      }
-      this.firestoreService.safeUpdate(docRef, comment);
+    await this._run(async () => {
+      const urls = await this.jobsSvc.uploadImages(this.jobId, 'design', this.designFiles);
+      await this.jobsSvc.submitDesign(this.jobId, urls);
+      this.designFiles = [];
     });
   }
 
-  formatDate(timestamp) {
-    if (!timestamp) return '';
-    const now = new Date();
-    const date = new Date(timestamp.seconds * 1000);
-    const diff = now.getTime() - date.getTime();
-    const seconds = Math.floor(diff / 1000);
-    const minutes = Math.floor(seconds / 60);
-    const hours = Math.floor(minutes / 60);
-    const days = Math.floor(hours / 24);
-    const months = Math.floor(days / 30);
-    const years = Math.floor(months / 12);
+  async onConfirmDesign() {
+    await this._run(() => this.jobsSvc.confirmDesign(this.jobId));
+  }
 
-    if (years > 0) {
-      return `${years} ปีที่แล้ว`;
-    } else if (months > 0) {
-      return `${months} เดือนที่แล้ว`;
-    } else if (days > 0) {
-      return `${days} วันที่แล้ว`;
-    } else if (hours > 0) {
-      return `${hours} ชั่วโมงที่แล้ว`;
-    } else if (minutes > 0) {
-      return `${minutes} นาทีที่แล้ว`;
-    } else {
-      return `${seconds} วินาทีที่แล้ว`;
+  async onRequestRevision() {
+    await this._run(() => this.jobsSvc.requestRevision(this.jobId, this.revisionNote || undefined));
+    this.revisionNote = '';
+    this.showRevisionInput = false;
+  }
+
+  async onSendToProduction() {
+    await this._run(() => this.jobsSvc.sendToProduction(this.jobId));
+  }
+
+  async onClaimPrint() {
+    await this._run(() => this.jobsSvc.claimPrint(this.jobId));
+  }
+
+  async onUploadPrint() {
+    if (this.printFiles.length === 0) {
+      this.actionError.set('กรุณาเลือกรูปงานพิมพ์อย่างน้อย 1 รูป');
+      return;
+    }
+    await this._run(async () => {
+      const urls = await this.jobsSvc.uploadImages(this.jobId, 'print', this.printFiles);
+      await this.jobsSvc.uploadPrint(this.jobId, urls);
+      this.printFiles = [];
+    });
+  }
+
+  async onMarkDelivered() {
+    await this._run(() => this.jobsSvc.markDelivered(this.jobId));
+  }
+
+  async onDeleteJob() {
+    if (!confirm('ลบใบงานนี้? (ยังกู้คืนได้ภายหลัง)')) return;
+    await this._run(() => this.jobsSvc.deleteJob(this.jobId));
+  }
+
+  async onRestoreJob() {
+    await this._run(() => this.jobsSvc.restoreJob(this.jobId));
+  }
+
+  // ── File input handlers ────────────────────────────────────────────────
+
+  onDesignFilesChange(event: Event) {
+    const input = event.target as HTMLInputElement;
+    this.designFiles = Array.from(input.files ?? []);
+  }
+
+  onPrintFilesChange(event: Event) {
+    const input = event.target as HTMLInputElement;
+    this.printFiles = Array.from(input.files ?? []);
+  }
+
+  // ── Comments ───────────────────────────────────────────────────────────
+
+  async onAddComment() {
+    const text = this.commentText.trim();
+    if (!text) return;
+    this.commentLoading = true;
+    try {
+      await this.commentsSvc.addComment(this.jobId, text);
+      this.commentText = '';
+    } catch (e) {
+      this.actionError.set((e as Error).message);
+    } finally {
+      this.commentLoading = false;
+    }
+  }
+
+  async onDeleteComment(commentId: string) {
+    try {
+      await this.commentsSvc.deleteComment(commentId);
+    } catch (e) {
+      this.actionError.set((e as Error).message);
+    }
+  }
+
+  canDeleteComment(comment: JobComment): boolean {
+    return this.role() === 'admin' || comment.user_uid === this.uid();
+  }
+
+  // ── Private ────────────────────────────────────────────────────────────
+
+  private async _run(fn: () => Promise<unknown>) {
+    this.actionLoading.set(true);
+    this.actionError.set('');
+    try {
+      await fn();
+    } catch (e: unknown) {
+      this.actionError.set((e as Error).message || 'เกิดข้อผิดพลาด');
+    } finally {
+      this.actionLoading.set(false);
     }
   }
 }

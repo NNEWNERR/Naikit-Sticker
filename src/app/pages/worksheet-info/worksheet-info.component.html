@@ -1,337 +1,507 @@
 <!--
-  Worksheet Info — neo-brutalist redesign.
-  Replaces the previous <app-header>/3-column ion layout with the prototype's
-  page-header + 8-status timeline + 3-panel grid (sales / graphic / production)
-  + comment thread. Opened as a full-screen modal from home + report.
-
-  See redesign/extracted/assets/541b5f48-…js for the source design.
+  Worksheet Info — P3.7 rewrite.
+  Standalone component opened as a CDK full-screen modal.
+  Data sourced from Firestore live listeners (jobs/{jobId}, job_events, comments).
 -->
-<div class="nk-content bg-surface-2">
+<div class="nk-content bg-surface-2 flex flex-col min-h-full">
 
-  <!-- ── Page header ──────────────────────────────────────────────────── -->
-  <app-page-header
-    [breadcrumb]="'HOME · ' + (workSheet?.serial_number || '')"
-    [title]="workSheet?.serial_number || 'ใบงาน'"
-    [subtitle]="workSheet?.customer_name || ''"
-    [yellow]="true"
-    [onBack]="goBack"
-  >
-    <div header-right class="flex items-center gap-2">
-      <app-badge [tone]="badgeTone" [dot]="true">{{ workSheet?.status || '-' }}</app-badge>
+  <!-- ── Loading state ──────────────────────────────────────────────────── -->
+  <ng-container *ngIf="jobLoading()">
+    <app-page-header title="กำลังโหลด..." [yellow]="true" [onBack]="goBack"></app-page-header>
+    <div class="p-4 flex flex-col gap-3">
+      <app-skeleton height="48px"></app-skeleton>
+      <app-skeleton height="200px"></app-skeleton>
     </div>
-  </app-page-header>
+  </ng-container>
 
-  <!-- ── Status timeline ──────────────────────────────────────────────── -->
-  <app-timeline
-    [steps]="timelineSteps"
-    [currentStatus]="workSheet?.status || ''"
-  ></app-timeline>
+  <!-- ── Not found ──────────────────────────────────────────────────────── -->
+  <ng-container *ngIf="!jobLoading() && !job()">
+    <app-page-header title="ไม่พบใบงาน" [yellow]="true" [onBack]="goBack"></app-page-header>
+    <app-empty-state class="flex-1" icon="🔍" title="ไม่พบใบงาน" helper="ใบงานอาจถูกลบหรือ ID ไม่ถูกต้อง"></app-empty-state>
+  </ng-container>
 
-  <!-- ── Mobile panel tabs ────────────────────────────────────────────── -->
-  <div class="md:hidden flex border-b-2 border-ink bg-white flex-shrink-0">
-    <button
-      *ngFor="let t of [{k:'sales', l:'💼 ขาย'}, {k:'graphic', l:'🎨 กราฟิก'}, {k:'production', l:'📦 ผลิต'}]"
-      type="button"
-      (click)="setMobilePanel(t.k)"
-      class="flex-1 px-2 py-2.5 text-body-sm font-bold cursor-pointer border-b-[3px] transition-colors"
-      [class.bg-brand]="mobilePanel === t.k"
-      [class.bg-white]="mobilePanel !== t.k"
-      [class.border-ink]="mobilePanel === t.k"
-      [class.border-transparent]="mobilePanel !== t.k"
-    >{{ t.l }}</button>
-  </div>
+  <!-- ── Main content ────────────────────────────────────────────────────── -->
+  <ng-container *ngIf="!jobLoading() && job() as j">
 
-  <!-- ── Body grid ────────────────────────────────────────────────────── -->
-  <div class="p-4 md:p-5 grid grid-cols-1 md:grid-cols-3 gap-4">
-
-    <!-- ━━━ ฝ่ายขาย ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
-    <section
-      *ngIf="mobilePanel === 'sales'"
-      class="bg-white border-2 border-ink rounded-lg shadow-brutal overflow-hidden md:block"
+    <!-- Page header -->
+    <app-page-header
+      [breadcrumb]="'HOME · ' + j.serial_number"
+      [title]="j.serial_number"
+      [subtitle]="j.customer_name"
+      [yellow]="true"
+      [onBack]="goBack"
     >
-      <!-- Panel header (brand-yellow accent) -->
-      <header class="bg-brand border-b-2 border-ink px-4 py-2.5 flex items-center gap-2.5">
-        <span class="text-[18px]" aria-hidden="true">💼</span>
-        <div class="flex-1">
-          <div class="text-[10px] font-bold tracking-[0.1em] opacity-65">DEPARTMENT</div>
-          <div class="text-h3">ฝ่ายขาย</div>
-        </div>
-        <app-badge [tone]="badgeTone" [dot]="true">{{ workSheet?.status || '-' }}</app-badge>
-      </header>
-
-      <div class="p-4 text-body">
-        <div class="flex justify-between items-center py-1.5 border-b border-dashed border-line">
-          <span class="text-ink-3 font-semibold">ผู้ขาย</span>
-          <span class="font-bold">{{ workSheet?.seller_name || workSheet?.seller || '—' }}</span>
-        </div>
-        <div class="flex justify-between items-center py-1.5 border-b border-dashed border-line">
-          <span class="text-ink-3 font-semibold">ช่องทาง</span>
-          <span class="font-bold">{{ workSheet?.contact || '—' }}</span>
-        </div>
-        <div class="flex justify-between items-center py-1.5 border-b border-dashed border-line">
-          <span class="text-ink-3 font-semibold">เบอร์โทร</span>
-          <span class="font-bold font-num">{{ workSheet?.phone_number || workSheet?.phone || '—' }}</span>
-        </div>
-        <div class="flex justify-between items-center py-1.5 border-b border-dashed border-line">
-          <span class="text-ink-3 font-semibold">ID ไลน์</span>
-          <span class="font-bold">{{ workSheet?.line_name || '—' }}</span>
-        </div>
-        <div class="flex justify-between items-center py-1.5 border-b border-dashed border-line">
-          <span class="text-ink-3 font-semibold">วันสั่งงาน</span>
-          <span class="font-bold font-num">{{ workSheet?.created_at ? formatTimeFull(workSheet.created_at) : '—' }}</span>
-        </div>
-        <div class="flex justify-between items-center py-1.5 border-b border-dashed border-line">
-          <span class="text-ink-3 font-semibold">วันรับงาน</span>
-          <span class="font-bold font-num text-danger">{{ workSheet?.date_of_acceptance ? formatTime(workSheet.date_of_acceptance) : '—' }}</span>
-        </div>
-
-        <!-- Payment summary -->
-        <div class="mt-3 p-3 bg-brand-50 border-[1.5px] border-ink rounded-md">
-          <div class="flex justify-between text-body mb-1">
-            <span class="text-ink-3">ยอดรวม</span>
-            <span class="font-bold font-num">฿{{ (workSheet?.payment?.total || 0) | number }}</span>
-          </div>
-          <div class="flex justify-between text-body mb-1.5">
-            <span class="text-ink-3">มัดจำ</span>
-            <span class="font-bold font-num">฿{{ (workSheet?.payment?.deposit || 0) | number }}</span>
-          </div>
-          <div class="flex justify-between pt-1.5 border-t border-line-2">
-            <span class="font-bold">คงเหลือ</span>
-            <span class="text-[18px] font-black font-num">฿{{ paymentRemaining | number }}</span>
-          </div>
-        </div>
-
-        <!-- Worksheet image -->
-        <div *ngIf="workSheet?.worksheet_image" class="mt-3">
-          <div class="label-mono mb-1.5">รูปใบงาน</div>
-          <img
-            [src]="workSheet.worksheet_image"
-            alt="WorkSheet"
-            class="w-full max-w-[200px] h-32 object-cover border-2 border-ink rounded-md shadow-brutal-sm cursor-pointer"
-            (click)="openImage(workSheet.worksheet_image)"
-          />
-        </div>
-
-        <!-- Reference images -->
-        <div *ngIf="workSheet?.reference_images?.length" class="mt-3">
-          <div class="label-mono mb-1.5">รูปอ้างอิง</div>
-          <div class="flex overflow-x-auto gap-2 pb-1">
-            <img
-              *ngFor="let image of workSheet.reference_images"
-              [src]="image"
-              alt="Reference"
-              class="w-24 h-24 object-cover border-2 border-ink rounded-md shadow-brutal-sm cursor-pointer flex-shrink-0"
-              (click)="openImage(image)"
-            />
-          </div>
-        </div>
+      <div header-right class="flex items-center gap-2">
+        <span *ngIf="j.is_deleted" class="text-body-sm font-bold text-danger border-2 border-danger px-2 py-0.5 rounded">ถูกลบ</span>
+        <span *ngIf="j.is_urgent" class="text-body-sm font-bold text-warn border-2 border-warn px-2 py-0.5 rounded">ด่วน!</span>
+        <app-badge [tone]="badgeTone" [dot]="true">{{ j.status }}</app-badge>
       </div>
-    </section>
+    </app-page-header>
 
-    <!-- ━━━ ฝ่ายกราฟิก ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
-    <section
-      *ngIf="mobilePanel === 'graphic'"
-      class="bg-white border-2 border-ink rounded-lg shadow-brutal overflow-hidden md:block"
-    >
-      <header class="border-b-2 border-ink px-4 py-2.5 flex items-center gap-2.5" style="background:#E0F2FE;">
-        <span class="text-[18px]" aria-hidden="true">🎨</span>
-        <div class="flex-1">
-          <div class="text-[10px] font-bold tracking-[0.1em] opacity-65">DEPARTMENT</div>
-          <div class="text-h3">ฝ่ายกราฟิก</div>
-        </div>
-      </header>
+    <!-- Status timeline -->
+    <app-timeline [steps]="timelineSteps" [currentStatus]="j.status"></app-timeline>
 
-      <div class="p-4 text-body">
-        <div class="flex justify-between items-center py-1.5 border-b border-dashed border-line">
-          <span class="text-ink-3 font-semibold">ผู้ออกแบบ</span>
-          <span class="font-bold" [class.text-ink-4]="!workSheet?.design_by || workSheet.design_by === '-'">
-            {{ workSheet?.design_by && workSheet.design_by !== '-' ? workSheet.design_by : 'ยังไม่มอบหมาย' }}
-          </span>
-        </div>
-        <div class="flex justify-between items-center py-1.5 border-b border-dashed border-line">
-          <span class="text-ink-3 font-semibold">วันรับออกแบบ</span>
-          <span class="font-bold font-num">{{ workSheet?.design_date ? formatTimeFull(workSheet.design_date) : '—' }}</span>
-        </div>
-        <div class="flex justify-between items-center py-1.5 border-b border-dashed border-line">
-          <span class="text-ink-3 font-semibold">แก้ไขแล้ว</span>
-          <span class="font-bold font-num text-warn">{{ workSheet?.modify || 0 }} ครั้ง</span>
-        </div>
-        <div class="flex justify-between items-center py-1.5 border-b border-dashed border-line">
-          <span class="text-ink-3 font-semibold">ส่งแบบล่าสุด</span>
-          <span class="font-bold font-num">{{ workSheet?.date_of_submission ? formatTimeFull(workSheet.date_of_submission) : '—' }}</span>
-        </div>
-        <div class="flex justify-between items-center py-1.5 border-b border-dashed border-line">
-          <span class="text-ink-3 font-semibold">ผู้คอนเฟิร์ม</span>
-          <span class="font-bold">{{ workSheet?.confirm_by || '—' }}</span>
-        </div>
-        <div class="flex justify-between items-center py-1.5 border-b border-dashed border-line">
-          <span class="text-ink-3 font-semibold">วันคอนเฟิร์ม</span>
-          <span class="font-bold font-num">{{ workSheet?.confirm_date ? formatTimeFull(workSheet.confirm_date) : '—' }}</span>
-        </div>
+    <!-- ── Action bar ──────────────────────────────────────────────────── -->
+    <div *ngIf="hasAnyAction()" class="mx-4 mt-4 p-3 bg-white border-2 border-ink rounded-lg shadow-brutal">
+      <div class="text-[10px] font-bold tracking-[0.1em] text-ink-3 mb-2">⚡ ดำเนินการ</div>
 
-        <!-- Design images -->
-        <div *ngIf="workSheet?.design_images?.length" class="mt-3">
-          <div class="label-mono mb-1.5">รูปที่ออกแบบ</div>
-          <div class="flex overflow-x-auto gap-2 pb-1">
-            <img
-              *ngFor="let image of workSheet.design_images"
-              [src]="image?.url || image"
-              alt="Design"
-              class="w-28 h-28 object-cover border-2 border-ink rounded-md shadow-brutal-sm cursor-pointer flex-shrink-0"
-              (click)="openImage(image?.url || image)"
-            />
-          </div>
-        </div>
+      <!-- Error banner -->
+      <div *ngIf="actionError()" class="mb-2 p-2 bg-danger-bg border border-danger rounded text-body-sm text-danger font-semibold flex justify-between">
+        <span>{{ actionError() }}</span>
+        <button type="button" class="ml-2 font-bold cursor-pointer bg-transparent border-0" (click)="actionError.set('')">✕</button>
       </div>
-    </section>
 
-    <!-- ━━━ ฝ่ายผลิต + หมายเหตุ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
-    <div
-      *ngIf="mobilePanel === 'production'"
-      class="flex flex-col gap-4 md:flex"
-    >
-      <!-- Production panel -->
-      <section class="bg-white border-2 border-ink rounded-lg shadow-brutal overflow-hidden">
-        <header class="border-b-2 border-ink px-4 py-2.5 flex items-center gap-2.5" style="background:#EDE9FE;">
-          <span class="text-[18px]" aria-hidden="true">📦</span>
+      <div class="flex flex-wrap gap-2">
+
+        <!-- รอออกแบบ: Claim design -->
+        <button *ngIf="canClaimDesign()" type="button"
+          class="px-3 py-1.5 bg-status-designing-bg border-2 border-ink rounded font-bold text-body-sm cursor-pointer disabled:opacity-50"
+          [disabled]="actionLoading()"
+          (click)="onClaimDesign()">
+          🎨 รับงานออกแบบ
+        </button>
+
+        <!-- กำลังออกแบบ: Submit design -->
+        <div *ngIf="canSubmitDesign()" class="flex flex-col gap-1.5 w-full">
+          <label class="text-body-sm font-semibold">แนบรูปแบบงาน (บังคับ)</label>
+          <input type="file" accept="image/*" multiple class="text-body-sm" (change)="onDesignFilesChange($event)">
+          <span *ngIf="designFiles.length" class="text-body-sm text-ink-3">เลือก {{ designFiles.length }} ไฟล์</span>
+          <button type="button"
+            class="self-start px-3 py-1.5 bg-status-await-bg border-2 border-ink rounded font-bold text-body-sm cursor-pointer disabled:opacity-50"
+            [disabled]="actionLoading() || designFiles.length === 0"
+            (click)="onSubmitDesign()">
+            ✅ ส่งแบบให้ลูกค้าคอนเฟิร์ม
+          </button>
+        </div>
+
+        <!-- รอคอนเฟิร์มแบบ: Confirm + Request revision -->
+        <ng-container *ngIf="canConfirmDesign()">
+          <button type="button"
+            class="px-3 py-1.5 bg-status-confirmed-bg border-2 border-ink rounded font-bold text-body-sm cursor-pointer disabled:opacity-50"
+            [disabled]="actionLoading()"
+            (click)="onConfirmDesign()">
+            ✅ คอนเฟิร์มแบบ
+          </button>
+          <div class="flex flex-col gap-1 w-full">
+            <button type="button"
+              class="self-start px-3 py-1.5 bg-warn-bg border-2 border-ink rounded font-bold text-body-sm cursor-pointer disabled:opacity-50"
+              [disabled]="actionLoading()"
+              (click)="showRevisionInput = !showRevisionInput">
+              🔄 ขอแก้ไขแบบ
+            </button>
+            <div *ngIf="showRevisionInput" class="flex gap-2 items-start">
+              <textarea
+                [(ngModel)]="revisionNote"
+                rows="2"
+                placeholder="เหตุผล (ไม่บังคับ)"
+                class="flex-1 border-2 border-ink rounded p-2 text-body-sm resize-none"
+              ></textarea>
+              <button type="button"
+                class="px-3 py-2 bg-warn border-2 border-ink rounded font-bold text-body-sm cursor-pointer disabled:opacity-50"
+                [disabled]="actionLoading()"
+                (click)="onRequestRevision()">
+                ส่ง
+              </button>
+            </div>
+          </div>
+        </ng-container>
+
+        <!-- คอนเฟิร์มแล้ว: Send to production -->
+        <button *ngIf="canSendToProduction()" type="button"
+          class="px-3 py-1.5 bg-status-printq-bg border-2 border-ink rounded font-bold text-body-sm cursor-pointer disabled:opacity-50"
+          [disabled]="actionLoading()"
+          (click)="onSendToProduction()">
+          📦 ส่งเข้าผลิต
+        </button>
+
+        <!-- รอผลิต: Claim print -->
+        <button *ngIf="canClaimPrint()" type="button"
+          class="px-3 py-1.5 bg-status-printing-bg border-2 border-ink rounded font-bold text-body-sm cursor-pointer disabled:opacity-50"
+          [disabled]="actionLoading()"
+          (click)="onClaimPrint()">
+          🖨️ รับงานผลิต
+        </button>
+
+        <!-- กำลังผลิต: Upload print -->
+        <div *ngIf="canUploadPrint()" class="flex flex-col gap-1.5 w-full">
+          <label class="text-body-sm font-semibold">แนบรูปงานพิมพ์ (บังคับ)</label>
+          <input type="file" accept="image/*" multiple class="text-body-sm" (change)="onPrintFilesChange($event)">
+          <span *ngIf="printFiles.length" class="text-body-sm text-ink-3">เลือก {{ printFiles.length }} ไฟล์</span>
+          <button type="button"
+            class="self-start px-3 py-1.5 bg-status-deliverq-bg border-2 border-ink rounded font-bold text-body-sm cursor-pointer disabled:opacity-50"
+            [disabled]="actionLoading() || printFiles.length === 0"
+            (click)="onUploadPrint()">
+            ✅ ส่งงานรอส่งมอบ
+          </button>
+        </div>
+
+        <!-- รอส่งมอบ: Mark delivered -->
+        <button *ngIf="canMarkDelivered()" type="button"
+          class="px-3 py-1.5 bg-status-delivered-bg border-2 border-ink rounded font-bold text-body-sm cursor-pointer disabled:opacity-50"
+          [disabled]="actionLoading()"
+          (click)="onMarkDelivered()">
+          🎉 ส่งมอบงานแล้ว
+        </button>
+
+        <!-- Admin: Delete / Restore -->
+        <button *ngIf="canDelete()" type="button"
+          class="px-3 py-1.5 bg-danger-bg border-2 border-danger rounded font-bold text-body-sm text-danger cursor-pointer disabled:opacity-50 ml-auto"
+          [disabled]="actionLoading()"
+          (click)="onDeleteJob()">
+          🗑️ ลบใบงาน
+        </button>
+        <button *ngIf="canRestore()" type="button"
+          class="px-3 py-1.5 bg-surface-3 border-2 border-ink rounded font-bold text-body-sm cursor-pointer disabled:opacity-50"
+          [disabled]="actionLoading()"
+          (click)="onRestoreJob()">
+          ↩️ กู้คืนใบงาน
+        </button>
+      </div>
+
+      <!-- Loading indicator -->
+      <div *ngIf="actionLoading()" class="mt-2 text-body-sm text-ink-3 font-semibold">⏳ กำลังดำเนินการ…</div>
+    </div>
+
+    <!-- ── Mobile panel tabs ────────────────────────────────────────────── -->
+    <div class="md:hidden flex border-b-2 border-ink bg-white flex-shrink-0 mt-4">
+      <button
+        *ngFor="let t of [{k:'sales', l:'💼 ขาย'}, {k:'graphic', l:'🎨 กราฟิก'}, {k:'production', l:'📦 ผลิต'}]"
+        type="button"
+        (click)="setMobilePanel(t.k)"
+        class="flex-1 px-2 py-2.5 text-body-sm font-bold cursor-pointer border-b-[3px] transition-colors"
+        [class.bg-brand]="mobilePanel === t.k"
+        [class.bg-white]="mobilePanel !== t.k"
+        [class.border-ink]="mobilePanel === t.k"
+        [class.border-transparent]="mobilePanel !== t.k"
+      >{{ t.l }}</button>
+    </div>
+
+    <!-- ── Body grid ────────────────────────────────────────────────────── -->
+    <div class="p-4 md:p-5 grid grid-cols-1 md:grid-cols-3 gap-4">
+
+      <!-- ━━━ ฝ่ายขาย ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+      <section
+        [class.hidden]="mobilePanel !== 'sales'"
+        class="bg-white border-2 border-ink rounded-lg shadow-brutal overflow-hidden md:block"
+      >
+        <header class="bg-brand border-b-2 border-ink px-4 py-2.5 flex items-center gap-2.5">
+          <span class="text-[18px]" aria-hidden="true">💼</span>
           <div class="flex-1">
             <div class="text-[10px] font-bold tracking-[0.1em] opacity-65">DEPARTMENT</div>
-            <div class="text-h3">ฝ่ายผลิต</div>
+            <div class="text-h3">ฝ่ายขาย</div>
+          </div>
+          <app-badge [tone]="badgeTone" [dot]="true">{{ j.status }}</app-badge>
+        </header>
+
+        <div class="p-4 text-body">
+          <div class="flex justify-between items-center py-1.5 border-b border-dashed border-line">
+            <span class="text-ink-3 font-semibold">ช่องทาง</span>
+            <span class="font-bold">{{ j.contact || '—' }}</span>
+          </div>
+          <div class="flex justify-between items-center py-1.5 border-b border-dashed border-line">
+            <span class="text-ink-3 font-semibold">เบอร์โทร</span>
+            <span class="font-bold font-num">{{ j.phone || '—' }}</span>
+          </div>
+          <div class="flex justify-between items-center py-1.5 border-b border-dashed border-line">
+            <span class="text-ink-3 font-semibold">ID ไลน์</span>
+            <span class="font-bold">{{ j.line_name || '—' }}</span>
+          </div>
+          <div class="flex justify-between items-center py-1.5 border-b border-dashed border-line">
+            <span class="text-ink-3 font-semibold">วันสั่งงาน</span>
+            <span class="font-bold font-num">{{ formatTs(j.created_at, true) }}</span>
+          </div>
+          <div class="flex justify-between items-center py-1.5 border-b border-dashed border-line">
+            <span class="text-ink-3 font-semibold">วันรับงาน</span>
+            <span class="font-bold font-num text-danger">{{ formatTs(j.date_of_acceptance) }}</span>
+          </div>
+
+          <!-- Payment summary -->
+          <div class="mt-3 p-3 bg-brand-50 border-[1.5px] border-ink rounded-md">
+            <div class="flex justify-between text-body mb-1">
+              <span class="text-ink-3">ยอดรวม</span>
+              <span class="font-bold font-num">฿{{ (j.payment?.total || 0) | number }}</span>
+            </div>
+            <div class="flex justify-between text-body mb-1.5">
+              <span class="text-ink-3">มัดจำ</span>
+              <span class="font-bold font-num">฿{{ (j.payment?.deposit || 0) | number }}</span>
+            </div>
+            <div class="flex justify-between pt-1.5 border-t border-line-2">
+              <span class="font-bold">คงเหลือ</span>
+              <span class="text-[18px] font-black font-num">฿{{ paymentRemaining | number }}</span>
+            </div>
+          </div>
+
+          <!-- Worksheet image -->
+          <div *ngIf="j.worksheet_image" class="mt-3">
+            <div class="label-mono mb-1.5">รูปใบงาน</div>
+            <img
+              [src]="j.worksheet_image"
+              alt="WorkSheet"
+              class="w-full max-w-[200px] h-32 object-cover border-2 border-ink rounded-md shadow-brutal-sm cursor-pointer"
+              (click)="openImage(j.worksheet_image!)"
+            />
+          </div>
+
+          <!-- Reference images -->
+          <div *ngIf="j.reference_images?.length" class="mt-3">
+            <div class="label-mono mb-1.5">รูปอ้างอิง</div>
+            <div class="flex overflow-x-auto gap-2 pb-1">
+              <img
+                *ngFor="let img of j.reference_images"
+                [src]="img"
+                alt="Reference"
+                class="w-24 h-24 object-cover border-2 border-ink rounded-md shadow-brutal-sm cursor-pointer flex-shrink-0"
+                (click)="openImage(img)"
+              />
+            </div>
+          </div>
+
+          <!-- Remark -->
+          <div *ngIf="j.remark" class="mt-3 p-2.5 bg-surface-3 border border-line rounded text-body-sm text-ink-2">
+            <span class="label-mono block mb-1">หมายเหตุ</span>{{ j.remark }}
+          </div>
+        </div>
+      </section>
+
+      <!-- ━━━ ฝ่ายกราฟิก ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+      <section
+        [class.hidden]="mobilePanel !== 'graphic'"
+        class="bg-white border-2 border-ink rounded-lg shadow-brutal overflow-hidden md:block"
+      >
+        <header class="border-b-2 border-ink px-4 py-2.5 flex items-center gap-2.5 bg-status-designing-bg">
+          <span class="text-[18px]" aria-hidden="true">🎨</span>
+          <div class="flex-1">
+            <div class="text-[10px] font-bold tracking-[0.1em] opacity-65">DEPARTMENT</div>
+            <div class="text-h3">ฝ่ายกราฟิก</div>
           </div>
         </header>
 
         <div class="p-4 text-body">
           <div class="flex justify-between items-center py-1.5 border-b border-dashed border-line">
-            <span class="text-ink-3 font-semibold">ผู้พิมพ์งาน</span>
-            <span class="font-bold" [class.text-ink-4]="!workSheet?.print_by">
-              {{ workSheet?.print_by || '—' }}
+            <span class="text-ink-3 font-semibold">ผู้ออกแบบ</span>
+            <span class="font-bold" [class.text-ink-4]="!j.design_uid">
+              {{ j.design_uid || 'ยังไม่มอบหมาย' }}
             </span>
           </div>
           <div class="flex justify-between items-center py-1.5 border-b border-dashed border-line">
-            <span class="text-ink-3 font-semibold">วันที่พิมพ์</span>
-            <span class="font-bold font-num">{{ workSheet?.print_date ? formatTimeFull(workSheet.print_date) : '—' }}</span>
+            <span class="text-ink-3 font-semibold">วันรับออกแบบ</span>
+            <span class="font-bold font-num">{{ formatTs(j.design_date, true) }}</span>
           </div>
           <div class="flex justify-between items-center py-1.5 border-b border-dashed border-line">
-            <span class="text-ink-3 font-semibold">วันส่งมอบ</span>
-            <span class="font-bold font-num">{{ workSheet?.date_of_completion ? formatTimeFull(workSheet.date_of_completion) : (workSheet?.date_of_acceptance ? formatTime(workSheet.date_of_acceptance) : '—') }}</span>
+            <span class="text-ink-3 font-semibold">ส่งแบบล่าสุด</span>
+            <span class="font-bold font-num">{{ formatTs(j.date_of_submission, true) }}</span>
+          </div>
+          <div class="flex justify-between items-center py-1.5 border-b border-dashed border-line">
+            <span class="text-ink-3 font-semibold">ผู้คอนเฟิร์ม</span>
+            <span class="font-bold">{{ j.confirm_uid || '—' }}</span>
+          </div>
+          <div class="flex justify-between items-center py-1.5 border-b border-dashed border-line">
+            <span class="text-ink-3 font-semibold">วันคอนเฟิร์ม</span>
+            <span class="font-bold font-num">{{ formatTs(j.confirm_date, true) }}</span>
           </div>
 
-          <div *ngIf="workSheet?.print_images?.length; else printPlaceholder" class="mt-3">
-            <div class="label-mono mb-1.5">รูปที่พิมพ์</div>
+          <!-- Design images -->
+          <div *ngIf="j.design_images?.length; else designPlaceholder" class="mt-3">
+            <div class="label-mono mb-1.5">รูปที่ออกแบบ</div>
             <div class="flex overflow-x-auto gap-2 pb-1">
               <img
-                *ngFor="let image of workSheet.print_images"
-                [src]="image"
-                alt="Print"
+                *ngFor="let img of j.design_images"
+                [src]="img.url"
+                alt="Design"
                 class="w-28 h-28 object-cover border-2 border-ink rounded-md shadow-brutal-sm cursor-pointer flex-shrink-0"
-                (click)="openImage(image)"
+                (click)="openImage(img.url)"
               />
             </div>
           </div>
-          <ng-template #printPlaceholder>
-            <div class="mt-3 p-3 bg-surface-3 rounded-md text-body-sm text-ink-3 text-center font-semibold">
-              ยังไม่มีรูปงานพิมพ์
-            </div>
+          <ng-template #designPlaceholder>
+            <div class="mt-3 p-3 bg-surface-3 rounded-md text-body-sm text-ink-3 text-center font-semibold">ยังไม่มีรูปแบบงาน</div>
           </ng-template>
         </div>
       </section>
 
-      <!-- Comments thread -->
-      <section class="bg-white border-2 border-ink rounded-lg shadow-brutal p-4">
-        <div class="flex justify-between items-center mb-3">
-          <span class="text-base font-extrabold">📝 หมายเหตุ · <span class="font-num">{{ comments.length }}</span></span>
-          <button
-            type="button"
-            (click)="addComment()"
-            class="px-2.5 py-1 bg-ink text-brand text-body-sm font-bold cursor-pointer rounded-md"
-          >+ เพิ่ม</button>
-        </div>
-
-        <div *ngIf="comments.length === 0" class="py-6 text-center text-body-sm text-ink-4 font-medium">
-          ยังไม่มีหมายเหตุ
-        </div>
-
-        <div
-          *ngFor="let comment of comments; let i = index; let isLast = last"
-          class="flex gap-2.5 pb-2.5"
-          [class.border-b]="!isLast"
-          [class.border-dashed]="!isLast"
-          [class.border-line]="!isLast"
-          [class.mb-2.5]="!isLast"
-        >
-          <div
-            class="w-[26px] h-[26px] rounded-full border-[1.5px] border-ink flex items-center justify-center text-[11px] font-extrabold flex-shrink-0 bg-brand-50"
-          >{{ (comment.user || '?').charAt(0).toUpperCase() }}</div>
-          <div class="flex-1 min-w-0">
-            <div class="flex justify-between items-baseline gap-2">
-              <span class="text-body font-bold truncate">{{ comment.user }}</span>
-              <span class="text-[11px] text-ink-4 font-medium flex-shrink-0">{{ formatDate(comment.date) }}</span>
+      <!-- ━━━ ฝ่ายผลิต + หมายเหตุ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+      <div
+        [class.hidden]="mobilePanel !== 'production'"
+        class="flex flex-col gap-4 md:flex"
+      >
+        <!-- Production panel -->
+        <section class="bg-white border-2 border-ink rounded-lg shadow-brutal overflow-hidden">
+          <header class="border-b-2 border-ink px-4 py-2.5 flex items-center gap-2.5 bg-status-printq-bg">
+            <span class="text-[18px]" aria-hidden="true">📦</span>
+            <div class="flex-1">
+              <div class="text-[10px] font-bold tracking-[0.1em] opacity-65">DEPARTMENT</div>
+              <div class="text-h3">ฝ่ายผลิต</div>
             </div>
-            <p class="text-body-sm text-ink-2 mt-0.5 leading-relaxed">{{ comment.text }}</p>
+          </header>
 
-            <div class="flex items-center gap-3 mt-1.5 text-body-sm">
-              <button (click)="likeComment(comment)" class="text-info hover:underline cursor-pointer bg-transparent border-0 font-semibold">
-                👍 {{ comment.likes || 0 }}
-              </button>
-              <button (click)="replyComment(comment)" class="text-info hover:underline cursor-pointer bg-transparent border-0 font-semibold">
-                💬 {{ comment.replies?.length || 0 }}
-              </button>
-              <button (click)="deleteComment(comment)" class="text-danger hover:underline cursor-pointer bg-transparent border-0 font-semibold ml-auto">
-                ลบ
-              </button>
+          <div class="p-4 text-body">
+            <div class="flex justify-between items-center py-1.5 border-b border-dashed border-line">
+              <span class="text-ink-3 font-semibold">ผู้พิมพ์งาน</span>
+              <span class="font-bold" [class.text-ink-4]="!j.print_uid">{{ j.print_uid || '—' }}</span>
+            </div>
+            <div class="flex justify-between items-center py-1.5 border-b border-dashed border-line">
+              <span class="text-ink-3 font-semibold">วันที่พิมพ์</span>
+              <span class="font-bold font-num">{{ formatTs(j.print_date, true) }}</span>
+            </div>
+            <div class="flex justify-between items-center py-1.5 border-b border-dashed border-line">
+              <span class="text-ink-3 font-semibold">วันส่งมอบ</span>
+              <span class="font-bold font-num">{{ formatTs(j.date_of_completion ?? j.date_of_acceptance) }}</span>
             </div>
 
-            <!-- Replies -->
-            <div
-              *ngFor="let reply of comment.replies || []"
-              class="ml-2 mt-2 pl-2.5 py-1.5 bg-surface-3 rounded-md border-l-2 border-ink-4"
-            >
-              <div class="flex justify-between items-baseline">
-                <span class="text-body-sm font-bold">{{ reply.user }}</span>
-                <span class="text-[10px] text-ink-4">{{ formatDate(reply.date) }}</span>
+            <div *ngIf="j.print_images?.length; else printPlaceholder" class="mt-3">
+              <div class="label-mono mb-1.5">รูปที่พิมพ์</div>
+              <div class="flex overflow-x-auto gap-2 pb-1">
+                <img
+                  *ngFor="let img of j.print_images"
+                  [src]="img.url"
+                  alt="Print"
+                  class="w-28 h-28 object-cover border-2 border-ink rounded-md shadow-brutal-sm cursor-pointer flex-shrink-0"
+                  (click)="openImage(img.url)"
+                />
               </div>
-              <p class="text-body-sm text-ink-2">{{ reply.text }}</p>
+            </div>
+            <ng-template #printPlaceholder>
+              <div class="mt-3 p-3 bg-surface-3 rounded-md text-body-sm text-ink-3 text-center font-semibold">ยังไม่มีรูปงานพิมพ์</div>
+            </ng-template>
+          </div>
+        </section>
+
+        <!-- Comments thread -->
+        <section class="bg-white border-2 border-ink rounded-lg shadow-brutal p-4">
+          <div class="flex justify-between items-center mb-3">
+            <span class="text-base font-extrabold">📝 หมายเหตุ · <span class="font-num">{{ comments().length }}</span></span>
+          </div>
+
+          <!-- Add comment -->
+          <div class="flex gap-2 mb-3">
+            <textarea
+              [(ngModel)]="commentText"
+              rows="2"
+              placeholder="พิมพ์หมายเหตุ…"
+              class="flex-1 border-2 border-ink rounded p-2 text-body-sm resize-none"
+            ></textarea>
+            <button
+              type="button"
+              (click)="onAddComment()"
+              [disabled]="!commentText.trim() || commentLoading"
+              class="px-3 py-2 bg-ink text-brand text-body-sm font-bold cursor-pointer rounded-md disabled:opacity-50 self-end"
+            >ส่ง</button>
+          </div>
+
+          <app-empty-state
+            *ngIf="comments().length === 0"
+            size="sm"
+            icon="📝"
+            title="ยังไม่มีหมายเหตุ"
+            helper="พิมพ์ข้อความด้านบนเพื่อเพิ่มหมายเหตุ">
+          </app-empty-state>
+
+          <div
+            *ngFor="let c of comments(); let isLast = last"
+            class="flex gap-2.5 pb-2.5"
+            [class.border-b]="!isLast"
+            [class.border-dashed]="!isLast"
+            [class.border-line]="!isLast"
+            [class.mb-2.5]="!isLast"
+          >
+            <div class="w-[26px] h-[26px] rounded-full border-[1.5px] border-ink flex items-center justify-center text-[11px] font-extrabold flex-shrink-0 bg-brand-50">
+              {{ (c.user_display_name || '?').charAt(0).toUpperCase() }}
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex justify-between items-baseline gap-2">
+                <span class="text-body font-bold truncate">{{ c.user_display_name }}</span>
+                <span class="text-[11px] text-ink-4 font-medium flex-shrink-0">{{ formatRelative(c.created_at) }}</span>
+              </div>
+              <p class="text-body-sm text-ink-2 mt-0.5 leading-relaxed">{{ c.text }}</p>
+              <div class="flex items-center gap-3 mt-1.5 text-body-sm">
+                <button *ngIf="canDeleteComment(c)" (click)="onDeleteComment(c.id)"
+                  class="text-danger hover:underline cursor-pointer bg-transparent border-0 font-semibold ml-auto">
+                  ลบ
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <!-- ── Work items table ──────────────────────────────────────────────── -->
+    <div *ngIf="j.work_items?.length" class="px-4 md:px-5 pb-4">
+      <div class="bg-white border-2 border-ink rounded-lg shadow-brutal overflow-hidden">
+        <div class="px-4 py-2.5 bg-brand border-b-2 border-ink flex items-center gap-2.5">
+          <span class="text-[18px]" aria-hidden="true">📌</span>
+          <h3 class="text-h3 m-0">รายละเอียดงาน</h3>
+          <span class="ml-auto bg-white border-[1.5px] border-ink px-2.5 py-0.5 rounded-full text-body-sm font-bold font-num">
+            {{ j.work_items.length }} รายการ
+          </span>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="min-w-full text-body">
+            <thead class="bg-ink text-brand text-[11px] font-extrabold">
+              <tr>
+                <th class="px-3 py-2 text-left">#</th>
+                <th class="px-3 py-2 text-left">ประเภท</th>
+                <th class="px-3 py-2 text-left">ขนาด</th>
+                <th class="px-3 py-2 text-left">ตัวเลือก</th>
+                <th class="px-3 py-2 text-right">จำนวน</th>
+                <th class="px-3 py-2 text-right">ราคา</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let w of j.work_items; let i = index" class="border-t border-line">
+                <td class="px-3 py-2 font-num text-ink-3 font-bold">{{ i + 1 }}</td>
+                <td class="px-3 py-2 font-bold">{{ w.type }}</td>
+                <td class="px-3 py-2 text-ink-2 font-num">{{ w.width }}×{{ w.height }} {{ w.unit_of_length }}</td>
+                <td class="px-3 py-2 text-ink-2">{{ w.option || '—' }}</td>
+                <td class="px-3 py-2 text-right font-bold font-num">{{ w.quantity | number }}</td>
+                <td class="px-3 py-2 text-right font-extrabold font-num">฿{{ (w.total || 0) | number }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Audit log (collapsible) ───────────────────────────────────────── -->
+    <div class="px-4 md:px-5 pb-6">
+      <div class="bg-white border-2 border-ink rounded-lg shadow-brutal overflow-hidden">
+        <button
+          type="button"
+          class="w-full px-4 py-2.5 flex items-center gap-2.5 bg-surface-3 border-b-2 border-ink cursor-pointer"
+          (click)="showAuditLog = !showAuditLog"
+        >
+          <span class="text-[16px]" aria-hidden="true">📋</span>
+          <span class="text-h3 flex-1 text-left">ประวัติการดำเนินการ</span>
+          <span class="text-body-sm font-bold font-num bg-white border-[1.5px] border-ink px-2 py-0.5 rounded-full">{{ events().length }}</span>
+          <span class="text-ink-3 text-body-sm">{{ showAuditLog ? '▲' : '▼' }}</span>
+        </button>
+
+        <div *ngIf="showAuditLog" class="divide-y divide-line">
+          <app-empty-state
+            *ngIf="events().length === 0"
+            size="sm"
+            icon="📋"
+            title="ยังไม่มีประวัติ"
+            helper=""
+          ></app-empty-state>
+          <div *ngFor="let e of events()" class="flex items-start gap-3 px-4 py-3">
+            <div class="w-8 h-8 rounded-full bg-brand-50 border-[1.5px] border-ink flex items-center justify-center text-[13px] flex-shrink-0 mt-0.5">
+              {{ roleLabel(e.actor_role).charAt(0) }}
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex flex-wrap justify-between items-baseline gap-x-2">
+                <span class="text-body font-bold">{{ actionLabel(e.action) }}</span>
+                <span class="text-[11px] text-ink-4 flex-shrink-0">{{ formatRelative(e.at) }}</span>
+              </div>
+              <div class="text-body-sm text-ink-3 mt-0.5">
+                {{ roleLabel(e.actor_role) }}
+                <span *ngIf="e.to_status" class="ml-1">→ <span class="font-semibold text-ink-2">{{ e.to_status }}</span></span>
+              </div>
             </div>
           </div>
         </div>
-      </section>
+      </div>
     </div>
-  </div>
 
-  <!-- ── Work items table (full-width below the panels) ───────────────── -->
-  <div *ngIf="workSheet?.workItems?.length" class="px-4 md:px-5 pb-6">
-    <div class="bg-white border-2 border-ink rounded-lg shadow-brutal overflow-hidden">
-      <div class="px-4 py-2.5 bg-brand border-b-2 border-ink flex items-center gap-2.5">
-        <span class="text-[18px]" aria-hidden="true">📌</span>
-        <h3 class="text-h3 m-0">รายละเอียดงาน</h3>
-        <span class="ml-auto bg-white border-[1.5px] border-ink px-2.5 py-0.5 rounded-full text-body-sm font-bold font-num">
-          {{ workSheet.workItems.length }} รายการ
-        </span>
-      </div>
-      <div class="overflow-x-auto">
-        <table class="min-w-full text-body">
-          <thead class="bg-ink text-brand text-[11px] font-extrabold">
-            <tr>
-              <th class="px-3 py-2 text-left">#</th>
-              <th class="px-3 py-2 text-left">ประเภท</th>
-              <th class="px-3 py-2 text-left">ขนาด</th>
-              <th class="px-3 py-2 text-left">ตัวเลือก</th>
-              <th class="px-3 py-2 text-right">จำนวน</th>
-              <th class="px-3 py-2 text-right">ราคา</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let work of workSheet.workItems; let i = index" class="border-t border-line">
-              <td class="px-3 py-2 font-num text-ink-3 font-bold">{{ i + 1 }}</td>
-              <td class="px-3 py-2 font-bold">{{ work.type }}</td>
-              <td class="px-3 py-2 text-ink-2 font-num">{{ work.width }}×{{ work.height }} {{ work.unit_of_length }}</td>
-              <td class="px-3 py-2 text-ink-2">{{ work.option || '—' }}</td>
-              <td class="px-3 py-2 text-right font-bold font-num">{{ work.quantity | number }}</td>
-              <td class="px-3 py-2 text-right font-extrabold font-num">฿{{ (work.total || 0) | number }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
+  </ng-container>
 </div>
