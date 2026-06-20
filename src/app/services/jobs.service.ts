@@ -1,0 +1,212 @@
+import { Injectable, signal } from '@angular/core';
+import {
+  collection,
+  doc,
+  onSnapshot,
+  orderBy,
+  query,
+  Query,
+  where,
+} from 'firebase/firestore';
+import { Role } from '../core/models/session';
+import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { FunctionsError, httpsCallable } from 'firebase/functions';
+import { db, functions, storage } from './firebase-config';
+import {
+  CreateJobPayload,
+  CreateJobResponse,
+  Job,
+  JobEvent,
+} from '../core/models/job';
+
+export class JobAdminError extends Error {
+  constructor(public readonly code: string, message: string) {
+    super(message);
+  }
+}
+
+@Injectable({ providedIn: 'root' })
+export class JobsService {
+
+  // ── Mutations (all go through Cloud Functions) ──────────────────────────
+
+  async createJob(payload: CreateJobPayload): Promise<CreateJobResponse> {
+    return this._call<CreateJobPayload, CreateJobResponse>('createJob', payload);
+  }
+
+  async claimDesign(jobId: string): Promise<void> {
+    await this._call('claimDesign', { job_id: jobId });
+  }
+
+  async submitDesign(jobId: string, designImageUrls: string[]): Promise<void> {
+    await this._call('submitDesign', { job_id: jobId, design_images: designImageUrls });
+  }
+
+  async confirmDesign(jobId: string): Promise<void> {
+    await this._call('confirmDesign', { job_id: jobId });
+  }
+
+  async requestRevision(jobId: string, note?: string): Promise<void> {
+    await this._call('requestRevision', { job_id: jobId, note: note ?? null });
+  }
+
+  async sendToProduction(jobId: string): Promise<void> {
+    await this._call('sendToProduction', { job_id: jobId });
+  }
+
+  async claimPrint(jobId: string): Promise<void> {
+    await this._call('claimPrint', { job_id: jobId });
+  }
+
+  async uploadPrint(jobId: string, printImageUrls: string[]): Promise<void> {
+    await this._call('uploadPrint', { job_id: jobId, print_images: printImageUrls });
+  }
+
+  async markDelivered(jobId: string): Promise<void> {
+    await this._call('markDelivered', { job_id: jobId });
+  }
+
+  async editJob(jobId: string, patch: Record<string, unknown>): Promise<void> {
+    await this._call('editJob', { job_id: jobId, ...patch });
+  }
+
+  async adminReassign(jobId: string, patch: { design_uid?: string | null; print_uid?: string | null; seller_uid?: string }): Promise<void> {
+    await this._call('adminReassign', { job_id: jobId, ...patch });
+  }
+
+  async deleteJob(jobId: string): Promise<void> {
+    await this._call('deleteJob', { job_id: jobId });
+  }
+
+  async restoreJob(jobId: string): Promise<void> {
+    await this._call('restoreJob', { job_id: jobId });
+  }
+
+  // ── Image upload helper (Storage → URL) ─────────────────────────────────
+
+  async uploadImages(jobId: string, type: 'design' | 'print', files: File[]): Promise<string[]> {
+    const urls: string[] = [];
+    for (const file of files) {
+      const ext = file.name.includes('.') ? file.name.split('.').pop() : 'bin';
+      const path = `jobs/${jobId}/${type}/${crypto.randomUUID()}.${ext}`;
+      const ref = storageRef(storage, path);
+      await uploadBytes(ref, file);
+      urls.push(await getDownloadURL(ref));
+    }
+    return urls;
+  }
+
+  // ── Firestore live listeners ─────────────────────────────────────────────
+
+  /** Subscribe to a single job document. Returns a cleanup fn. */
+  watchJob(jobId: string, onUpdate: (job: Job | null) => void, onError?: () => void): () => void {
+    return onSnapshot(
+      doc(db, 'jobs', jobId),
+      (snap) => onUpdate(snap.exists() ? ({ id: snap.id, ...snap.data() } as Job) : null),
+      () => { onError?.(); onUpdate(null); },
+    );
+  }
+
+  /**
+   * Role-aware live query for the home kanban.
+   *
+   * - admin/seller: single query filtered by is_deleted + (seller_uid for seller)
+   * - graphic: two queries merged — unclaimed design queue + my design jobs
+   * - production: two queries merged — unclaimed production queue + my print jobs
+   *
+   * Returns a cleanup fn that unsubscribes all underlying listeners.
+   */
+  watchMyJobs(role: Role, uid: string, onUpdate: (jobs: Job[]) => void): () => void {
+    // Each query owns a slot in `buckets`; all slots are merged on every change.
+    const buckets: Map<string, Job>[] = [];
+    const cleanups: Array<() => void> = [];
+
+    const addQuery = (q: Query): void => {
+      const idx = buckets.length;
+      buckets.push(new Map<string, Job>());
+      cleanups.push(
+        onSnapshot(q, (snap) => {
+          buckets[idx].clear();
+          for (const d of snap.docs) {
+            buckets[idx].set(d.id, { id: d.id, ...d.data() } as Job);
+          }
+          const merged = new Map<string, Job>();
+          for (const b of buckets) b.forEach((v, k) => merged.set(k, v));
+          onUpdate([...merged.values()]);
+        }),
+      );
+    };
+
+    const base = collection(db, 'jobs');
+    const notDeleted = where('is_deleted', '==', false);
+
+    switch (role) {
+      case 'admin':
+        addQuery(query(base, notDeleted));
+        break;
+      case 'seller':
+        addQuery(query(base, notDeleted, where('seller_uid', '==', uid)));
+        break;
+      case 'graphic':
+        // unclaimed design queue
+        addQuery(query(base, notDeleted, where('status', '==', 'รอออกแบบ'), where('design_uid', '==', null)));
+        // jobs currently or previously assigned to me
+        addQuery(query(base, notDeleted, where('design_uid', '==', uid)));
+        break;
+      case 'production':
+        // unclaimed production queue (confirmed + waiting)
+        addQuery(query(base, notDeleted, where('status', 'in', ['คอนเฟิร์มแล้ว', 'รอผลิต']), where('print_uid', '==', null)));
+        // jobs assigned to me
+        addQuery(query(base, notDeleted, where('print_uid', '==', uid)));
+        break;
+    }
+
+    return () => cleanups.forEach((fn) => fn());
+  }
+
+  /** Subscribe to the audit log for a job, newest first. Returns a cleanup fn. */
+  watchJobEvents(jobId: string, onUpdate: (events: JobEvent[]) => void): () => void {
+    return onSnapshot(
+      query(
+        collection(db, 'job_events'),
+        where('job_id', '==', jobId),
+        orderBy('at', 'desc'),
+      ),
+      (snap) => onUpdate(snap.docs.map((d) => ({ id: d.id, ...d.data() } as JobEvent))),
+    );
+  }
+
+  // ── Private ──────────────────────────────────────────────────────────────
+
+  private async _call<Req, Res = { jobId: string }>(name: string, data: Req): Promise<Res> {
+    const fn = httpsCallable<Req, Res>(functions, name);
+    try {
+      const res = await fn(data);
+      return res.data;
+    } catch (e: unknown) {
+      throw this._mapError(e);
+    }
+  }
+
+  private _mapError(e: unknown): JobAdminError {
+    const fe = e as FunctionsError;
+    const code = fe?.code ?? 'unknown';
+    const beMessage = typeof fe?.message === 'string' ? fe.message : '';
+    switch (code) {
+      case 'functions/invalid-argument':
+        return new JobAdminError(code, beMessage || 'ข้อมูลไม่ถูกต้อง');
+      case 'functions/failed-precondition':
+        return new JobAdminError(code, beMessage || 'ไม่สามารถดำเนินการได้');
+      case 'functions/not-found':
+        return new JobAdminError(code, beMessage || 'ไม่พบข้อมูล');
+      case 'functions/permission-denied':
+        return new JobAdminError(code, beMessage || 'ไม่มีสิทธิ์ทำรายการนี้');
+      case 'functions/unauthenticated':
+        return new JobAdminError(code, 'กรุณาเข้าสู่ระบบใหม่');
+      case 'functions/unavailable':
+        return new JobAdminError(code, 'เครือข่ายขัดข้อง กรุณาลองอีกครั้ง');
+      default:
+        return new JobAdminError(code, beMessage || 'เกิดข้อผิดพลาด กรุณาลองอีกครั้ง');
+    }
+  }
+}

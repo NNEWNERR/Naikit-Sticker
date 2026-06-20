@@ -51,10 +51,10 @@
           <button
             type="button"
             (click)="setUrgent(true)"
-            class="px-4 py-2 rounded-md border-2 text-body font-extrabold cursor-pointer transition-all"
-            style="border-color:#E63946;color:#FFD400;"
-            [style.background]="worksheetForm.get('is_urgent')?.value ? '#E63946' : 'transparent'"
-            [style.boxShadow]="worksheetForm.get('is_urgent')?.value ? '2px 2px 0 #FFD400' : 'none'"
+            class="px-4 py-2 rounded-md border-2 border-urgent text-brand text-body font-extrabold cursor-pointer transition-all"
+            [class.bg-urgent]="worksheetForm.get('is_urgent')?.value"
+            [class.shadow-brutal-brand]="worksheetForm.get('is_urgent')?.value"
+            [class.bg-transparent]="!worksheetForm.get('is_urgent')?.value"
           >⚡ ด่วน</button>
         </div>
       </div>
@@ -66,22 +66,8 @@
           <h3 class="text-h3 m-0">ข้อมูลลูกค้า · Customer Info</h3>
         </div>
 
-        <!-- Serial + seller + accept date -->
-        <div class="grid grid-cols-1 md:grid-cols-[180px_1fr_1fr] gap-3.5 mb-3.5">
-          <app-field label="เลขใบงาน" [required]="true" [error]="isFieldInvalid('serial_number') ? 'กรุณากรอกเลขที่ใบงาน' : ''">
-            <input
-              type="text"
-              formControlName="serial_number"
-              class="input-base focus-ring w-full font-num font-bold"
-              placeholder="NK-…"
-            />
-          </app-field>
-          <app-field label="ผู้ขาย" [required]="true" [error]="isFieldInvalid('seller_name') ? 'กรุณาเลือกผู้ขาย' : ''">
-            <select formControlName="seller_name" class="input-base focus-ring w-full font-semibold">
-              <option value="">เลือกผู้ขาย</option>
-              <option *ngFor="let s of sellers" [value]="s.value">{{ s.label }}</option>
-            </select>
-          </app-field>
+        <!-- Accept date (seller_uid + serial_number now derived server-side) -->
+        <div class="mb-3.5">
           <app-field label="วันรับงาน" [required]="true" [error]="isFieldInvalid('date_of_acceptance') ? 'กรุณาเลือกวันรับงาน' : ''">
             <input
               type="date"
@@ -89,6 +75,9 @@
               class="input-base focus-ring w-full font-num font-semibold"
             />
           </app-field>
+          <p class="text-body-sm text-ink-3 mt-1.5">
+            เลขใบงานจะออกอัตโนมัติตอนบันทึก (รูปแบบ <span class="font-num font-bold">NK-YYMM-NNN</span>)
+          </p>
         </div>
 
         <!-- Contact chips -->

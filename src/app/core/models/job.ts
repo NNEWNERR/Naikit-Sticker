@@ -1,0 +1,151 @@
+/**
+ * FE mirror of the BE JobDoc / WorkItem / Payment shapes.
+ *
+ * Keep in sync with:
+ *   - SCHEMA.md (jobs/{jobId})
+ *   - Naikit-Sticker-BE/functions/src/lib/types.ts
+ */
+import { Timestamp } from 'firebase/firestore';
+import { Role } from './session';
+
+export type JobStatus =
+  | 'รอออกแบบ'
+  | 'กำลังออกแบบ'
+  | 'รอคอนเฟิร์มแบบ'
+  | 'คอนเฟิร์มแล้ว'
+  | 'รอผลิต'
+  | 'กำลังผลิต'
+  | 'รอส่งมอบ'
+  | 'ส่งมอบแล้ว';
+
+export type Contact = 'หน้าร้าน' | 'เฟสบุ๊ค' | 'ไลน์' | 'อีเมล' | 'โทรศัพท์';
+export type UnitOfLength = 'mm.' | 'cm.' | 'inch' | 'm.';
+export type PaymentMethod = 'เงินสด' | 'โอน' | 'เช็ค' | 'เครดิต' | 'อื่นๆ' | '';
+
+export interface WorkItem {
+  type: string;
+  width: number;
+  height: number;
+  unit_of_length: UnitOfLength;
+  option: string;
+  quantity: number;
+  unit_price: number;
+  total: number;
+}
+
+export interface Payment {
+  total: number;
+  deposit: number;
+  remaining: number;
+  payment_method: PaymentMethod;
+  /** ISO string when posting to Cloud Function; Timestamp when reading from Firestore. */
+  date_of_payment: string | Timestamp | null;
+}
+
+/**
+ * Payload accepted by the `createJob` callable. Dates are sent as ISO strings —
+ * the BE parses them with `parseDate()`.
+ */
+export interface CreateJobPayload {
+  customer_name: string;
+  contact: Contact;
+  phone?: string;
+  line_name?: string;
+  is_urgent: boolean;
+  work_items: WorkItem[];
+  payment: Payment;
+  worksheet_image?: string | null;
+  reference_images?: string[];
+  date_of_acceptance: string;  // ISO 8601
+  remark?: string;
+  /** Admin-only: create on behalf of another seller. Ignored when caller is seller. */
+  seller_uid?: string;
+}
+
+export interface CreateJobResponse {
+  jobId: string;
+  serial_number: string;
+}
+
+// ─── Full Job read model (from Firestore) ────────────────────────────────────
+
+export interface JobImageDoc {
+  id: string;
+  url: string;
+  uploaded_at: Timestamp;
+  uploaded_by_uid: string;
+}
+
+/** Firestore `jobs/{jobId}` document with the doc ID merged in. */
+export interface Job {
+  id: string;
+  serial_number: string;
+  customer_name: string;
+  contact: Contact;
+  phone?: string;
+  line_name?: string;
+  is_urgent: boolean;
+  status: JobStatus;
+  seller_uid: string;
+  design_uid: string | null;
+  print_uid: string | null;
+  work_items: WorkItem[];
+  payment: Payment;
+  worksheet_image: string | null;
+  reference_images: string[];
+  design_images: JobImageDoc[];
+  print_images: JobImageDoc[];
+  date_of_acceptance: Timestamp;
+  design_date: Timestamp | null;
+  date_of_submission: Timestamp | null;
+  confirm_uid: string | null;
+  confirm_date: Timestamp | null;
+  print_date: Timestamp | null;
+  date_of_completion: Timestamp | null;
+  remark: string;
+  created_at: Timestamp;
+  created_by_uid: string;
+  updated_at: Timestamp;
+  updated_by_uid: string;
+  is_deleted: boolean;
+  deleted_at: Timestamp | null;
+}
+
+export type JobAction =
+  | 'create' | 'edit' | 'claim_design' | 'claim_print' | 'submit_design'
+  | 'confirm_design' | 'request_revision' | 'start_print' | 'upload_print'
+  | 'mark_delivered' | 'comment_add' | 'comment_delete' | 'admin_reassign'
+  | 'delete' | 'restore';
+
+export interface JobEvent {
+  id: string;
+  job_id: string;
+  actor_uid: string;
+  actor_role: Role;
+  action: JobAction;
+  from_status: JobStatus | null;
+  to_status: JobStatus | null;
+  payload: Record<string, unknown>;
+  at: Timestamp;
+}
+
+export interface CommentReply {
+  id: string;
+  user_uid: string;
+  user_display_name: string;
+  text: string;
+  created_at: Timestamp;
+}
+
+export interface JobComment {
+  id: string;
+  job_id: string;
+  user_uid: string;
+  user_display_name: string;
+  text: string;
+  likes: number;
+  replies: CommentReply[];
+  created_at: Timestamp;
+  is_deleted: boolean;
+  deleted_at: Timestamp | null;
+}

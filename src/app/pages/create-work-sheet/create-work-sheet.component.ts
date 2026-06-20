@@ -2,11 +2,7 @@ import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ModalController } from 'src/app/services/modal.service';
 import { ToastController, AlertController } from 'src/app/services/service.service';
-import { arrayUnion, collection } from 'firebase/firestore';
-import { db } from 'src/app/services/firebase-config';
 import { v4 as uuidv4 } from 'uuid';
-import { FirestoreService } from '../../services/firestore.service';
-import { Job, WorkItem, Payment } from '../../interfaces/job.interface';
 import { WorkItemModalComponent } from './work-item-modal/work-item-modal.component';
 import { Router } from '@angular/router';
 import { StorageService } from 'src/app/services/storage.service';
@@ -16,7 +12,40 @@ import { thSarabunFont } from '../../shared/fonts/th-sarabun-font';
 import * as XLSX from 'xlsx';
 import html2canvas from 'html2canvas';
 import { WorksheetPreviewModalComponent } from '../../components/worksheet-preview-modal/worksheet-preview-modal.component';
-import { parseSession, SESSION_STORAGE_KEY } from '../../interfaces/session.interface';
+import { JobAdminError, JobsService } from '../../services/jobs.service';
+import {
+  CreateJobPayload,
+  Payment,
+  UnitOfLength,
+  WorkItem,
+} from '../../core/models/job';
+
+interface WorkItemFormValue {
+  id?: string;
+  type?: string;
+  width?: number | string;
+  height?: number | string;
+  unit_of_length?: string;
+  option?: string;
+  quantity?: number | string;
+  total?: number | string;
+  remark?: string;
+}
+
+/**
+ * Map the Thai unit labels the modal stores ('มม.' / 'ซม.' / 'นิ้ว' / 'เมตร')
+ * onto the SCHEMA enum the BE expects. Unknown values fall back to 'cm.'
+ * because that's the default in the modal — keeps the form forgiving.
+ */
+function mapUnitOfLength(thai: string | undefined): UnitOfLength {
+  switch (thai) {
+    case 'มม.': return 'mm.';
+    case 'ซม.': return 'cm.';
+    case 'นิ้ว': return 'inch';
+    case 'เมตร': return 'm.';
+    default: return 'cm.';
+  }
+}
 
 // File-upload safety limits. Kept here (vs constants file) so a reviewer can
 // see them next to the upload code.
@@ -117,17 +146,6 @@ export class CreateWorkSheetComponent implements OnInit {
   // contacts = ['หน้าร้าน', 'โทรศัพท์', 'เฟสบุ๊ค', 'ไลน์', 'อีเมล']
   // designers = ฟลุ๊ค ไนซ์ เลย์ เอก เยาว์
   // printers = ฟลุ๊ค ไนซ์ เลย์ เอก เยาว์ นิว ซี ฮอล อัน ดาว(พ) เลย์(ช)
-
-  // sellers = นาเดียร์ แมว น้ำ ซัง ซิน
-  sellers = [
-    { value: 'นาเดียร์', label: 'นาเดียร์' },
-    { value: 'แมว', label: 'แมว' },
-    { value: 'น้ำ', label: 'น้ำ' },
-    { value: 'ซัง', label: 'ซัง' },
-    { value: 'ซิน', label: 'ซิน' },
-    { value: 'เจ๊', label: 'เจ๊' },
-    { value: 'ตาล', label: 'ตาล' },
-  ];
 
   payments = [
     {
@@ -273,6 +291,11 @@ export class CreateWorkSheetComponent implements OnInit {
   referencePreviews: string[] = [];  // เพิ่มบรรทัดนี้
   referenceFiles: File[] = [];
 
+  /** Per-submission UUID used as a storage-path bucket — generated lazily on
+   *  first upload, regenerated after a successful submit so the next job
+   *  doesn't write into the previous job's bucket. */
+  private uploadBucketId: string | null = null;
+
   /**
    * Wizard step state — drives the prototype's 4-step layout. The underlying
    * `worksheetForm` is one FormGroup; only the visible step changes. Submit
@@ -292,13 +315,13 @@ export class CreateWorkSheetComponent implements OnInit {
   ];
 
   constructor(
-    private firestoreService: FirestoreService,
+    private jobsService: JobsService,
     private storageService: StorageService,
     private modalController: ModalController,
     private toastController: ToastController,
     private fb: FormBuilder,
     private router: Router,
-    private alertController: AlertController
+    private alertController: AlertController,
   ) {
     this.initNewForm();
   }
@@ -367,27 +390,13 @@ export class CreateWorkSheetComponent implements OnInit {
     return (Number(p.total) || 0) - (Number(p.deposit) || 0);
   }
 
-  private async saveJob(data: Job): Promise<void> {
-    try {
-      const collectionRef = collection(db, 'jobs');
-      await this.firestoreService.addDatatoFirebase(collectionRef, data);
-      this.form.reset();
-    } catch (error) {
-      console.error('เกิดข้อผิดพลาดในการบันทึกข้อมูล:', error);
-      throw error;
-    }
-  }
-
-  getMounthName(): string {
-    const date = new Date();
-    return date.toLocaleString('th-TH', { month: 'short' });
-  }
 
   private initNewForm() {
+    // Fields that the BE owns (serial_number / seller_uid / status / created_*
+    // / *_date / *_uid / design_images / print_images) are no longer in this
+    // form — createJob populates them server-side.
     this.worksheetForm = this.fb.group({
-      serial_number: [this.getMounthName(), Validators.required],
-      seller_name: ['', Validators.required],
-      contact: [''],
+      contact: ['', Validators.required],
       customer_name: ['', Validators.required],
       line_name: [''],
       phone: [''],
@@ -399,30 +408,12 @@ export class CreateWorkSheetComponent implements OnInit {
         deposit: [0],
         date_of_payment: [new Date()],
         payment_method: [''],
-        remaining: [0]
+        remaining: [0],
       }),
       date_of_acceptance: ['', Validators.required],
-      design_by: [''],
-      print_by: [''],
       is_urgent: [false],
       remark: [''],
-      reference_images: [[]],
-      status: ['รอออกแบบ'],
-      created_at: [new Date()],
-      created_by: [this.getCurrentUsername()],
-      design_date: [''],
-      confirm_by: [''],
-      confirm_date: [''],
-      print_date: [''],
-      modify: [0],
-      date_of_submission: [''],
-      date_of_completion: [''],
-      worksheet_image: [''],
-      design_images: [[]],
-      print_images: [[]],
     });
-
-    // this.addWorkItem();
   }
 
   getWorkItemTypes() {
@@ -631,15 +622,6 @@ export class CreateWorkSheetComponent implements OnInit {
     return cleaned.length > 0 ? cleaned.slice(0, 64) : 'unknown';
   }
 
-  private getCurrentUsername(): string {
-    const session = parseSession(localStorage.getItem(SESSION_STORAGE_KEY));
-    if (!session) {
-      console.warn('[create-work-sheet] no session in localStorage; using "unknown" as created_by');
-      return 'unknown';
-    }
-    return session.username || session.phone || 'unknown';
-  }
-
   private createPreview(file: File, type: 'worksheet' | 'reference') {
     if (file.type.startsWith('image/')) {
       const reader = new FileReader();
@@ -707,50 +689,106 @@ export class CreateWorkSheetComponent implements OnInit {
 
     this.isSubmitting = true;
     try {
-      const formData = this.worksheetForm.value;
-      formData.total = this.totalAmount;
-      formData.balance = this.calculateBalance();
-
-      // เพิ่มข้อมูลเวลา
-      const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 0);
-      
-      formData.created_at = yesterday;
-      formData.updated_at = yesterday;
-      formData.date_of_acceptance = new Date(formData.date_of_acceptance);
-
-      // ส่งข้อมูลไป API หรือ Service
-      const images = await this.uploadFiles(this.workSheetFiles, 'worksheet');
+      // Upload images first — storage paths use a UUID instead of serial
+      // because the serial is now generated server-side by createJob.
+      const workSheetImages = await this.uploadFiles(this.workSheetFiles, 'worksheet');
       const referenceImages = await this.uploadFiles(this.referenceFiles, 'reference');
-      formData.worksheet_image = images.length > 0 ? images[0].url : '';
-      formData.reference_images = referenceImages.length > 0 ? arrayUnion(...referenceImages) : [];
-      console.log('Form Data:', formData);
 
-      const collectionRef = collection(db, 'jobs');
-      await this.firestoreService.addDatatoFirebase(collectionRef, formData);
+      const payload = this.buildCreateJobPayload(
+        workSheetImages.length > 0 ? workSheetImages[0].url : null,
+        referenceImages.map((i) => i.url),
+      );
+
+      const res = await this.jobsService.createJob(payload);
+
       const toast = await this.toastController.create({
-        message: 'บันทึกข้อมูลสำเร็จ',
-        duration: 2000,
+        message: `บันทึกใบงาน ${res.serial_number} สำเร็จ`,
+        duration: 2500,
         position: 'top',
         color: 'success',
         cssClass: 'custom-toast',
-        icon: 'checkmark-circle'
+        icon: 'checkmark-circle',
       });
       await toast.present();
       this.resetForm();
-    } catch (error) {
+      this.router.navigate(['/naikit-sticker/home']);
+    } catch (error: unknown) {
+      const message =
+        error instanceof JobAdminError
+          ? error.message
+          : 'เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง';
       const toast = await this.toastController.create({
-        message: 'เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง',
-        duration: 2000,
+        message,
+        duration: 3000,
         position: 'top',
         color: 'danger',
         cssClass: 'custom-toast',
-        icon: 'alert-circle'
+        icon: 'alert-circle',
       });
       await toast.present();
     } finally {
       this.isSubmitting = false;
     }
+  }
+
+  /**
+   * Map the form value into the BE `createJob` payload shape. Two non-obvious
+   * conversions happen here:
+   *   - work_items: Thai unit labels ('ซม.' / 'นิ้ว' / …) → SCHEMA enum
+   *     ('cm.' / 'inch' / …), and unit_price is derived from total/quantity
+   *     because the modal only captures total.
+   *   - date_of_acceptance + payment.date_of_payment: serialized to ISO so
+   *     the BE `parseDate()` accepts them.
+   */
+  private buildCreateJobPayload(
+    worksheetImageUrl: string | null,
+    referenceImageUrls: string[],
+  ): CreateJobPayload {
+    const v = this.worksheetForm.value;
+    const total = this.totalAmount;
+    const deposit = Number(v.deposit) || 0;
+    const remaining = Math.max(0, total - deposit);
+
+    const work_items: WorkItem[] = (v.workItems as WorkItemFormValue[]).map((wi) => {
+      const quantity = Number(wi.quantity) || 1;
+      const itemTotal = Number(wi.total) || 0;
+      const unit_price = quantity > 0 ? itemTotal / quantity : 0;
+      return {
+        type: String(wi.type ?? ''),
+        width: Number(wi.width) || 0,
+        height: Number(wi.height) || 0,
+        unit_of_length: mapUnitOfLength(wi.unit_of_length),
+        option: String(wi.option ?? ''),
+        quantity,
+        unit_price,
+        total: itemTotal,
+      };
+    });
+
+    const paymentForm = v.payment ?? {};
+    const payment: Payment = {
+      total,
+      deposit,
+      remaining,
+      payment_method: (paymentForm.payment_method ?? '') as Payment['payment_method'],
+      date_of_payment: paymentForm.date_of_payment
+        ? new Date(paymentForm.date_of_payment).toISOString()
+        : null,
+    };
+
+    return {
+      customer_name: String(v.customer_name ?? '').trim(),
+      contact: v.contact as CreateJobPayload['contact'],
+      phone: String(v.phone ?? '').trim() || undefined,
+      line_name: String(v.line_name ?? '').trim() || undefined,
+      is_urgent: !!v.is_urgent,
+      remark: String(v.remark ?? '').trim() || undefined,
+      date_of_acceptance: new Date(v.date_of_acceptance).toISOString(),
+      work_items,
+      payment,
+      worksheet_image: worksheetImageUrl,
+      reference_images: referenceImageUrls,
+    };
   }
 
   async uploadFiles(files: File[], type: 'worksheet' | 'reference') {
@@ -780,11 +818,14 @@ export class CreateWorkSheetComponent implements OnInit {
         filesToUpload = files;
       }
 
-      // Sanitize serial_number BEFORE building any storage path to prevent
-      // path-traversal (e.g. "../../" or absolute paths) via the form input.
-      const safeSerial = this.sanitizePathSegment(
-        this.worksheetForm.get('serial_number')?.value ?? ''
-      );
+      // Uploads happen before the BE generates the serial_number (createJob
+      // returns it later), so the storage path uses a per-submission UUID
+      // bucket instead. Memoized on `this.uploadBucketId` so worksheet +
+      // reference uploads share the same bucket.
+      if (!this.uploadBucketId) {
+        this.uploadBucketId = uuidv4();
+      }
+      const safeSerial = this.uploadBucketId;
       const subdir = type === 'worksheet' ? 'worksheet' : 'reference';
 
       for (const file of filesToUpload) {
@@ -829,7 +870,12 @@ export class CreateWorkSheetComponent implements OnInit {
     this.worksheetForm.reset();
     this.workItems.clear();
     this.filePreviews = [];
+    this.workSheetFiles = [];
+    this.workSheetPreviews = [];
+    this.referenceFiles = [];
+    this.referencePreviews = [];
     this.totalAmount = 0;
+    this.uploadBucketId = null;
     this.initNewForm();
   }
 
@@ -952,31 +998,6 @@ export class CreateWorkSheetComponent implements OnInit {
     await alert.present();
   }
 
-  async saveDraft() {
-    try {
-      const formData = this.worksheetForm.value;
-      formData.status = 'draft';
-      const collectionRef = collection(db, 'job_drafts');
-      await this.firestoreService.addDatatoFirebase(collectionRef, formData);
-
-      const toast = await this.toastController.create({
-        message: 'บันทึกแบบร่างสำเร็จ',
-        duration: 2000,
-        position: 'top',
-        color: 'success'
-      });
-      await toast.present();
-    } catch (error) {
-      console.error('Error saving draft:', error);
-      const toast = await this.toastController.create({
-        message: 'เกิดข้อผิดพลาด กรุณาลองใหม่',
-        duration: 2000,
-        position: 'top',
-        color: 'danger'
-      });
-      await toast.present();
-    }
-  }
 
   async exportToPDF() {
     try {
@@ -1141,66 +1162,6 @@ export class CreateWorkSheetComponent implements OnInit {
       console.error('Error:', error);
       const toast = await this.toastController.create({
         message: 'เกิดข้อผิดพลาด',
-        duration: 2000,
-        position: 'top',
-        color: 'danger'
-      });
-      await toast.present();
-    }
-  }
-
-  async save() {
-    try {
-      if (this.worksheetForm.valid) {
-        const formData = this.worksheetForm.value;
-        
-        // เพิ่มข้อมูลรูปภาพ
-        const previewData = {
-          ...formData,
-          worksheet_preview: this.workSheetPreviews?.[0], // รูปใบงาน
-          reference_previews: this.referencePreviews || [], // รูปอ้างอิง
-        };
-
-        // แสดง Modal ยืนยันข้อมูล
-        const modal = await this.modalController.create({
-          component: WorksheetPreviewModalComponent,
-          componentProps: {
-            worksheetData: previewData
-          },
-          cssClass: 'modal-fullscreen'
-        });
-
-        await modal.present();
-
-        // รอผลลัพธ์จาก Modal
-        const { data } = await modal.onDidDismiss();
-        
-        if (data?.confirmed) {
-          await this.submit();
-          
-          const toast = await this.toastController.create({
-            message: 'บันทึกข้อมูลสำเร็จ',
-            duration: 2000,
-            position: 'top',
-            color: 'success'
-          });
-          await toast.present();
-          
-          this.router.navigate(['/worksheets']);
-        }
-      } else {
-        const toast = await this.toastController.create({
-          message: 'กรุณากรอกข้อมูลให้ครบถ้วน',
-          duration: 2000,
-          position: 'top',
-          color: 'warning'
-        });
-        await toast.present();
-      }
-    } catch (error) {
-      console.error('Error:', error);
-      const toast = await this.toastController.create({
-        message: 'เกิดข้อผิดพลาดในการบันทึกข้อมูล',
         duration: 2000,
         position: 'top',
         color: 'danger'
