@@ -738,8 +738,12 @@ export class CreateWorkSheetComponent implements OnInit {
     referenceImageUrls: string[],
   ): CreateJobPayload {
     const v = this.worksheetForm.value;
-    const total = this.totalAmount;
-    const deposit = Number(v.deposit) || 0;
+    // Payment numerics come from the Step-3 "payment" formGroup inputs. Even
+    // type="number" controls can hand back strings, so coerce explicitly — the
+    // BE rejects a non-number payment.total ("payment.total ต้องเป็นตัวเลข").
+    const paymentForm = v.payment ?? {};
+    const total = Number(paymentForm.total ?? this.totalAmount) || 0;
+    const deposit = Number(paymentForm.deposit ?? v.deposit) || 0;
     const remaining = Math.max(0, total - deposit);
 
     const work_items: WorkItem[] = (v.workItems as WorkItemFormValue[]).map((wi) => {
@@ -758,7 +762,6 @@ export class CreateWorkSheetComponent implements OnInit {
       };
     });
 
-    const paymentForm = v.payment ?? {};
     const payment: Payment = {
       total,
       deposit,
