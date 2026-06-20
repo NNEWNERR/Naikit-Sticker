@@ -177,10 +177,11 @@ body { background: #FAFAFA; color: #0A0A0A; }
   src: url('/assets/fonts/ibm-plex-sans-thai/plex-thai-700-latin-ext.woff2') format('woff2');
   unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
-/* IBM Plex Sans Thai weight 800/900 — fonts.googleapis CDN fallback for the
- * extra-bold display headlines (login screen 36-72px). Bundle only contained
- * 400-700; loaded async via swap so layout isn't blocked. */
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@800;900&display=swap');
+/* Weights 800/900 are intentionally NOT loaded: the cross-origin Google Fonts
+ * @import was blocked by the browser (ORB) so it never actually applied, and it
+ * violated the self-host-only policy. font-black / font-extrabold headlines
+ * synthesize from the self-hosted 700 cut. Self-host 800/900 woff2 here if the
+ * exact display weight is ever needed. */
 
 /* JetBrains Mono — for all numeric data (prices, qty, serials, dates) */
 @font-face {
@@ -199,8 +200,8 @@ body { background: #FAFAFA; color: #0A0A0A; }
   src: url('/assets/fonts/jetbrains-mono/mono-500-latin-ext.woff2') format('woff2');
   unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
-/* Mono weights 700/800 via CDN — only 500 was bundled */
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@700;800&display=swap');
+/* Mono weights 700/800 dropped with the ORB-blocked Google Fonts @import —
+ * numeric bold synthesizes from the self-hosted 500 cut. */
 
 @tailwind base;
 @tailwind components;
