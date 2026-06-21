@@ -29,6 +29,7 @@ const ACTION_LABELS: Record<JobAction, string> = {
   start_print:      'ส่งเข้าผลิต',
   upload_print:     'อัพโหลดงานพิมพ์',
   mark_delivered:   'ส่งมอบแล้ว',
+  payment_adjust:   'ปรับยอดเงิน (การเงิน)',
   comment_add:      'เพิ่มหมายเหตุ',
   comment_delete:   'ลบหมายเหตุ',
   admin_reassign:   'มอบหมายงาน (admin)',

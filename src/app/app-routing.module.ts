@@ -10,6 +10,7 @@ import { SettingComponent } from './pages/setting/setting.component';
 import { ReportComponent } from './pages/report/report.component';
 import { DiarySummaryComponent } from './pages/diary-summary/diary-summary.component';
 import { CreateWorkSheetComponent } from './pages/create-work-sheet/create-work-sheet.component';
+import { FinanceComponent } from './pages/finance/finance.component';
 
 // RBAC per SCHEMA.md — home is open to every authenticated role
 // (component renders the queue relevant to that role).
@@ -44,6 +45,11 @@ export const routes: Routes = [
         path: 'create-work-sheet',
         component: CreateWorkSheetComponent,
         canActivate: [roleGuard(['seller', 'admin'])],
+      },
+      {
+        path: 'finance',
+        component: FinanceComponent,
+        canActivate: [roleGuard(['admin', 'finance'])],
       },
     ],
   },

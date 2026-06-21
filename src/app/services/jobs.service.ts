@@ -207,6 +207,33 @@ export class JobsService {
     );
   }
 
+  /**
+   * Finance Dashboard (F6) — all `payment_adjust` audit events, newest first.
+   * Read scoped to staff by rules; only finance/admin reach the dashboard.
+   * Returns a cleanup fn.
+   */
+  watchPaymentAdjustEvents(onUpdate: (events: JobEvent[]) => void): () => void {
+    return onSnapshot(
+      query(
+        collection(db, 'job_events'),
+        where('action', '==', 'payment_adjust'),
+        orderBy('at', 'desc'),
+      ),
+      (snap) => onUpdate(snap.docs.map((d) => ({ id: d.id, ...d.data() } as JobEvent))),
+    );
+  }
+
+  /**
+   * Finance Dashboard (F6) — soft-deleted jobs (audit/outlier panel).
+   * finance/admin only (firestore.rules canReadAll). Returns a cleanup fn.
+   */
+  watchDeletedJobs(onUpdate: (jobs: Job[]) => void): () => void {
+    return onSnapshot(
+      query(collection(db, 'jobs'), where('is_deleted', '==', true)),
+      (snap) => onUpdate(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Job))),
+    );
+  }
+
   // ── Private ──────────────────────────────────────────────────────────────
 
   private async _call<Req, Res = { jobId: string }>(name: string, data: Req): Promise<Res> {

@@ -119,8 +119,8 @@ export interface Job {
 export type JobAction =
   | 'create' | 'edit' | 'claim_design' | 'claim_print' | 'submit_design'
   | 'confirm_design' | 'request_revision' | 'start_print' | 'upload_print'
-  | 'mark_delivered' | 'comment_add' | 'comment_delete' | 'admin_reassign'
-  | 'delete' | 'restore';
+  | 'mark_delivered' | 'payment_adjust' | 'comment_add' | 'comment_delete'
+  | 'admin_reassign' | 'delete' | 'restore';
 
 export interface JobEvent {
   id: string;

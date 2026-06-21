@@ -1,0 +1,240 @@
+<div class="nk-content flex flex-col gap-5 p-4 md:p-6 max-w-[1100px] mx-auto">
+
+  <!-- Header -->
+  <div class="flex items-center gap-2.5">
+    <div class="w-9 h-9 rounded-md bg-ink border-2 border-ink flex items-center justify-center text-brand text-h3">💰</div>
+    <div>
+      <h2 class="text-h2 m-0">ตรวจเงิน · Finance</h2>
+      <p class="text-body-sm text-ink-3 m-0">ยอดขาย · กระทบยอดเงินสด · ประวัติการปรับเงิน · รายการน่าสงสัย</p>
+    </div>
+  </div>
+
+  <!-- Summary cards -->
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-3.5">
+    <div class="bg-white border-2 border-ink rounded-lg p-4 shadow-brutal">
+      <div class="text-body-sm text-ink-3">ยอดขาย (ส่งมอบแล้ว)</div>
+      <div class="text-h2 font-num font-black">฿{{ totalRevenue | number }}</div>
+      <div class="text-body-sm text-ink-3">{{ deliveredCount }} งาน</div>
+    </div>
+    <div class="bg-white border-2 border-ink rounded-lg p-4 shadow-brutal">
+      <div class="text-body-sm text-ink-3">เงินสด</div>
+      <div class="text-h2 font-num font-black">฿{{ cashRevenue | number }}</div>
+    </div>
+    <div class="bg-white border-2 border-ink rounded-lg p-4 shadow-brutal"
+         [class.bg-amber-100]="cashRatio > 0.7">
+      <div class="text-body-sm text-ink-3">สัดส่วนเงินสด</div>
+      <div class="text-h2 font-num font-black">{{ cashRatio * 100 | number:'1.0-0' }}%</div>
+      <div *ngIf="cashRatio > 0.7" class="text-body-sm text-amber-900 font-bold">⚠️ เงินสดสูง</div>
+    </div>
+    <div class="bg-white border-2 border-ink rounded-lg p-4 shadow-brutal">
+      <div class="text-body-sm text-ink-3">ปรับเงินย้อนหลัง</div>
+      <div class="text-h2 font-num font-black">{{ adjustEvents.length }}</div>
+      <div class="text-body-sm text-ink-3">ครั้ง (audit)</div>
+    </div>
+  </div>
+
+  <!-- Cash reconciliation -->
+  <section class="bg-white border-2 border-ink rounded-lg p-5 shadow-brutal flex flex-col gap-4">
+    <h3 class="text-h3 m-0">กระทบยอดเงินสดรายวัน</h3>
+
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-3 items-end">
+      <label class="flex flex-col gap-1 text-body-sm">ผู้ขาย
+        <select [(ngModel)]="recSellerUid" class="input-base focus-ring w-full font-semibold">
+          <option value="" disabled>เลือกผู้ขาย</option>
+          <option *ngFor="let s of sellers" [value]="s.uid">{{ s.name }}</option>
+        </select>
+      </label>
+      <label class="flex flex-col gap-1 text-body-sm">วันที่ (YYYYMMDD)
+        <input type="text" [(ngModel)]="recDate" maxlength="8"
+               class="input-base focus-ring w-full font-num" placeholder="25690621" />
+      </label>
+      <label class="flex flex-col gap-1 text-body-sm">ยอดที่นับได้ (฿)
+        <input type="number" [(ngModel)]="recDeclared"
+               class="input-base focus-ring w-full font-num" placeholder="0" />
+      </label>
+      <label class="flex flex-col gap-1 text-body-sm">หมายเหตุ
+        <input type="text" [(ngModel)]="recNote"
+               class="input-base focus-ring w-full" placeholder="(ไม่บังคับ)" />
+      </label>
+      <button type="button" (click)="submitReconcile()" [disabled]="recBusy"
+              class="px-3 py-2 bg-brand border-2 border-ink rounded font-bold cursor-pointer disabled:opacity-50">
+        กระทบยอด
+      </button>
+    </div>
+    <p *ngIf="recMsg" class="text-body-sm font-semibold m-0"
+       [class.text-red-700]="recErr" [class.text-green-700]="!recErr">{{ recMsg }}</p>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-body-sm border-collapse">
+        <thead>
+          <tr class="text-left border-b-2 border-ink">
+            <th class="py-2 pr-3">ผู้ขาย</th>
+            <th class="py-2 pr-3">วันที่</th>
+            <th class="py-2 pr-3 text-right">ระบบ</th>
+            <th class="py-2 pr-3 text-right">นับได้</th>
+            <th class="py-2 pr-3 text-right">ส่วนต่าง</th>
+            <th class="py-2 pr-3">สถานะ</th>
+            <th class="py-2"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let s of cashSessions; trackBy: trackById" class="border-b border-line-2">
+            <td class="py-2 pr-3">{{ nameOf(s.seller_uid) }}</td>
+            <td class="py-2 pr-3 font-num">{{ s.date }}</td>
+            <td class="py-2 pr-3 text-right font-num">{{ s.system_total | number }}</td>
+            <td class="py-2 pr-3 text-right font-num">{{ s.declared_total | number }}</td>
+            <td class="py-2 pr-3 text-right font-num font-bold"
+                [class.text-red-700]="s.variance !== 0">{{ s.variance | number }}</td>
+            <td class="py-2 pr-3">
+              <span class="px-2 py-0.5 rounded border-2 border-ink text-body-sm font-bold"
+                    [class.bg-green-100]="s.status === 'closed'"
+                    [class.bg-amber-100]="s.status === 'open'">
+                {{ s.status === 'closed' ? 'ปิดแล้ว' : 'เปิด' }}
+              </span>
+            </td>
+            <td class="py-2">
+              <button *ngIf="s.status === 'open'" type="button" (click)="closeSession(s)"
+                      class="px-2 py-1 border-2 border-ink rounded text-body-sm cursor-pointer">ปิดรอบ</button>
+            </td>
+          </tr>
+          <tr *ngIf="cashSessions.length === 0">
+            <td colspan="7" class="py-3 text-center text-ink-3">ยังไม่มีรอบกระทบยอด</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Seller breakdown -->
+  <section class="bg-white border-2 border-ink rounded-lg p-5 shadow-brutal">
+    <h3 class="text-h3 mt-0 mb-3">ยอดขายแยกตามผู้ขาย</h3>
+    <div class="overflow-x-auto">
+      <table class="w-full text-body-sm border-collapse">
+        <thead>
+          <tr class="text-left border-b-2 border-ink">
+            <th class="py-2 pr-3">ผู้ขาย</th>
+            <th class="py-2 pr-3 text-right">งาน</th>
+            <th class="py-2 pr-3 text-right">ยอดรวม</th>
+            <th class="py-2 pr-3 text-right">เงินสด</th>
+            <th class="py-2 pr-3 text-right">% เงินสด</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let r of sellerRows; trackBy: trackById" class="border-b border-line-2">
+            <td class="py-2 pr-3 font-semibold">{{ r.name }}</td>
+            <td class="py-2 pr-3 text-right font-num">{{ r.count }}</td>
+            <td class="py-2 pr-3 text-right font-num">{{ r.total | number }}</td>
+            <td class="py-2 pr-3 text-right font-num">{{ r.cashTotal | number }}</td>
+            <td class="py-2 pr-3 text-right font-num font-bold"
+                [class.text-amber-700]="r.cashRatio > 0.7">{{ r.cashRatio * 100 | number:'1.0-0' }}%</td>
+          </tr>
+          <tr *ngIf="sellerRows.length === 0">
+            <td colspan="5" class="py-3 text-center text-ink-3">ยังไม่มีงานส่งมอบ</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Method breakdown -->
+  <section class="bg-white border-2 border-ink rounded-lg p-5 shadow-brutal">
+    <h3 class="text-h3 mt-0 mb-3">ยอดขายแยกตามวิธีจ่าย</h3>
+    <div class="flex flex-wrap gap-2.5">
+      <div *ngFor="let m of methodRows; trackBy: trackById"
+           class="border-2 border-ink rounded px-3 py-2 bg-surface-2">
+        <div class="text-body-sm text-ink-3">{{ m.method }}</div>
+        <div class="font-num font-black">฿{{ m.total | number }}</div>
+        <div class="text-body-sm text-ink-3">{{ m.count }} งาน</div>
+      </div>
+      <div *ngIf="methodRows.length === 0" class="text-ink-3">ยังไม่มีงานส่งมอบ</div>
+    </div>
+  </section>
+
+  <!-- Payment adjust audit log -->
+  <section class="bg-white border-2 border-ink rounded-lg p-5 shadow-brutal">
+    <h3 class="text-h3 mt-0 mb-3">ประวัติการปรับยอดเงิน (audit)</h3>
+    <div class="overflow-x-auto">
+      <table class="w-full text-body-sm border-collapse">
+        <thead>
+          <tr class="text-left border-b-2 border-ink">
+            <th class="py-2 pr-3">วันที่</th>
+            <th class="py-2 pr-3">ใบงาน</th>
+            <th class="py-2 pr-3">โดย</th>
+            <th class="py-2 pr-3 text-right">ยอด ก่อน→หลัง</th>
+            <th class="py-2 pr-3 text-right">มัดจำ ก่อน→หลัง</th>
+            <th class="py-2 pr-3">เหตุผล</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let a of adjustRows; trackBy: trackById" class="border-b border-line-2 cursor-pointer hover:bg-surface-2"
+              (click)="openJob(a.jobId)">
+            <td class="py-2 pr-3">{{ fmtDate(a.at) }}</td>
+            <td class="py-2 pr-3 font-num font-semibold">{{ a.serial }}</td>
+            <td class="py-2 pr-3">{{ a.actor }}</td>
+            <td class="py-2 pr-3 text-right font-num">{{ a.beforeTotal | number }} → <b>{{ a.afterTotal | number }}</b></td>
+            <td class="py-2 pr-3 text-right font-num">{{ a.beforeDeposit | number }} → {{ a.afterDeposit | number }}</td>
+            <td class="py-2 pr-3">{{ a.reason }}</td>
+          </tr>
+          <tr *ngIf="adjustRows.length === 0">
+            <td colspan="6" class="py-3 text-center text-ink-3">ยังไม่มีการปรับยอดเงิน</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Outliers -->
+  <section class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+    <div class="bg-white border-2 border-ink rounded-lg p-4 shadow-brutal">
+      <h4 class="text-h4 mt-0 mb-2">⚠️ ส่งมอบแล้วแต่ไม่มีมัดจำ <span class="font-num">({{ zeroDepositDelivered.length }})</span></h4>
+      <ul class="m-0 pl-0 list-none flex flex-col gap-1">
+        <li *ngFor="let j of zeroDepositDelivered; trackBy: trackById"
+            class="flex justify-between cursor-pointer hover:bg-surface-2 px-1 rounded" (click)="openJob(j.id)">
+          <span class="font-num">{{ j.serial_number }}</span>
+          <span class="text-ink-3">{{ j.customer_name }}</span>
+          <span class="font-num">฿{{ j.payment.total | number }}</span>
+        </li>
+        <li *ngIf="zeroDepositDelivered.length === 0" class="text-ink-3 text-body-sm">— ไม่มี —</li>
+      </ul>
+    </div>
+
+    <div class="bg-white border-2 border-ink rounded-lg p-4 shadow-brutal">
+      <h4 class="text-h4 mt-0 mb-2">⚠️ ส่งมอบแล้วแต่ยอด = 0 <span class="font-num">({{ zeroTotalDelivered.length }})</span></h4>
+      <ul class="m-0 pl-0 list-none flex flex-col gap-1">
+        <li *ngFor="let j of zeroTotalDelivered; trackBy: trackById"
+            class="flex justify-between cursor-pointer hover:bg-surface-2 px-1 rounded" (click)="openJob(j.id)">
+          <span class="font-num">{{ j.serial_number }}</span>
+          <span class="text-ink-3">{{ j.customer_name }}</span>
+        </li>
+        <li *ngIf="zeroTotalDelivered.length === 0" class="text-ink-3 text-body-sm">— ไม่มี —</li>
+      </ul>
+    </div>
+
+    <div class="bg-white border-2 border-ink rounded-lg p-4 shadow-brutal">
+      <h4 class="text-h4 mt-0 mb-2">🏷️ งานที่มีส่วนลด <span class="font-num">({{ discountedJobs.length }})</span></h4>
+      <ul class="m-0 pl-0 list-none flex flex-col gap-1">
+        <li *ngFor="let j of discountedJobs; trackBy: trackById"
+            class="flex justify-between cursor-pointer hover:bg-surface-2 px-1 rounded" (click)="openJob(j.id)">
+          <span class="font-num">{{ j.serial_number }}</span>
+          <span class="text-ink-3">{{ j.customer_name }}</span>
+          <span class="font-num text-amber-700">−฿{{ discountOf(j) | number }}</span>
+        </li>
+        <li *ngIf="discountedJobs.length === 0" class="text-ink-3 text-body-sm">— ไม่มี —</li>
+      </ul>
+    </div>
+
+    <div class="bg-white border-2 border-ink rounded-lg p-4 shadow-brutal">
+      <h4 class="text-h4 mt-0 mb-2">🗑️ งานที่ถูกลบ <span class="font-num">({{ deletedJobs.length }})</span></h4>
+      <ul class="m-0 pl-0 list-none flex flex-col gap-1">
+        <li *ngFor="let j of deletedJobs; trackBy: trackById"
+            class="flex justify-between cursor-pointer hover:bg-surface-2 px-1 rounded" (click)="openJob(j.id)">
+          <span class="font-num">{{ j.serial_number }}</span>
+          <span class="text-ink-3">{{ j.customer_name }}</span>
+          <span class="font-num">฿{{ j.payment.total | number }}</span>
+        </li>
+        <li *ngIf="deletedJobs.length === 0" class="text-ink-3 text-body-sm">— ไม่มี —</li>
+      </ul>
+    </div>
+  </section>
+
+</div>

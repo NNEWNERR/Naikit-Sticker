@@ -117,13 +117,19 @@ collection `cash_sessions/{seller_uid}_{YYYYMMDD}` (วันตาม ICT/UTC+7
 
 **⚠️ deploy:** ต้อง deploy functions + rules + **indexes** (`firebase deploy --only firestore:indexes`) — bundle FE sprint
 
-## Phase F6 — Finance Dashboard (FE) — planned
+## Phase F6 — Finance Dashboard (FE) ✅ implemented (รอ deploy พร้อม FE sprint)
 
-หน้าใหม่ (role finance/admin):
-- ยอดขายแยก seller × payment_method + สัดส่วนเงินสดต่อคน
-- Payment changes log (`payment_adjust` events: ใคร/เมื่อ/before→after/เหตุผล)
-- Outlier scan: `deposit=0` ที่ส่งมอบ, `discount` สูงผิดปกติ, งานที่ถูก delete
-- Cash variance รายวัน/seller
+หน้าใหม่ `pages/finance/` (standalone, route `/naikit-sticker/finance`, roleGuard admin+finance, nav SYSTEM + mobile):
+- summary cards: ยอดขาย/เงินสด/สัดส่วนเงินสด (ธงแดง > 70%)/จำนวนครั้งปรับเงิน
+- **กระทบยอดเงินสด**: ฟอร์ม reconcile (เลือก seller + วันที่ YYYYMMDD + ยอดนับได้) → `CashService.reconcile`; ตาราง sessions + variance + ปุ่มปิดรอบ (`close`)
+- **ยอดขายแยก seller**: count/total/เงินสด/% เงินสด (เรียง % เงินสดมากก่อน — เพ่งเล็งคนเงินสดสูง)
+- **ยอดขายแยกวิธีจ่าย**
+- **payment_adjust audit log**: วันที่/ใบงาน/โดย/ยอด before→after/มัดจำ before→after/เหตุผล (คลิกเปิดใบงาน)
+- **outlier scan**: ส่งมอบแต่ deposit=0, ส่งมอบแต่ total=0, งานมีส่วนลด, งานที่ถูกลบ
+
+**ทำแล้ว:** `finance.component.{ts,html}` (standalone); JobsService `watchPaymentAdjustEvents` + `watchDeletedJobs`; `firestore.indexes.json` +1 (`job_events action,at`); FE JobAction + worksheet-info ACTION_LABELS += payment_adjust; route + nav (sidebar+mobile)
+
+**ทั้งชุด F1–F6 implement ครบ** — เหลือ deploy bundle ตอนจบสปรินต์
 
 ---
 
