@@ -100,13 +100,22 @@ role ที่ 5: `seller | graphic | production | admin | finance`
 
 **⚠️ deploy:** markDelivered enforcement เป็น behavior change บน live (งานที่ยังไม่มี method/สลิป จะส่งมอบไม่ได้จนกว่าจะแก้) → **bundle deploy พร้อม FE sprint** ไม่ปล่อย BE เดี่ยว (กันบล็อกการส่งมอบงานที่ค้างอยู่)
 
-## Phase F5 — Cash reconciliation (กระทบยอดเงินสดรายวัน) — planned
+## Phase F5 — Cash reconciliation (กระทบยอดเงินสดรายวัน) ✅ implemented (BE; FE UI ใน F6)
 
-collection `cash_sessions/{sellerUid}_{YYYYMMDD}`:
-- `system_total` = Σ งานเงินสดที่ส่งมอบวันนั้น (อัตโนมัติ)
-- `declared_total` = ยอดที่ seller นับส่งจริง
-- `variance = declared − system` → ส่วนต่าง = ธงแดง
-- finance กดปิดรอบ + ยืนยัน
+collection `cash_sessions/{seller_uid}_{YYYYMMDD}` (วันตาม ICT/UTC+7):
+- `system_total` = Σ `payment.total` ของงานเงินสดที่ `status='ส่งมอบแล้ว'` + ส่งมอบวันนั้น (server คำนวณ)
+- `declared_total` = ยอดที่ seller นับส่งจริง · `variance = declared − system` (≠ 0 = ธงแดง)
+
+**ทำแล้ว (BE):**
+- `cash.ts`: `reconcileCashSession` (finance/admin — คำนวณ system_total + upsert doc, แก้ซ้ำได้จน close) + `closeCashSession` (lock). helper `ictDayBounds()` แปลง YYYYMMDD→UTC day-bounds, `computeCashSystemTotal()` query+sum
+- `types.ts` CashSessionDoc + COL.cash_sessions; `index.ts` export
+- `firestore.rules`: cash_sessions read canReadAll (finance/admin), write false
+- `firestore.indexes.json`: 2 composite indexes (cash query + cash_sessions list)
+- FE: `core/models/cash.ts` + `services/cash.service.ts` (reconcile/close/watchSessions) — **UI ยังไม่มี → อยู่ใน F6 Finance Dashboard**
+
+**สมมติฐาน v1:** เงินสด = จ่ายเต็มยอด (`payment.total`) ตอนส่งมอบ. ถ้าในอนาคตมัดจำเงินสดคนละวัน ต้องแยกคิด (future refinement)
+
+**⚠️ deploy:** ต้อง deploy functions + rules + **indexes** (`firebase deploy --only firestore:indexes`) — bundle FE sprint
 
 ## Phase F6 — Finance Dashboard (FE) — planned
 

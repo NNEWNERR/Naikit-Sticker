@@ -197,6 +197,26 @@ interface Reply {
 }
 ```
 
+### `cash_sessions/{seller_uid}_{YYYYMMDD}` (F5)
+
+กระทบยอดเงินสดรายวันต่อ seller. เขียนผ่าน Cloud Function เท่านั้น (`reconcileCashSession`/`closeCashSession`); อ่านได้เฉพาะ finance/admin. ดู docs/FINANCE-CONTROLS.md
+
+| field | type | notes |
+|---|---|---|
+| `seller_uid` | string | |
+| `date` | string | 'YYYYMMDD' (ICT) |
+| `system_total` | number | Σ `payment.total` ของงานเงินสด (`payment_method='เงินสด'`) ที่ `status='ส่งมอบแล้ว'` + `date_of_completion` ในวันนั้น (ICT) — server คำนวณ |
+| `job_count` | number | จำนวนงานเงินสดที่นับ |
+| `declared_total` | number | ยอดที่ seller นับส่งจริง |
+| `variance` | number | `declared_total − system_total` (≠ 0 = ธงแดง) |
+| `status` | `'open' \| 'closed'` | closed = lock แก้ไม่ได้ |
+| `note` | string | |
+| `reconciled_by_uid` / `reconciled_at` | string / Timestamp | finance/admin ที่กระทบยอดล่าสุด |
+| `closed_by_uid` / `closed_at` | string\|null / Timestamp\|null | |
+| `created_at` / `updated_at` | Timestamp | |
+
+Index: `cash_sessions (seller_uid, date desc)` + `jobs (is_deleted, seller_uid, status, payment.payment_method, date_of_completion)` สำหรับคำนวณ system_total
+
 ### Collections ที่ **เลิกใช้**
 
 ลบทิ้งทั้งหมดจาก Firebase console ก่อนเริ่ม Phase 3:

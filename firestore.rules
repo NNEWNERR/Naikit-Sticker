@@ -89,6 +89,14 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // ---- cash_sessions (F5 — กระทบยอดเงินสดรายวัน) -------------------------
+    // อ่านได้เฉพาะ finance/admin; เขียนผ่าน Cloud Functions เท่านั้น
+    // (reconcileCashSession / closeCashSession). ดู docs/FINANCE-CONTROLS.md F5
+    match /cash_sessions/{sessionId} {
+      allow read: if canReadAll();
+      allow write: if false;
+    }
+
     // ---- default deny ------------------------------------------------------
     // Legacy v1 collections (groups/sites/schedules/slots/broadcasts/services,
     // job_drafts) are intentionally NOT matched → denied. Delete them from the
