@@ -135,6 +135,12 @@ collection `cash_sessions/{seller_uid}_{YYYYMMDD}` (วันตาม ICT/UTC+7
 
 ---
 
+## Phase F8 — Slip/Payment model + กันสลิปซ้ำ — DESIGN (ดู F8-SLIP-PAYMENT-DESIGN.md)
+
+ปิดช่องโหว่ `delivery_slips` ที่เก็บแค่รูป (ไม่มี amount/ref → ตรวจสลิปซ้ำไม่ได้). โมเดล `payments` + `allocations` (1 การจ่าย ผูกหลายใบงาน) → hard rule `bank_ref` unique กันใช้สลิปซ้ำ พร้อมรองรับเคส multi-job/one-slip. **ยังเป็น design — รอ lock open decisions ก่อน build.** รายละเอียด: [`docs/F8-SLIP-PAYMENT-DESIGN.md`](./F8-SLIP-PAYMENT-DESIGN.md)
+
+> F7 (ราคากลาง advisory) ยังเป็นแนวคิด — ทำทีหลังถ้าต้องการ
+
 ## Action enum เพิ่ม
 
 ```
