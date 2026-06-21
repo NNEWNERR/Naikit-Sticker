@@ -141,6 +141,10 @@ collection `cash_sessions/{seller_uid}_{YYYYMMDD}` (วันตาม ICT/UTC+7
 
 > F7 (ราคากลาง advisory) ยังเป็นแนวคิด — ทำทีหลังถ้าต้องการ
 
+## Phase F9 — VAT + หัก ณ ที่จ่าย (WHT) + จังหวะรับเงิน — DESIGN (ดู F9-TAX-PAYMENT-DESIGN.md)
+
+ปิดช่องว่างภาษี + การปิดงานที่ถูกหัก ณ ที่จ่าย + มัดจำ/บาลานซ์. เพิ่ม `tax` block (vat_mode นอก/ใน, wht_rate) → `net_receivable = grand_total − wht`; **settlement เปลี่ยนเป็น `paid_amount ≥ net_receivable`** (กัน WHT job ค้างตลอดกาล); **revise D5** — markDelivered เลิก hard-gate → รับบาลานซ์ตอนส่ง/ส่งแบบ AR. ระบบไม่ออกใบกำกับ (แค่คำนวณ). รายละเอียด: [`docs/F9-TAX-PAYMENT-DESIGN.md`](./F9-TAX-PAYMENT-DESIGN.md)
+
 ## Action enum เพิ่ม
 
 ```
