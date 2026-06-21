@@ -137,7 +137,7 @@ export class WorksheetInfoComponent implements OnInit, OnDestroy {
   canSendToProduction = computed(() => {
     const j = this.job(); const r = this.role(); const uid = this.uid();
     return !!j && !j.is_deleted && j.status === 'คอนเฟิร์มแล้ว'
-      && (r === 'admin' || (r === 'seller' && j.seller_uid === uid));
+      && (r === 'admin' || (r === 'graphic' && j.design_uid === uid));
   });
 
   canClaimPrint = computed(() => {

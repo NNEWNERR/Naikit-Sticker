@@ -231,7 +231,7 @@ interface Reply {
 | `submit_design` | — | ✓ ถ้า `design_uid=self` AND `status='กำลังออกแบบ'` | — | ✓ | `กำลังออกแบบ` → `รอคอนเฟิร์มแบบ` |
 | `confirm_design` | ✓ ถ้า `seller_uid=self` AND `status='รอคอนเฟิร์มแบบ'` | — | — | ✓ | `รอคอนเฟิร์มแบบ` → `คอนเฟิร์มแล้ว` |
 | `request_revision` | ✓ ถ้า `seller_uid=self` AND `status='รอคอนเฟิร์มแบบ'` | — | — | ✓ | `รอคอนเฟิร์มแบบ` → `กำลังออกแบบ` |
-| `send_to_production` | ✓ ถ้า `seller_uid=self` AND `status='คอนเฟิร์มแล้ว'` | — | — | ✓ | `คอนเฟิร์มแล้ว` → `รอผลิต` |
+| `send_to_production` | — | ✓ ถ้า `design_uid=self` AND `status='คอนเฟิร์มแล้ว'` | — | ✓ | `คอนเฟิร์มแล้ว` → `รอผลิต` |
 | `claim_print` | — | — | ✓ ถ้า `status='รอผลิต'` AND `print_uid=null` | ✓ | `รอผลิต` → `กำลังผลิต` |
 | `upload_print` | — | — | ✓ ถ้า `print_uid=self` AND `status='กำลังผลิต'` | ✓ | `กำลังผลิต` → `รอส่งมอบ` |
 | `mark_delivered` | ✓ ถ้า `seller_uid=self` AND `status='รอส่งมอบ'` | — | — | ✓ | `รอส่งมอบ` → `ส่งมอบแล้ว` |
