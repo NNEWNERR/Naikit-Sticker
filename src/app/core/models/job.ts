@@ -34,7 +34,10 @@ export interface WorkItem {
 }
 
 export interface Payment {
+  /** SERVER-AUTHORITATIVE = Σ work_items.total − discount (BE คิดให้ ดู docs/FINANCE-CONTROLS.md) */
   total: number;
+  /** ส่วนลด default 0; optional ใน read (เอกสารเก่าก่อน F1 ไม่มี field นี้) */
+  discount?: number;
   deposit: number;
   remaining: number;
   payment_method: PaymentMethod;

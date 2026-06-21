@@ -1,0 +1,141 @@
+---
+version: v1
+project: naikit-sticker
+status: design — F1+F2 implementing; F3–F6 planned
+audience: ทั้ง FE (Naikit-Sticker) และ BE (Naikit-Sticker-BE) อ้างเอกสารนี้เป็น source of truth ของ financial controls
+related: SCHEMA.md (data contract หลัก)
+---
+
+# Naikit Sticker — Financial Controls (ป้องกัน/ตรวจสอบการยักยอกเงิน)
+
+เอกสารนี้กำหนดมาตรการป้องกันและตรวจสอบการยักยอกเงินโดยฝ่ายขาย (seller)
+เกิดจากเหตุการณ์จริง: seller ยักยอกเงินบริษัท
+
+## ปัญหา (threat model)
+
+ปัจจุบัน seller คุมวงจรเงินทั้งหมดคนเดียว — **รับเงินลูกค้า + กรอกตัวเลขเอง + แก้ตัวเลขได้เอง**
+โดยไม่มี source of truth อื่นมาเทียบ และ audit log ไม่เก็บค่าเดิม จึงตรวจย้อนไม่ได้
+
+ช่องโหว่ที่พบในโค้ด (ณ 2026-06-21):
+
+| # | ช่องโหว่ | ที่มา |
+|---|---------|------|
+| A | `payment.total` เป็น input อิสระที่ seller พิมพ์เอง ไม่ผูกกับผลรวม `work_items` | `create-work-sheet` Step 3 `formControlName="total"` |
+| A2 | `validatePayment` ไม่บังคับ `remaining = total − deposit`, `deposit ≤ total`, `work_item.total = qty × unit_price` | `jobs.ts` validatePayment/validateWorkItem |
+| B | audit `edit` event เก็บแค่ *ชื่อ* field ไม่เก็บค่าเก่า→ใหม่ | `jobs.ts:646` `payload: { fields }` |
+| C | seller แก้ `payment` ได้อิสระตอน status ก่อนคอนเฟิร์ม | `editJob` EDITABLE_BEFORE_CONFIRM |
+| D | เงินสดไม่ต้องแนบหลักฐาน; `delivery_slips` optional; `payment_method` ปล่อย `''` ได้ | `markDelivered` |
+
+> แก่น: **เงินสด + แก้ตัวเลขได้ + audit ไม่เก็บค่าเดิม + ไม่มี reconcile กับเงินจริง**
+
+## หลักการ: Separation of Duties
+
+แยก "คนรับเงิน" (seller) ออกจาก "คนยืนยัน/กระทบยอด" (finance)
+- seller: บันทึกยอดตอน**สร้าง**งานเท่านั้น แก้ตัวเลขเงินเองทีหลังไม่ได้
+- `total` เป็นค่า **server-authoritative** คิดจากผลรวม `work_items` เสมอ — พิมพ์มั่วไม่ได้
+- การแก้เงินหลังสร้าง ผ่าน `finance`/`admin` เท่านั้น + บันทึก before→after + เหตุผล (append-only ledger)
+- ล็อกเงินถาวรหลังส่งมอบ
+- เงินสดต้องกระทบยอดรายวัน
+
+---
+
+## Phase F1 — Payment integrity (server-authoritative total) ✅ implementing
+
+BE บังคับความถูกต้องของตัวเลขทุก write path:
+
+1. **`work_item.total === round(quantity × unit_price)`** (±0.01) — กันกรอก total ราย item มั่ว
+2. **`total` คิดจาก server**: `total = Σ work_items.total − discount` — **ignore ค่า `total` ที่ client ส่ง**
+3. **`discount`** (field ใหม่, default 0): `0 ≤ discount ≤ Σ work_items.total` — ส่วนลดต้องชัดเจน บันทึกได้ ตรวจได้
+4. **`deposit`**: `0 ≤ deposit ≤ total`
+5. **`remaining`** คิดจาก server: `remaining = total − deposit`
+
+ผล: เคส "total=1000 / deposit=0 / remaining=0 แล้วเก็บสด 1000" เป็นไปไม่ได้อีก —
+total จะถูก derive จากงานจริงเสมอ และ remaining สะท้อนยอดค้างจริง
+
+> **หมายเหตุ deploy**: F1 เป็น BE-only ปลอดภัย deploy ทันที — ไม่ reject การสร้างงาน
+> (BE override `total` ให้ถูกแทนที่จะปฏิเสธ). FE follow-up: ทำช่อง "ยอดรวม" เป็น read-only
+> ผูกกับผลรวม items + เพิ่มช่อง "ส่วนลด" (อยู่ใน FE batch ของ F4)
+
+## Phase F2 — Payment ledger (append-only, immutable trail) ✅ implementing
+
+1. **ถอด `payment` ออกจาก `editJob`** — seller บันทึก payment ได้แค่ตอน `createJob`
+2. **editJob แก้ `work_items` ได้** (ก่อนคอนเฟิร์ม) → BE **คำนวณ `total`/`remaining` ใหม่อัตโนมัติ**
+   (คง deposit/discount/method เดิม); ถ้ายอดใหม่ < deposit → reject ให้ปรับมัดจำผ่าน finance ก่อน
+   บันทึก payment เก่า→ใหม่ ใน edit event payload
+3. **`adjustPayment` callable ใหม่** (role `finance`/`admin` เท่านั้น):
+   - args: `{ job_id, deposit?, discount?, payment_method?, date_of_payment?, reason }` — `reason` บังคับ
+   - คิด `total`/`remaining` ใหม่ตามกติกา F1
+   - เขียน event `action='payment_adjust'` payload `{ before, after, reason }`
+   - ใช้ได้ **ทุก status** (รวมหลังส่งมอบ — เพื่อให้ finance กระทบยอด/แก้ที่ผิดได้ โดยมีร่องรอย)
+4. เพิ่ม action `payment_adjust` ใน enum; เพิ่ม role `finance` ใน Role union (ยังไม่มี user จนกว่า F3)
+
+> ผลรวม F1+F2: ตัวเลขถูกบังคับให้ถูกต้อง + แก้เงินได้เฉพาะ finance + ทุกการแก้มี before/after + เหตุผล
+> → ยักยอกแบบเงียบ (ลดยอดทีหลัง) ทำไม่ได้แล้ว
+
+---
+
+## Phase F3 — Role `finance` (read-all + reconcile) — planned
+
+role ที่ 5: `seller | graphic | production | admin | finance`
+
+| สิทธิ์ | finance |
+|--------|---------|
+| อ่านทุก job (ไม่ผูก ownership) | ✓ |
+| `adjustPayment` | ✓ |
+| ปิดยอดเงินสดรายวัน | ✓ |
+| เปลี่ยน status งาน / สร้างงาน / จัดการ user | ✗ |
+
+ต้องแก้: Role enum (BE+FE) · custom claim · `firestore.rules` (finance read jobs/job_events ทั้งหมด) ·
+`createUser` รับ role finance · `setUserRole` · FE guard/nav
+
+## Phase F4 — บังคับหลักฐานตามวิธีจ่าย (ปิดช่อง D) — planned
+
+ตอน `markDelivered`:
+- `payment_method` ต้องไม่ว่าง
+- `โอน`/`เช็ค`/`เครดิต` → ต้องมี `delivery_slips` ≥ 1
+- `เงินสด` → บันทึกเข้า cash session ของวันนั้น (F5)
+- FE create: ช่อง "ยอดรวม" read-only = Σ items + ช่อง "ส่วนลด"
+
+## Phase F5 — Cash reconciliation (กระทบยอดเงินสดรายวัน) — planned
+
+collection `cash_sessions/{sellerUid}_{YYYYMMDD}`:
+- `system_total` = Σ งานเงินสดที่ส่งมอบวันนั้น (อัตโนมัติ)
+- `declared_total` = ยอดที่ seller นับส่งจริง
+- `variance = declared − system` → ส่วนต่าง = ธงแดง
+- finance กดปิดรอบ + ยืนยัน
+
+## Phase F6 — Finance Dashboard (FE) — planned
+
+หน้าใหม่ (role finance/admin):
+- ยอดขายแยก seller × payment_method + สัดส่วนเงินสดต่อคน
+- Payment changes log (`payment_adjust` events: ใคร/เมื่อ/before→after/เหตุผล)
+- Outlier scan: `deposit=0` ที่ส่งมอบ, `discount` สูงผิดปกติ, งานที่ถูก delete
+- Cash variance รายวัน/seller
+
+---
+
+## Action enum เพิ่ม
+
+```
+payment_adjust   // finance/admin แก้เงินหลังสร้าง (before/after + reason)
+```
+
+## Payment shape (อัปเดต)
+
+```ts
+interface Payment {
+  total: number;          // SERVER-AUTHORITATIVE = Σ work_items.total − discount
+  discount: number;       // ใหม่: default 0, 0 ≤ discount ≤ Σ items
+  deposit: number;        // 0 ≤ deposit ≤ total
+  remaining: number;      // SERVER-DERIVED = total − deposit
+  payment_method: 'เงินสด' | 'โอน' | 'เช็ค' | 'เครดิต' | 'อื่นๆ' | '';
+  date_of_payment: Timestamp | null;
+}
+```
+
+## เปลี่ยน controls นี้ทำยังไง
+
+1. แก้เอกสารนี้ + SCHEMA.md ก่อน
+2. แก้ `types.ts` (BE) + FE `core/models/job.ts` ให้ตรง
+3. แก้ Cloud Functions + rules
+4. แก้ FE service/page

@@ -31,7 +31,7 @@ Key = Firebase Auth uid ของ user
 |---|---|---|---|
 | `username` | string | ✓ | unique, lowercase, [a-z0-9_]+ |
 | `display_name` | string | ✓ | ชื่อที่แสดง ("ฟลุ๊ค") |
-| `role` | `'seller' \| 'graphic' \| 'production' \| 'admin'` | ✓ | mirror ของ custom claim |
+| `role` | `'seller' \| 'graphic' \| 'production' \| 'admin' \| 'finance'` | ✓ | mirror ของ custom claim. `finance` = ผู้ตรวจเงิน (F3 — read-all + adjustPayment; ยังไม่ wire rules จึงยังสร้าง user ไม่ได้จนกว่า F3) |
 | `is_active` | boolean | ✓ | false = ล็อกล็อกอิน |
 | `created_at` | Timestamp | ✓ | serverTimestamp |
 | `created_by_uid` | string | ✓ | admin uid ที่สร้าง (หรือ `"system"` สำหรับ seed) |
@@ -105,12 +105,15 @@ interface WorkItem {
 }
 
 interface Payment {
-  total: number;         // = sum(work_items.total)
-  deposit: number;
-  remaining: number;     // = total - deposit
+  total: number;         // SERVER-AUTHORITATIVE = sum(work_items.total) - discount; client total ถูก ignore
+  discount: number;      // default 0; 0 ≤ discount ≤ sum(work_items.total)
+  deposit: number;       // 0 ≤ deposit ≤ total
+  remaining: number;     // SERVER-DERIVED = total - deposit
   payment_method: 'เงินสด' | 'โอน' | 'เช็ค' | 'เครดิต' | 'อื่นๆ' | '';
   date_of_payment: Timestamp | null;
 }
+// invariant บังคับฝั่ง BE (F1): work_item.total === quantity × unit_price.
+// แก้ payment หลังสร้างได้เฉพาะ finance/admin ผ่าน adjustPayment. ดู docs/FINANCE-CONTROLS.md
 
 interface Image {
   id: string;            // uuid
@@ -160,6 +163,7 @@ type ActionEnum =
   | 'start_print'         // production เริ่มพิมพ์
   | 'upload_print'        // อัปรูปงานพิมพ์
   | 'mark_delivered'      // ส่งมอบ
+  | 'payment_adjust'      // finance/admin แก้เงินหลังสร้าง (payload: before/after/reason)
   | 'comment_add'
   | 'comment_delete'
   | 'admin_reassign'      // admin override design_uid/print_uid
@@ -226,7 +230,7 @@ interface Reply {
 | Action | seller | graphic | production | admin | Transition |
 |---|---|---|---|---|---|
 | `create_job` | ✓ → `seller_uid=self` | — | — | ✓ (เลือก seller_uid ใดก็ได้) | — → `'รอออกแบบ'` |
-| `edit_job` (non-state field) | ✓ ถ้า `seller_uid=self` AND `status in [รอออกแบบ, กำลังออกแบบ, รอคอนเฟิร์มแบบ]` | — | — | ✓ ทุก status | — |
+| `edit_job` (non-state field, **ไม่รวม payment**) | ✓ ถ้า `seller_uid=self` AND `status in [รอออกแบบ, กำลังออกแบบ, รอคอนเฟิร์มแบบ]` | — | — | ✓ ทุก status | — (ถ้าแก้ `work_items` → total/remaining recompute อัตโนมัติ) |
 | `claim_design` | — | ✓ ถ้า `status='รอออกแบบ'` AND `design_uid=null` | — | ✓ | `รอออกแบบ` → `กำลังออกแบบ` |
 | `submit_design` | — | ✓ ถ้า `design_uid=self` AND `status='กำลังออกแบบ'` | — | ✓ | `กำลังออกแบบ` → `รอคอนเฟิร์มแบบ` |
 | `confirm_design` | ✓ ถ้า `seller_uid=self` AND `status='รอคอนเฟิร์มแบบ'` | — | — | ✓ | `รอคอนเฟิร์มแบบ` → `คอนเฟิร์มแล้ว` |
@@ -235,6 +239,7 @@ interface Reply {
 | `claim_print` | — | — | ✓ ถ้า `status='รอผลิต'` AND `print_uid=null` | ✓ | `รอผลิต` → `กำลังผลิต` |
 | `upload_print` | — | — | ✓ ถ้า `print_uid=self` AND `status='กำลังผลิต'` | ✓ | `กำลังผลิต` → `รอส่งมอบ` |
 | `mark_delivered` | ✓ ถ้า `seller_uid=self` AND `status='รอส่งมอบ'` | — | — | ✓ | `รอส่งมอบ` → `ส่งมอบแล้ว` |
+| `adjust_payment` (F2) | — | — | — | ✓ ทุก status | **finance** ด้วย (role ที่ 5 — ดู F3). แก้ discount/deposit/method/date + บังคับ `reason` → event `payment_adjust` before/after. total ยังคิดจาก work_items |
 | `admin_reassign` | — | — | — | ✓ ทุก status | (เปลี่ยน design_uid หรือ print_uid; status ตามที่ admin เลือก) |
 | `delete_job` (soft) | — | — | — | ✓ | (set `is_deleted=true`) |
 | `restore_job` | — | — | — | ✓ | (set `is_deleted=false`) |
