@@ -39,9 +39,6 @@ service cloud.firestore {
     function role() {
       return request.auth.token.role;
     }
-    function isAdmin() {
-      return isSignedIn() && role() == 'admin';
-    }
     // finance = ผู้ตรวจเงิน (F3): อ่านได้ทั้งหมดเหมือน admin แต่ไม่ใช่ admin
     // (mutations ทั้งหมดผ่าน Cloud Functions อยู่แล้ว — write:false ทุก collection)
     function canReadAll() {
