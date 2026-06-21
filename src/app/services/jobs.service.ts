@@ -142,6 +142,7 @@ export class JobsService {
 
     switch (role) {
       case 'admin':
+      case 'finance': // ผู้ตรวจเงิน — อ่านทุกงาน (read-only) เหมือน admin
         addQuery(query(base, notDeleted));
         break;
       case 'seller':
@@ -166,11 +167,11 @@ export class JobsService {
 
   /**
    * Live query of every job the current user is allowed to see, for the
-   * report + diary pages (both gated to admin + seller only).
+   * report + diary pages (gated to admin + seller + finance).
    *
-   * - admin:  all non-deleted jobs
-   * - seller: own non-deleted jobs (seller_uid == uid)
-   * - other:  empty (those roles can't reach these pages; fail closed)
+   * - admin/finance: all non-deleted jobs
+   * - seller:        own non-deleted jobs (seller_uid == uid)
+   * - other:         empty (those roles can't reach these pages; fail closed)
    *
    * Predicates mirror firestore.rules so the list query is never rejected.
    * Returns a cleanup fn.
@@ -180,7 +181,7 @@ export class JobsService {
     const notDeleted = where('is_deleted', '==', false);
 
     let q: Query;
-    if (role === 'admin') {
+    if (role === 'admin' || role === 'finance') {
       q = query(base, notDeleted);
     } else if (role === 'seller') {
       q = query(base, notDeleted, where('seller_uid', '==', uid));

@@ -10,9 +10,9 @@
  *   - Naikit-Sticker-BE/functions/src/lib/types.ts (Role enum)
  */
 
-export type Role = 'seller' | 'graphic' | 'production' | 'admin';
+export type Role = 'seller' | 'graphic' | 'production' | 'admin' | 'finance';
 
-export const ROLES: readonly Role[] = ['seller', 'graphic', 'production', 'admin'];
+export const ROLES: readonly Role[] = ['seller', 'graphic', 'production', 'admin', 'finance'];
 
 export function isRole(v: unknown): v is Role {
   return typeof v === 'string' && (ROLES as readonly string[]).includes(v);

@@ -28,7 +28,7 @@ export const routes: Routes = [
       {
         path: 'all',
         component: ReportComponent,
-        canActivate: [roleGuard(['admin', 'seller'])],
+        canActivate: [roleGuard(['admin', 'seller', 'finance'])],
       },
       {
         path: 'setting',
@@ -38,7 +38,7 @@ export const routes: Routes = [
       {
         path: 'diary-summary',
         component: DiarySummaryComponent,
-        canActivate: [roleGuard(['admin', 'seller'])],
+        canActivate: [roleGuard(['admin', 'seller', 'finance'])],
       },
       {
         path: 'create-work-sheet',

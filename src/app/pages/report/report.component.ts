@@ -79,9 +79,9 @@ export class ReportComponent implements OnInit, OnDestroy {
     const uid = this.appState.uid();
     if (!role || !uid) return;
 
-    // Only admin may read the full users collection (firestore.rules); attach
-    // the shared listener so seller_uid / design_uid resolve to display names.
-    if (role === 'admin') {
+    // admin + finance may read the full users collection (firestore.rules);
+    // attach the shared listener so seller_uid / design_uid resolve to names.
+    if (role === 'admin' || role === 'finance') {
       this.usersCleanup = this.users.attachListener();
     }
 

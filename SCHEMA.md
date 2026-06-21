@@ -31,7 +31,7 @@ Key = Firebase Auth uid ของ user
 |---|---|---|---|
 | `username` | string | ✓ | unique, lowercase, [a-z0-9_]+ |
 | `display_name` | string | ✓ | ชื่อที่แสดง ("ฟลุ๊ค") |
-| `role` | `'seller' \| 'graphic' \| 'production' \| 'admin' \| 'finance'` | ✓ | mirror ของ custom claim. `finance` = ผู้ตรวจเงิน (F3 — read-all + adjustPayment; ยังไม่ wire rules จึงยังสร้าง user ไม่ได้จนกว่า F3) |
+| `role` | `'seller' \| 'graphic' \| 'production' \| 'admin' \| 'finance'` | ✓ | mirror ของ custom claim. `finance` = ผู้ตรวจเงิน (F3): read-all (jobs/job_events/comments/users ทั้งหมดเหมือน admin) + adjustPayment; ไม่ทำ workflow/สร้างงาน/จัดการ user |
 | `is_active` | boolean | ✓ | false = ล็อกล็อกอิน |
 | `created_at` | Timestamp | ✓ | serverTimestamp |
 | `created_by_uid` | string | ✓ | admin uid ที่สร้าง (หรือ `"system"` สำหรับ seed) |
@@ -213,6 +213,8 @@ interface Reply {
 `request.auth.token.role` = role ของ user ที่ login
 
 ### Read
+
+> **finance** (F3): อ่านได้ทั้งหมดเหมือน admin ทุกแถวข้างล่าง (jobs/job_events/comments/users) — เพื่อตรวจเงิน/กระทบยอด แต่ write ไม่ได้ (mutations ผ่าน Cloud Functions เท่านั้น)
 
 | Action | seller | graphic | production | admin |
 |---|---|---|---|---|

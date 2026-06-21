@@ -44,6 +44,7 @@ const ROLE_DEFAULT_COLUMNS: Record<Role, readonly Status[]> = {
   graphic:    TEAM_STATUSES.graphic,
   production: TEAM_STATUSES.production,
   admin:      STATUS_ORDER,
+  finance:    STATUS_ORDER, // ผู้ตรวจเงิน เห็นทุกคอลัมน์ (read-only)
 };
 
 const MOBILE_TABS: Record<Role, { key: 'all' | Status; label: string }[]> = {
@@ -66,6 +67,12 @@ const MOBILE_TABS: Record<Role, { key: 'all' | Status; label: string }[]> = {
     { key: 'รอส่งมอบ',     label: 'ส่งมอบ' },
   ],
   admin:      [
+    { key: 'all',          label: 'ทั้งหมด' },
+    { key: 'รอออกแบบ',     label: 'รอแบบ' },
+    { key: 'กำลังผลิต',    label: 'ผลิต' },
+    { key: 'รอส่งมอบ',     label: 'ส่งมอบ' },
+  ],
+  finance:    [
     { key: 'all',          label: 'ทั้งหมด' },
     { key: 'รอออกแบบ',     label: 'รอแบบ' },
     { key: 'กำลังผลิต',    label: 'ผลิต' },

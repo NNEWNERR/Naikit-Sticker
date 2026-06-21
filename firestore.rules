@@ -8,7 +8,8 @@ rules_version = '2';
 //     staff member. The old plain-text-password / custom-localStorage login is
 //     GONE (A1 landed) — there is no public `users` read hole anymore.
 //   * Role = custom claim `request.auth.token.role`
-//     ('seller' | 'graphic' | 'production' | 'admin').
+//     ('seller' | 'graphic' | 'production' | 'admin' | 'finance').
+//     finance = read-all (เหมือน admin) เพื่อตรวจเงิน — ดู docs/FINANCE-CONTROLS.md F3.
 //   * ALL writes go through Cloud Functions (Admin SDK), which bypass these
 //     rules. Therefore every collection here is `write: if false` for clients —
 //     create/update/delete are impossible from the browser. This guarantees
@@ -41,9 +42,14 @@ service cloud.firestore {
     function isAdmin() {
       return isSignedIn() && role() == 'admin';
     }
+    // finance = ผู้ตรวจเงิน (F3): อ่านได้ทั้งหมดเหมือน admin แต่ไม่ใช่ admin
+    // (mutations ทั้งหมดผ่าน Cloud Functions อยู่แล้ว — write:false ทุก collection)
+    function canReadAll() {
+      return isSignedIn() && (role() == 'admin' || role() == 'finance');
+    }
     function isStaff() {
       return isSignedIn()
-          && role() in ['seller', 'graphic', 'production', 'admin'];
+          && role() in ['seller', 'graphic', 'production', 'admin', 'finance'];
     }
 
     // ---- users -------------------------------------------------------------
@@ -51,7 +57,7 @@ service cloud.firestore {
     // username/password/custom-claim must be set together in admin context via
     // the createUser / setUserRole / setUserActive / resetPassword callables.
     match /users/{userId} {
-      allow read: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      allow read: if isSignedIn() && (request.auth.uid == userId || canReadAll());
       allow write: if false;
     }
 
@@ -61,7 +67,7 @@ service cloud.firestore {
     // below; single-doc detail reads (watchJob) are checked the same way.
     match /jobs/{jobId} {
       allow read: if isSignedIn() && (
-        isAdmin() ||
+        canReadAll() ||
         (role() == 'seller'     && resource.data.seller_uid == request.auth.uid) ||
         (role() == 'graphic'    && (resource.data.design_uid == request.auth.uid
                                     || resource.data.status == 'รอออกแบบ')) ||

@@ -74,19 +74,23 @@ total จะถูก derive จากงานจริงเสมอ แล�
 
 ---
 
-## Phase F3 — Role `finance` (read-all + reconcile) — planned
+## Phase F3 — Role `finance` (read-all + reconcile) ✅ implemented (รอ deploy พร้อม FE sprint)
 
 role ที่ 5: `seller | graphic | production | admin | finance`
 
 | สิทธิ์ | finance |
 |--------|---------|
-| อ่านทุก job (ไม่ผูก ownership) | ✓ |
-| `adjustPayment` | ✓ |
-| ปิดยอดเงินสดรายวัน | ✓ |
+| อ่านทุก job + job_events + comments + users (ไม่ผูก ownership) | ✓ |
+| `adjustPayment` (มีตั้งแต่ F2) | ✓ |
+| ปิดยอดเงินสดรายวัน | ✓ (F5) |
 | เปลี่ยน status งาน / สร้างงาน / จัดการ user | ✗ |
 
-ต้องแก้: Role enum (BE+FE) · custom claim · `firestore.rules` (finance read jobs/job_events ทั้งหมด) ·
-`createUser` รับ role finance · `setUserRole` · FE guard/nav
+**ทำแล้ว:**
+- BE `types.ts`: `finance` เข้า `ALL_ROLES` (admin createUser/setUserRole สร้าง finance ได้); `admin.ts` validateRole message
+- `firestore.rules`: helper `canReadAll()` (admin\|finance) → jobs read-all + users read-all; `isStaff()` += finance (job_events/comments)
+- FE: `session.ts` Role/ROLES += finance · routing report(`/all`)+diary += finance · `jobs.service` watchMyJobs/watchVisibleJobs finance=all · `home.component` ROLE_DEFAULT_COLUMNS/MOBILE_TABS finance=all (read-only, ไม่มีปุ่มสร้าง) · nav (main-layout) report+diary += finance · report/diary attach users listener สำหรับ finance · user admin role label/badge += finance (dropdown สร้าง user มี finance อัตโนมัติ)
+
+**⚠️ deploy:** finance ใช้งานได้ต่อเมื่อ **rules + FE deploy พร้อมกัน** (rules ไม่อยู่ใน CI hosting workflow → ต้อง `firebase deploy --only firestore:rules` เอง). **อย่าสร้าง user role finance จนกว่า rules+FE จะ live** (ไม่งั้น login ได้แต่ FE prod ยังไม่รู้จัก finance → หน้าโล่ง). finance ยังไม่มี dashboard เฉพาะ (F6) — ระหว่างนี้ใช้ home(read-all) + report + diary ได้
 
 ## Phase F4 — บังคับหลักฐานตามวิธีจ่าย (ปิดช่อง D) — planned
 

@@ -67,8 +67,8 @@ export class DiarySummaryComponent implements OnInit, OnDestroy {
     const uid = this.appState.uid();
     if (!role || !uid) return;
 
-    // Only admin may read the full users collection (firestore.rules).
-    if (role === 'admin') {
+    // admin + finance may read the full users collection (firestore.rules).
+    if (role === 'admin' || role === 'finance') {
       this.usersCleanup = this.users.attachListener();
     }
 

@@ -21,15 +21,15 @@ export class MainLayoutComponent {
   private readonly allNavItems: NavItem[] = [
     { key: 'home', label: 'หน้าหลัก', icon: '📋', routerLink: '/naikit-sticker/home', section: 'WORKFLOW' },
     { key: 'create', label: 'สร้างใบงาน', icon: '➕', routerLink: '/naikit-sticker/create-work-sheet', section: 'WORKFLOW', roles: ['seller', 'admin'] },
-    { key: 'all', label: 'งานทั้งหมด', icon: '📊', routerLink: '/naikit-sticker/all', section: 'WORKFLOW', roles: ['admin', 'seller'] },
-    { key: 'diary', label: 'สรุปงานรายวัน', icon: '✅', routerLink: '/naikit-sticker/diary-summary', section: 'WORKFLOW', roles: ['admin', 'seller'] },
+    { key: 'all', label: 'งานทั้งหมด', icon: '📊', routerLink: '/naikit-sticker/all', section: 'WORKFLOW', roles: ['admin', 'seller', 'finance'] },
+    { key: 'diary', label: 'สรุปงานรายวัน', icon: '✅', routerLink: '/naikit-sticker/diary-summary', section: 'WORKFLOW', roles: ['admin', 'seller', 'finance'] },
     { key: 'setting', label: 'ตั้งค่า', icon: '⚙️', routerLink: '/naikit-sticker/setting', section: 'SYSTEM', roles: ['admin'] },
   ];
 
   private readonly allPrimaryTabs: NavItem[] = [
     { key: 'home', label: 'งาน', icon: '📋', routerLink: '/naikit-sticker/home' },
     { key: 'create-fab', label: 'สร้าง', icon: '➕', routerLink: '/naikit-sticker/create-work-sheet', fab: true, roles: ['seller', 'admin'] },
-    { key: 'all', label: 'รายงาน', icon: '📊', routerLink: '/naikit-sticker/all', roles: ['admin', 'seller'] },
+    { key: 'all', label: 'รายงาน', icon: '📊', routerLink: '/naikit-sticker/all', roles: ['admin', 'seller', 'finance'] },
     { key: 'setting', label: 'ตั้งค่า', icon: '⚙️', routerLink: '/naikit-sticker/setting', roles: ['admin'] },
   ];
 
