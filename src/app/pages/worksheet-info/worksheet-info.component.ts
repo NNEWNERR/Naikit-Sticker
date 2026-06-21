@@ -90,6 +90,14 @@ export class WorksheetInfoComponent implements OnInit, OnDestroy {
   /** Optional payment slips staged for markDelivered. */
   slipFiles: File[] = [];
 
+  /** F2/F6 — finance adjustPayment form state. */
+  showAdjust = false;
+  adjDeposit: number | null = null;
+  adjDiscount: number | null = null;
+  adjMethod = '';
+  adjReason = '';
+  readonly paymentMethods = ['เงินสด', 'โอน', 'เช็ค', 'เครดิต', 'อื่นๆ'];
+
   private detachJob?: () => void;
   private detachEvents?: () => void;
   private detachComments?: () => void;
@@ -161,6 +169,12 @@ export class WorksheetInfoComponent implements OnInit, OnDestroy {
 
   canDelete = computed(() => this.role() === 'admin' && !!this.job() && !this.job()!.is_deleted);
   canRestore = computed(() => this.role() === 'admin' && !!this.job()?.is_deleted);
+
+  /** F2/F6 — finance/admin ปรับยอดเงินหลังสร้าง (มี audit before/after + reason). */
+  canAdjustPayment = computed(() => {
+    const j = this.job(); const r = this.role();
+    return !!j && !j.is_deleted && (r === 'finance' || r === 'admin');
+  });
 
   hasAnyAction = computed(() =>
     this.canClaimDesign() || this.canSubmitDesign() || this.canConfirmDesign() ||
@@ -335,6 +349,38 @@ export class WorksheetInfoComponent implements OnInit, OnDestroy {
         : [];
       await this.jobsSvc.markDelivered(this.jobId, urls);
       this.slipFiles = [];
+    });
+  }
+
+  // ── Finance: adjust payment (F2/F6) ────────────────────────────────────
+
+  openAdjust() {
+    const p = this.job()?.payment;
+    this.adjDeposit = p?.deposit ?? 0;
+    this.adjDiscount = p?.discount ?? 0;
+    this.adjMethod = p?.payment_method ?? '';
+    this.adjReason = '';
+    this.actionError.set('');
+    this.showAdjust = true;
+  }
+
+  cancelAdjust() {
+    this.showAdjust = false;
+  }
+
+  async onAdjustPayment() {
+    if (!this.adjReason.trim()) {
+      this.actionError.set('กรุณาระบุเหตุผลการปรับยอด');
+      return;
+    }
+    await this._run(async () => {
+      await this.jobsSvc.adjustPayment(this.jobId, {
+        reason: this.adjReason.trim(),
+        deposit: this.adjDeposit ?? undefined,
+        discount: this.adjDiscount ?? undefined,
+        payment_method: this.adjMethod || undefined,
+      });
+      this.showAdjust = false;
     });
   }
 

@@ -70,6 +70,24 @@ export class JobsService {
     await this._call('editJob', { job_id: jobId, ...patch });
   }
 
+  /**
+   * F2 — ปรับยอดเงินหลังสร้าง (role finance/admin เท่านั้น, บังคับ reason).
+   * total ยังคิดจาก work_items ฝั่ง BE; ปรับได้แค่ discount/deposit/method/date.
+   * เขียน audit event `payment_adjust` (before/after/reason). ดู docs/FINANCE-CONTROLS.md
+   */
+  async adjustPayment(
+    jobId: string,
+    patch: {
+      reason: string;
+      deposit?: number;
+      discount?: number;
+      payment_method?: string;
+      date_of_payment?: string | null;
+    },
+  ): Promise<void> {
+    await this._call('adjustPayment', { job_id: jobId, ...patch });
+  }
+
   async adminReassign(jobId: string, patch: { design_uid?: string | null; print_uid?: string | null; seller_uid?: string }): Promise<void> {
     await this._call('adminReassign', { job_id: jobId, ...patch });
   }

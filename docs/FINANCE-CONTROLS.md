@@ -129,6 +129,8 @@ collection `cash_sessions/{seller_uid}_{YYYYMMDD}` (วันตาม ICT/UTC+7
 
 **ทำแล้ว:** `finance.component.{ts,html}` (standalone); JobsService `watchPaymentAdjustEvents` + `watchDeletedJobs`; `firestore.indexes.json` +1 (`job_events action,at`); FE JobAction + worksheet-info ACTION_LABELS += payment_adjust; route + nav (sidebar+mobile)
 
+**adjustPayment UI (ครบลูป):** ใน `worksheet-info` มีปุ่ม "💰 ปรับยอดเงิน (การเงิน)" สำหรับ role finance/admin → ฟอร์มปรับ discount/deposit/payment_method + เหตุผล (บังคับ) → `JobsService.adjustPayment` → event `payment_adjust`. payment summary แสดงส่วนลด + วิธีจ่ายด้วย
+
 **ทั้งชุด F1–F6 implement ครบ** — เหลือ deploy bundle ตอนจบสปรินต์
 
 ---
