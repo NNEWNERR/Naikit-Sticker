@@ -237,4 +237,94 @@
     </div>
   </section>
 
+  <!-- F8 — Refund requests (pending + log) -->
+  <section class="bg-white border-2 border-ink rounded-lg p-5 shadow-brutal">
+    <h3 class="text-h3 mt-0 mb-3">คำขอคืนเงิน</h3>
+    <div *ngFor="let r of pendingRefunds; trackBy: trackById"
+         class="flex items-center justify-between gap-2 py-2 px-2 mb-1 bg-amber-50 border-2 border-ink rounded">
+      <div class="text-body-sm">
+        <span class="font-num font-bold">{{ serialFor(r.job_id) }}</span>
+        · คืน <b class="font-num">฿{{ r.amount | number }}</b> ({{ r.method }})
+        · <span class="text-ink-3">{{ r.reason }}</span>
+      </div>
+      <div class="flex gap-1.5 shrink-0">
+        <button type="button" (click)="approveRefund(r)"
+          class="px-2 py-1 bg-green-100 border-2 border-ink rounded text-body-sm font-bold cursor-pointer">อนุมัติ</button>
+        <button type="button" (click)="rejectRefund(r)"
+          class="px-2 py-1 border-2 border-ink rounded text-body-sm font-bold cursor-pointer">ปฏิเสธ</button>
+      </div>
+    </div>
+    <p *ngIf="pendingRefunds.length === 0" class="text-body-sm text-ink-3">ไม่มีคำขอค้าง</p>
+    <div *ngIf="refundLog.length" class="mt-3 pt-2 border-t-2 border-ink">
+      <div class="text-body-sm text-ink-3 mb-1">ประวัติ</div>
+      <div *ngFor="let r of refundLog; trackBy: trackById" class="flex justify-between text-body-sm py-0.5">
+        <span class="font-num">{{ serialFor(r.job_id) }} · ฿{{ r.amount | number }}</span>
+        <span [class.text-green-700]="r.status === 'approved'" [class.text-ink-3]="r.status === 'rejected'">{{ r.status === 'approved' ? 'คืนแล้ว' : 'ปฏิเสธ' }}</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- F8 — Outstanding / AR (ส่งมอบแล้วยังจ่ายไม่ครบ) -->
+  <section class="bg-white border-2 border-ink rounded-lg p-5 shadow-brutal">
+    <h3 class="text-h3 mt-0 mb-3">ลูกหนี้ค้างชำระ (ส่งมอบแล้ว) <span class="font-num">({{ outstandingDelivered.length }})</span></h3>
+    <table class="w-full text-body-sm border-collapse">
+      <tbody>
+        <tr *ngFor="let j of outstandingDelivered; trackBy: trackById" class="border-b border-line-2 cursor-pointer hover:bg-surface-2" (click)="openJob(j.id)">
+          <td class="py-1.5 font-num font-semibold">{{ j.serial_number }}</td>
+          <td class="py-1.5 text-ink-3">{{ j.customer_name }}</td>
+          <td class="py-1.5 text-right font-num">จ่าย {{ j.paid_amount || 0 | number }}/{{ j.payment.total | number }}</td>
+          <td class="py-1.5 text-right font-num font-bold text-red-700">ค้าง ฿{{ outstandingOf(j) | number }}</td>
+        </tr>
+        <tr *ngIf="outstandingDelivered.length === 0"><td class="py-2 text-ink-3">— ไม่มี —</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- F8.7 — Bank reconcile + reuse flags -->
+  <section class="bg-white border-2 border-ink rounded-lg p-5 shadow-brutal">
+    <div class="flex items-center justify-between mb-3">
+      <h3 class="text-h3 m-0">กระทบยอดโอน/เช็ค (เทียบ statement)</h3>
+      <div class="text-right">
+        <div class="text-body-sm text-ink-3">รวมโอน/เช็คในระบบ</div>
+        <div class="text-h3 font-num font-black">฿{{ transferTotal | number }}</div>
+      </div>
+    </div>
+
+    <div *ngIf="dupRefPayments.length" class="mb-2 p-2 bg-red-50 border-2 border-red-700 rounded text-body-sm">
+      ⚠️ <b>เลขอ้างอิงซ้ำ ({{ dupRefPayments.length }})</b> — อาจใช้สลิปซ้ำ:
+      <span *ngFor="let p of dupRefPayments; trackBy: trackById" class="font-num"> {{ p.bank_ref }}({{ serialFor(p.job_ids[0]) }})</span>
+    </div>
+    <div *ngIf="dupHashPayments.length" class="mb-2 p-2 bg-red-50 border-2 border-red-700 rounded text-body-sm">
+      ⚠️ <b>ภาพสลิปซ้ำ/ตัดต่อ ({{ dupHashPayments.length }})</b> — hash เดียวกันแต่ ref ต่าง
+    </div>
+
+    <table class="w-full text-body-sm border-collapse">
+      <thead>
+        <tr class="text-left border-b-2 border-ink">
+          <th class="py-2 pr-3">วันที่จ่าย</th>
+          <th class="py-2 pr-3">วิธี</th>
+          <th class="py-2 pr-3">เลขอ้างอิง</th>
+          <th class="py-2 pr-3 text-right">ยอด</th>
+          <th class="py-2 pr-3">งาน</th>
+          <th class="py-2"></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let p of transferPayments; trackBy: trackById" class="border-b border-line-2"
+            [class.bg-red-50]="dupRefPayments.includes(p) || dupHashPayments.includes(p)">
+          <td class="py-1.5 pr-3">{{ fmtDate(p.paid_at) }}</td>
+          <td class="py-1.5 pr-3">{{ p.method }}</td>
+          <td class="py-1.5 pr-3 font-num">{{ p.bank_ref }}</td>
+          <td class="py-1.5 pr-3 text-right font-num font-bold">{{ p.allocated_total | number }}</td>
+          <td class="py-1.5 pr-3 font-num">
+            <span *ngFor="let jid of p.job_ids">{{ serialFor(jid) }} </span>
+            <a *ngIf="p.slip_url" [href]="p.slip_url" target="_blank" class="text-blue-700 underline">สลิป</a>
+          </td>
+          <td class="py-1.5"><button type="button" (click)="voidPayment(p)" class="px-1.5 py-0.5 border border-ink rounded text-[11px] cursor-pointer">void</button></td>
+        </tr>
+        <tr *ngIf="transferPayments.length === 0"><td colspan="6" class="py-2 text-ink-3 text-center">ยังไม่มีการจ่ายโอน/เช็ค</td></tr>
+      </tbody>
+    </table>
+  </section>
+
 </div>

@@ -239,8 +239,16 @@
               <span class="font-bold">{{ j.payment?.payment_method || '— ไม่ระบุ —' }}</span>
             </div>
             <div class="flex justify-between pt-1.5 border-t border-line-2">
-              <span class="font-bold">คงเหลือ</span>
+              <span class="font-bold">คงเหลือ (ตามบิล)</span>
               <span class="text-[18px] font-black font-num">฿{{ paymentRemaining | number }}</span>
+            </div>
+            <div class="flex justify-between text-body mt-1.5 pt-1.5 border-t border-dashed border-line">
+              <span class="text-ink-3">จ่ายจริงแล้ว</span>
+              <span class="font-bold font-num text-green-700">฿{{ paidAmount | number }}</span>
+            </div>
+            <div class="flex justify-between text-body">
+              <span class="text-ink-3">ค้างชำระจริง</span>
+              <span class="font-bold font-num" [class.text-red-700]="outstanding > 0">฿{{ outstanding | number }}</span>
             </div>
           </div>
 
@@ -282,6 +290,92 @@
                   ยกเลิก
                 </button>
               </div>
+            </div>
+          </div>
+
+          <!-- F8 — Payments / Refund -->
+          <div class="mt-3 p-3 border-2 border-ink rounded-md bg-surface-2 flex flex-col gap-2">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-body-sm">การชำระเงิน (โอน/เช็ค)</span>
+              <div class="flex gap-1.5">
+                <button *ngIf="canRecordPayment() && !showPayForm" type="button" (click)="openPayForm()"
+                  class="px-2 py-1 bg-brand border-2 border-ink rounded text-body-sm font-bold cursor-pointer">+ บันทึกการจ่าย</button>
+                <button *ngIf="canRequestRefund() && !showRefundForm" type="button" (click)="openRefundForm()"
+                  class="px-2 py-1 border-2 border-ink rounded text-body-sm font-bold cursor-pointer">ขอคืนเงิน</button>
+              </div>
+            </div>
+
+            <div *ngIf="showPayForm" class="flex flex-col gap-2 p-2 bg-white border-2 border-ink rounded">
+              <div class="grid grid-cols-2 gap-2">
+                <label class="flex flex-col gap-1 text-body-sm">วิธี
+                  <select [(ngModel)]="payMethod" class="input-base focus-ring font-semibold">
+                    <option value="โอน">โอน</option><option value="เช็ค">เช็ค</option>
+                  </select>
+                </label>
+                <label class="flex flex-col gap-1 text-body-sm">จำนวนเงิน
+                  <input type="number" [(ngModel)]="payAmount" class="input-base focus-ring font-num" />
+                </label>
+              </div>
+              <label class="flex flex-col gap-1 text-body-sm">เลขอ้างอิงโอน/เช็ค
+                <input type="text" [(ngModel)]="payBankRef" class="input-base focus-ring font-num" placeholder="เช่น 4 ตัวท้าย+เวลา" />
+              </label>
+              <label class="flex flex-col gap-1 text-body-sm">วันที่จ่าย
+                <input type="date" [(ngModel)]="payDate" class="input-base focus-ring font-num" />
+              </label>
+              <label class="flex flex-col gap-1 text-body-sm">สลิป (รูป/PDF)
+                <input type="file" accept="image/*,application/pdf" (change)="onSlipFileChange($event)" class="text-body-sm" />
+              </label>
+              <p *ngIf="actionError()" class="text-body-sm text-red-700 font-semibold m-0">{{ actionError() }}</p>
+              <div class="flex gap-2">
+                <button type="button" (click)="onRecordPayment()" [disabled]="actionLoading()"
+                  class="flex-1 px-3 py-2 bg-brand border-2 border-ink rounded font-bold text-body-sm cursor-pointer disabled:opacity-50">บันทึก</button>
+                <button type="button" (click)="showPayForm=false" [disabled]="actionLoading()"
+                  class="px-3 py-2 border-2 border-ink rounded font-bold text-body-sm cursor-pointer">ยกเลิก</button>
+              </div>
+            </div>
+
+            <div *ngIf="showRefundForm" class="flex flex-col gap-2 p-2 bg-white border-2 border-ink rounded">
+              <div class="grid grid-cols-2 gap-2">
+                <label class="flex flex-col gap-1 text-body-sm">ยอดคืน
+                  <input type="number" [(ngModel)]="refundAmount" class="input-base focus-ring font-num" />
+                </label>
+                <label class="flex flex-col gap-1 text-body-sm">ช่องทางคืน
+                  <select [(ngModel)]="refundMethod" class="input-base focus-ring font-semibold">
+                    <option value="โอน">โอน</option><option value="เงินสด">เงินสด</option>
+                  </select>
+                </label>
+              </div>
+              <label class="flex flex-col gap-1 text-body-sm">เหตุผล
+                <input type="text" [(ngModel)]="refundReason" class="input-base focus-ring" placeholder="เช่น ลูกค้ายกเลิกงาน" />
+              </label>
+              <p *ngIf="actionError()" class="text-body-sm text-red-700 font-semibold m-0">{{ actionError() }}</p>
+              <div class="flex gap-2">
+                <button type="button" (click)="onRequestRefund()" [disabled]="actionLoading()"
+                  class="flex-1 px-3 py-2 bg-warn border-2 border-ink rounded font-bold text-body-sm cursor-pointer disabled:opacity-50">ส่งคำขอคืนเงิน</button>
+                <button type="button" (click)="showRefundForm=false" class="px-3 py-2 border-2 border-ink rounded font-bold text-body-sm cursor-pointer">ยกเลิก</button>
+              </div>
+            </div>
+
+            <div *ngFor="let p of activePayments()" class="flex items-center justify-between text-body-sm py-1 border-b border-dashed border-line">
+              <div>
+                <span class="font-num font-bold">฿{{ p.allocated_total | number }}</span>
+                <span class="text-ink-3"> · {{ p.method }} · {{ p.bank_ref }}</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <a *ngIf="p.slip_url" [href]="p.slip_url" target="_blank" class="text-blue-700 underline">สลิป</a>
+                <button *ngIf="isFinanceOrAdmin()" type="button" (click)="onVoidPayment(p)"
+                  class="px-1.5 py-0.5 border border-ink rounded text-[11px] cursor-pointer">void</button>
+              </div>
+            </div>
+            <p *ngIf="activePayments().length === 0 && !showPayForm" class="text-body-sm text-ink-3 m-0">ยังไม่มีการบันทึกการจ่าย</p>
+
+            <div *ngFor="let r of pendingRefunds()" class="flex items-center justify-between text-body-sm py-1 bg-amber-50 px-2 rounded border border-ink">
+              <span>ขอคืน ฿{{ r.amount | number }} ({{ r.method }}) — {{ r.reason }}</span>
+              <div *ngIf="isFinanceOrAdmin()" class="flex gap-1">
+                <button type="button" (click)="onApproveRefund(r)" class="px-1.5 py-0.5 bg-green-100 border border-ink rounded text-[11px] cursor-pointer">อนุมัติ</button>
+                <button type="button" (click)="onRejectRefund(r)" class="px-1.5 py-0.5 border border-ink rounded text-[11px] cursor-pointer">ปฏิเสธ</button>
+              </div>
+              <span *ngIf="!isFinanceOrAdmin()" class="text-ink-3 text-[11px]">รออนุมัติ</span>
             </div>
           </div>
 

@@ -7,9 +7,11 @@ import { AppStateService } from 'src/app/services/app-state.service';
 import { JobsService } from 'src/app/services/jobs.service';
 import { UsersService } from 'src/app/services/users.service';
 import { CashService } from 'src/app/services/cash.service';
+import { PaymentService } from 'src/app/services/payment.service';
 import { ModalController } from 'src/app/services/modal.service';
 import { Job, JobEvent } from 'src/app/core/models/job';
 import { CashSession } from 'src/app/core/models/cash';
+import { PaymentRecord, RefundRecord } from 'src/app/core/models/payment';
 import { WorksheetInfoComponent } from '../worksheet-info/worksheet-info.component';
 
 interface SellerRow {
@@ -60,6 +62,8 @@ export class FinanceComponent implements OnInit, OnDestroy {
   deletedJobs: Job[] = [];
   adjustEvents: JobEvent[] = [];
   cashSessions: CashSession[] = [];
+  payments: PaymentRecord[] = [];
+  refunds: RefundRecord[] = [];
 
   // reconcile form
   recSellerUid = '';
@@ -77,6 +81,7 @@ export class FinanceComponent implements OnInit, OnDestroy {
     private jobsSvc: JobsService,
     private users: UsersService,
     private cashSvc: CashService,
+    private paymentSvc: PaymentService,
     private modalController: ModalController,
   ) {}
 
@@ -90,6 +95,8 @@ export class FinanceComponent implements OnInit, OnDestroy {
     this.cleanups.push(this.jobsSvc.watchDeletedJobs((j) => (this.deletedJobs = j)));
     this.cleanups.push(this.jobsSvc.watchPaymentAdjustEvents((e) => (this.adjustEvents = e)));
     this.cleanups.push(this.cashSvc.watchSessions((s) => (this.cashSessions = s)));
+    this.cleanups.push(this.paymentSvc.watchAllPayments((p) => (this.payments = p)));
+    this.cleanups.push(this.paymentSvc.watchAllRefunds((r) => (this.refunds = r)));
   }
 
   ngOnDestroy(): void {
@@ -173,6 +180,64 @@ export class FinanceComponent implements OnInit, OnDestroy {
   }
 
   discountOf(j: Job): number { return j.payment?.discount ?? 0; }
+
+  // ── F8 — Payments / Refund / reuse detection ───────────────────────────────
+
+  /** payment ที่ bank_ref ซ้ำ (≥2 ใบ active ใช้ ref เดียว) — ธงสลิปซ้ำ. */
+  get dupRefPayments(): PaymentRecord[] {
+    const active = this.payments.filter((p) => p.status === 'active' && p.bank_ref);
+    const count = new Map<string, number>();
+    for (const p of active) count.set(p.bank_ref, (count.get(p.bank_ref) ?? 0) + 1);
+    return active.filter((p) => (count.get(p.bank_ref) ?? 0) > 1);
+  }
+
+  /** payment ที่ slip_hash ซ้ำ แต่ bank_ref ต่าง — ภาพสลิปซ้ำ/ตัดต่อ. */
+  get dupHashPayments(): PaymentRecord[] {
+    const active = this.payments.filter((p) => p.status === 'active' && p.slip_hash);
+    const byHash = new Map<string, Set<string>>();
+    for (const p of active) {
+      const s = byHash.get(p.slip_hash!) ?? new Set<string>();
+      s.add(p.bank_ref);
+      byHash.set(p.slip_hash!, s);
+    }
+    return active.filter((p) => (byHash.get(p.slip_hash!)?.size ?? 0) > 1);
+  }
+
+  get pendingRefunds(): RefundRecord[] { return this.refunds.filter((r) => r.status === 'pending'); }
+  get refundLog(): RefundRecord[] { return this.refunds.filter((r) => r.status !== 'pending'); }
+
+  /** งานส่งมอบแล้วแต่ยังจ่ายไม่ครบ (ลูกหนี้/AR — เครดิต หรือผิดปกติ). */
+  get outstandingDelivered(): Job[] {
+    return this.jobs.filter(
+      (j) => j.status === 'ส่งมอบแล้ว' && (j.paid_amount ?? 0) + 0.01 < (j.payment?.total ?? 0),
+    );
+  }
+  outstandingOf(j: Job): number { return (j.payment?.total ?? 0) - (j.paid_amount ?? 0); }
+
+  /** bank reconcile (F8.7): payment โอน/เช็ค active ทั้งหมด (ไว้เทียบ statement). */
+  get transferPayments(): PaymentRecord[] {
+    return this.payments.filter((p) => p.status === 'active' && (p.method === 'โอน' || p.method === 'เช็ค'));
+  }
+  get transferTotal(): number {
+    return this.transferPayments.reduce((s, p) => s + (p.allocated_total ?? 0), 0);
+  }
+
+  async approveRefund(r: RefundRecord): Promise<void> {
+    if (!confirm(`อนุมัติคืนเงิน ฿${r.amount}?`)) return;
+    try { await this.paymentSvc.approveRefund(r.id!); } catch (e) { alert((e as Error).message); }
+  }
+  async rejectRefund(r: RefundRecord): Promise<void> {
+    const reason = prompt('เหตุผลที่ปฏิเสธ (ไม่บังคับ):') ?? '';
+    try { await this.paymentSvc.rejectRefund(r.id!, reason); } catch (e) { alert((e as Error).message); }
+  }
+  async voidPayment(p: PaymentRecord): Promise<void> {
+    const reason = prompt('เหตุผลที่ void payment:');
+    if (!reason?.trim()) return;
+    try { await this.paymentSvc.voidPayment(p.id!, reason.trim()); } catch (e) { alert((e as Error).message); }
+  }
+  serialFor(jobId: string): string {
+    return this.jobs.concat(this.deletedJobs).find((j) => j.id === jobId)?.serial_number ?? jobId.slice(0, 6);
+  }
 
   // ── Payment-adjust audit log ───────────────────────────────────────────────
 

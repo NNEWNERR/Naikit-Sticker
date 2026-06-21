@@ -21,6 +21,7 @@ export interface PaymentRecord {
   paid_at: Timestamp;
   allocations: PaymentAllocation[];
   allocated_total: number;
+  job_ids: string[];
   seller_uids: string[];
   customer_name: string;
   status: 'active' | 'voided';

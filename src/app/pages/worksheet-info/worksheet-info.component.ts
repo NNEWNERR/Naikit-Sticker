@@ -17,6 +17,8 @@ import {
   TimelineStep,
 } from 'src/app/shared/components';
 import { Job, JobAction, JobComment, JobEvent } from 'src/app/core/models/job';
+import { PaymentRecord, RefundRecord } from 'src/app/core/models/payment';
+import { PaymentService } from 'src/app/services/payment.service';
 
 const ACTION_LABELS: Record<JobAction, string> = {
   create:           'สร้างใบงาน',
@@ -72,11 +74,14 @@ export class WorksheetInfoComponent implements OnInit, OnDestroy {
   private modalCtrl = inject(ModalController);
   private appState = inject(AppStateService);
   private usersSvc = inject(UsersService);
+  private paymentSvc = inject(PaymentService);
 
   job = signal<Job | null>(null);
   jobLoading = signal(true);
   events = signal<JobEvent[]>([]);
   comments = signal<JobComment[]>([]);
+  payments = signal<PaymentRecord[]>([]);
+  refunds = signal<RefundRecord[]>([]);
 
   actionLoading = signal(false);
   actionError = signal('');
@@ -107,6 +112,22 @@ export class WorksheetInfoComponent implements OnInit, OnDestroy {
   private detachEvents?: () => void;
   private detachComments?: () => void;
   private detachUsers?: () => void;
+  private detachPayments?: () => void;
+  private detachRefunds?: () => void;
+
+  // F8 — record payment form
+  showPayForm = false;
+  payMethod: 'โอน' | 'เช็ค' = 'โอน';
+  payAmount: number | null = null;
+  payBankRef = '';
+  payDate = new Date().toISOString().slice(0, 10);
+  paySlipFile: File | null = null;
+
+  // F8 — request refund form
+  showRefundForm = false;
+  refundAmount: number | null = null;
+  refundMethod: 'เงินสด' | 'โอน' = 'โอน';
+  refundReason = '';
 
   readonly timelineSteps: TimelineStep[] = [
     { key: 'รอออกแบบ',      short: 'รอแบบ' },
@@ -284,11 +305,12 @@ export class WorksheetInfoComponent implements OnInit, OnDestroy {
       this.jobId,
       (c) => this.comments.set(c),
     );
-    // Only admin may read the full users collection (firestore.rules) — attach
-    // so design/print/confirm uids resolve to names. Others resolve self only.
-    if (this.appState.role() === 'admin') {
+    // admin + finance may read the full users collection (firestore.rules).
+    if (this.appState.role() === 'admin' || this.appState.role() === 'finance') {
       this.detachUsers = this.usersSvc.attachListener();
     }
+    this.detachPayments = this.paymentSvc.watchPaymentsForJob(this.jobId, (p) => this.payments.set(p));
+    this.detachRefunds = this.paymentSvc.watchRefundsForJob(this.jobId, (r) => this.refunds.set(r));
   }
 
   ngOnDestroy() {
@@ -296,6 +318,97 @@ export class WorksheetInfoComponent implements OnInit, OnDestroy {
     this.detachEvents?.();
     this.detachComments?.();
     this.detachUsers?.();
+    this.detachPayments?.();
+    this.detachRefunds?.();
+  }
+
+  // ── F8 — Payment / Refund ──────────────────────────────────────────────
+
+  isFinanceOrAdmin = computed(() => this.role() === 'finance' || this.role() === 'admin');
+
+  /** ผู้บันทึก/ขอ payment ได้: seller(เจ้าของ) / finance / admin */
+  private canHandleMoney = computed(() => {
+    const j = this.job(); const r = this.role(); const uid = this.uid();
+    return !!j && !j.is_deleted && (r === 'finance' || r === 'admin' || (r === 'seller' && j.seller_uid === uid));
+  });
+  canRecordPayment = computed(() => this.canHandleMoney());
+  canRequestRefund = computed(() => this.canHandleMoney() && (this.job()?.paid_amount ?? 0) > 0);
+
+  get paidAmount(): number { return this.job()?.paid_amount ?? 0; }
+  get outstanding(): number { return Math.max(0, (this.job()?.payment?.total ?? 0) - this.paidAmount); }
+
+  pendingRefunds = computed(() => this.refunds().filter((r) => r.status === 'pending'));
+  activePayments = computed(() => this.payments().filter((p) => !p.is_deleted && p.status === 'active'));
+
+  openPayForm() {
+    this.payAmount = this.outstanding || null;
+    this.payMethod = 'โอน';
+    this.payBankRef = '';
+    this.payDate = new Date().toISOString().slice(0, 10);
+    this.paySlipFile = null;
+    this.actionError.set('');
+    this.showPayForm = true;
+  }
+  onSlipFileChange(e: Event) {
+    this.paySlipFile = (e.target as HTMLInputElement).files?.[0] ?? null;
+  }
+
+  async onRecordPayment() {
+    const amt = Number(this.payAmount);
+    if (!amt || amt <= 0) { this.actionError.set('ระบุจำนวนเงิน'); return; }
+    if (!this.payBankRef.trim()) { this.actionError.set('ระบุเลขอ้างอิงโอน/เช็ค'); return; }
+    if (!this.paySlipFile) { this.actionError.set('แนบสลิป'); return; }
+    await this._run(async () => {
+      const file = this.paySlipFile!;
+      const [slip_url, slip_hash] = await Promise.all([
+        this.paymentSvc.uploadSlip(this.jobId, file),
+        this.paymentSvc.hashFile(file),
+      ]);
+      await this.paymentSvc.createPayment({
+        method: this.payMethod,
+        amount: amt,
+        bank_ref: this.payBankRef.trim(),
+        slip_url,
+        slip_hash,
+        paid_at: new Date(this.payDate).toISOString(),
+        allocations: [{ job_id: this.jobId, amount: amt }],
+        customer_name: this.job()?.customer_name ?? '',
+      });
+      this.showPayForm = false;
+    });
+  }
+
+  openRefundForm() {
+    this.refundAmount = this.paidAmount || null;
+    this.refundMethod = 'โอน';
+    this.refundReason = '';
+    this.actionError.set('');
+    this.showRefundForm = true;
+  }
+  async onRequestRefund() {
+    const amt = Number(this.refundAmount);
+    if (!amt || amt <= 0) { this.actionError.set('ระบุจำนวนเงินคืน'); return; }
+    if (!this.refundReason.trim()) { this.actionError.set('ระบุเหตุผล'); return; }
+    await this._run(async () => {
+      await this.paymentSvc.requestRefund({
+        job_id: this.jobId, amount: amt, method: this.refundMethod, reason: this.refundReason.trim(),
+      });
+      this.showRefundForm = false;
+    });
+  }
+
+  async onVoidPayment(p: PaymentRecord) {
+    const reason = prompt('เหตุผลที่ void (เช็คเด้ง/ปลอม/ยกเลิก):');
+    if (!reason?.trim()) return;
+    await this._run(() => this.paymentSvc.voidPayment(p.id!, reason.trim()));
+  }
+  async onApproveRefund(r: RefundRecord) {
+    if (!confirm(`อนุมัติคืนเงิน ฿${r.amount}?`)) return;
+    await this._run(() => this.paymentSvc.approveRefund(r.id!));
+  }
+  async onRejectRefund(r: RefundRecord) {
+    const reason = prompt('เหตุผลที่ปฏิเสธ (ไม่บังคับ):') ?? '';
+    await this._run(() => this.paymentSvc.rejectRefund(r.id!, reason));
   }
 
   // ── Workflow actions ───────────────────────────────────────────────────
