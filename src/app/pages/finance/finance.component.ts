@@ -206,13 +206,23 @@ export class FinanceComponent implements OnInit, OnDestroy {
   get pendingRefunds(): RefundRecord[] { return this.refunds.filter((r) => r.status === 'pending'); }
   get refundLog(): RefundRecord[] { return this.refunds.filter((r) => r.status !== 'pending'); }
 
-  /** งานส่งมอบแล้วแต่ยังจ่ายไม่ครบ (ลูกหนี้/AR — เครดิต หรือผิดปกติ). */
+  /** F9 — ยอดรับสุทธิของงาน (net_receivable = ยอดบิล − WHT); fallback ยอดงาน */
+  receivableOf(j: Job): number { return j.tax?.net_receivable ?? j.payment?.total ?? 0; }
+  outstandingOf(j: Job): number { return this.receivableOf(j) - (j.paid_amount ?? 0); }
+
+  /** งานส่งมอบแล้วแต่ยังจ่ายไม่ครบ (ลูกหนี้/AR เทียบยอดรับสุทธิ). */
   get outstandingDelivered(): Job[] {
-    return this.jobs.filter(
-      (j) => j.status === 'ส่งมอบแล้ว' && (j.paid_amount ?? 0) + 0.01 < (j.payment?.total ?? 0),
-    );
+    return this.jobs.filter((j) => j.status === 'ส่งมอบแล้ว' && (j.paid_amount ?? 0) + 0.01 < this.receivableOf(j));
   }
-  outstandingOf(j: Job): number { return (j.payment?.total ?? 0) - (j.paid_amount ?? 0); }
+
+  /** งานที่ถูกหัก ณ ที่จ่าย แต่ยังไม่ได้ใบ 50 ทวิ. */
+  get whtPendingCert(): Job[] {
+    return this.jobs.filter((j) => (j.tax?.wht_amount ?? 0) > 0 && !(j.tax?.wht_cert_ref));
+  }
+  whtOf(j: Job): number { return j.tax?.wht_amount ?? 0; }
+
+  get totalVat(): number { return this.delivered.reduce((s, j) => s + (j.tax?.vat_amount ?? 0), 0); }
+  get totalWht(): number { return this.delivered.reduce((s, j) => s + (j.tax?.wht_amount ?? 0), 0); }
 
   /** bank reconcile (F8.7): payment โอน/เช็ค active ทั้งหมด (ไว้เทียบ statement). */
   get transferPayments(): PaymentRecord[] {

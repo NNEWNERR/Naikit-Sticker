@@ -363,6 +363,10 @@ export class CreateWorkSheetComponent implements OnInit {
         deposit: job.payment?.deposit ?? 0,
         payment_method: job.payment?.payment_method ?? '',
       },
+      tax: {
+        vat_mode: job.tax?.vat_mode ?? 'none',
+        wht_rate: job.tax?.wht_rate ?? 0,
+      },
     });
     // rebuild work_items FormArray
     const arr = this.workItems;
@@ -476,8 +480,31 @@ export class CreateWorkSheetComponent implements OnInit {
       date_of_acceptance: ['', Validators.required],
       is_urgent: [false],
       remark: [''],
+      tax: this.fb.group({
+        vat_mode: ['none'],
+        wht_rate: [0],
+      }),
     });
   }
+
+  // ── F9 — VAT/WHT live calc (mirror BE computeTax) ──────────────────────────
+  readonly VAT_RATE = 7;
+  private r2(n: number): number { return Math.round(n * 100) / 100; }
+  get vatMode(): string { return this.worksheetForm.get('tax')?.get('vat_mode')?.value || 'none'; }
+  get whtRate(): number { return Number(this.worksheetForm.get('tax')?.get('wht_rate')?.value) || 0; }
+  get taxBase(): number {
+    return this.vatMode === 'inclusive' ? this.r2(this.paymentTotal / (1 + this.VAT_RATE / 100)) : this.r2(this.paymentTotal);
+  }
+  get vatAmount(): number {
+    if (this.vatMode === 'exclusive') return this.r2((this.paymentTotal * this.VAT_RATE) / 100);
+    if (this.vatMode === 'inclusive') return this.r2(this.paymentTotal - this.taxBase);
+    return 0;
+  }
+  get grandTotal(): number {
+    return this.vatMode === 'exclusive' ? this.r2(this.paymentTotal + this.vatAmount) : this.r2(this.paymentTotal);
+  }
+  get whtAmount(): number { return this.r2((this.taxBase * this.whtRate) / 100); }
+  get netReceivable(): number { return this.r2(this.grandTotal - this.whtAmount); }
 
   getWorkItemTypes() {
     return [
@@ -821,6 +848,8 @@ export class CreateWorkSheetComponent implements OnInit {
         remark: String(v.remark ?? '').trim(),
         date_of_acceptance: v.date_of_acceptance ? new Date(v.date_of_acceptance).toISOString() : undefined,
         work_items,
+        vat_mode: this.vatMode,
+        wht_rate: this.whtRate,
       };
       await this.jobsService.editJob(this.editJobId, patch);
       const toast = await this.toastController.create({
@@ -907,6 +936,8 @@ export class CreateWorkSheetComponent implements OnInit {
       payment,
       worksheet_image: worksheetImageUrl,
       reference_images: referenceImageUrls,
+      vat_mode: this.vatMode as CreateJobPayload['vat_mode'],
+      wht_rate: this.whtRate,
     };
   }
 

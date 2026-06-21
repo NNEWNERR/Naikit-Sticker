@@ -248,6 +248,34 @@
             </select>
           </app-field>
         </div>
+
+        <!-- F9 — VAT / หัก ณ ที่จ่าย -->
+        <div formGroupName="tax" class="grid grid-cols-2 gap-3.5 mt-4 pt-4 border-t-2 border-line-2">
+          <app-field label="VAT">
+            <select formControlName="vat_mode" class="input-base focus-ring w-full font-semibold">
+              <option value="none">ไม่มี VAT</option>
+              <option value="exclusive">VAT นอก (+7%)</option>
+              <option value="inclusive">VAT ใน (รวม 7%)</option>
+            </select>
+          </app-field>
+          <app-field label="หัก ณ ที่จ่าย">
+            <select formControlName="wht_rate" class="input-base focus-ring w-full font-semibold">
+              <option [ngValue]="0">ไม่หัก</option>
+              <option [ngValue]="1">1%</option>
+              <option [ngValue]="2">2%</option>
+              <option [ngValue]="3">3%</option>
+            </select>
+          </app-field>
+        </div>
+
+        <!-- สรุปภาษี (live) -->
+        <div *ngIf="vatMode !== 'none' || whtRate > 0" class="mt-3 p-3 bg-surface-2 border-2 border-ink rounded-md text-body-sm flex flex-col gap-1">
+          <div class="flex justify-between"><span class="text-ink-3">ฐาน (ก่อน VAT)</span><span class="font-num">฿{{ taxBase | number }}</span></div>
+          <div *ngIf="vatMode !== 'none'" class="flex justify-between"><span class="text-ink-3">VAT 7%</span><span class="font-num">฿{{ vatAmount | number }}</span></div>
+          <div class="flex justify-between font-bold"><span>ยอดบิล (รวม VAT)</span><span class="font-num">฿{{ grandTotal | number }}</span></div>
+          <div *ngIf="whtRate > 0" class="flex justify-between text-amber-700"><span>หัก ณ ที่จ่าย {{ whtRate }}%</span><span class="font-num">−฿{{ whtAmount | number }}</span></div>
+          <div class="flex justify-between font-black pt-1 border-t border-line-2"><span>รับสุทธิ</span><span class="font-num text-[16px]">฿{{ netReceivable | number }}</span></div>
+        </div>
       </div>
 
       <!-- ━━━ STEP 4 · ไฟล์แนบ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->

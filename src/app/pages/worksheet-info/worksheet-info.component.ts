@@ -351,7 +351,10 @@ export class WorksheetInfoComponent implements OnInit, OnDestroy {
   canRequestRefund = computed(() => this.canHandleMoney() && (this.job()?.paid_amount ?? 0) > 0);
 
   get paidAmount(): number { return this.job()?.paid_amount ?? 0; }
-  get outstanding(): number { return Math.max(0, (this.job()?.payment?.total ?? 0) - this.paidAmount); }
+  /** F9 — ยอดที่จะได้รับจริง (net_receivable = ยอดบิล − WHT); fallback ยอดงาน */
+  get receivable(): number { return this.job()?.tax?.net_receivable ?? this.job()?.payment?.total ?? 0; }
+  get outstanding(): number { return Math.max(0, this.receivable - this.paidAmount); }
+  get tax() { return this.job()?.tax; }
 
   pendingRefunds = computed(() => this.refunds().filter((r) => r.status === 'pending'));
   activePayments = computed(() => this.payments().filter((p) => !p.is_deleted && p.status === 'active'));
@@ -476,6 +479,7 @@ export class WorksheetInfoComponent implements OnInit, OnDestroy {
   }
 
   async onMarkDelivered() {
+    if (this.outstanding > 0 && !confirm(`ยังค้างชำระ ฿${this.outstanding.toLocaleString()} — ส่งมอบแบบค้างชำระ (เครดิต/ลูกหนี้)?`)) return;
     await this._run(async () => {
       // Slips are optional — upload only if the user attached any.
       const urls = this.slipFiles.length

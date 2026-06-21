@@ -33,6 +33,21 @@ export interface WorkItem {
   total: number;
 }
 
+export type VatMode = 'none' | 'exclusive' | 'inclusive'; // ไม่มี / VAT นอก / VAT ใน
+
+/** F9 — VAT/WHT block (server คำนวณ). ดู docs/F9-TAX-PAYMENT-DESIGN.md */
+export interface Tax {
+  vat_mode: VatMode;
+  vat_rate: number;
+  wht_rate: number;        // 0|1|2|3
+  base: number;
+  vat_amount: number;
+  grand_total: number;
+  wht_amount: number;
+  net_receivable: number;  // grand_total − wht_amount
+  wht_cert_ref: string;
+}
+
 export interface Payment {
   /** SERVER-AUTHORITATIVE = Σ work_items.total − discount (BE คิดให้ ดู docs/FINANCE-CONTROLS.md) */
   total: number;
@@ -63,6 +78,11 @@ export interface CreateJobPayload {
   remark?: string;
   /** Admin-only: create on behalf of another seller. Ignored when caller is seller. */
   seller_uid?: string;
+  // F9 — tax inputs (BE คำนวณ tax block ให้)
+  vat_mode?: VatMode;
+  vat_rate?: number;
+  wht_rate?: number;
+  wht_cert_ref?: string;
 }
 
 export interface CreateJobResponse {
@@ -94,6 +114,7 @@ export interface Job {
   print_uid: string | null;
   work_items: WorkItem[];
   payment: Payment;
+  tax?: Tax;
   worksheet_image: string | null;
   reference_images: string[];
   design_images: JobImageDoc[];

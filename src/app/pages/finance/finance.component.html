@@ -272,12 +272,35 @@
         <tr *ngFor="let j of outstandingDelivered; trackBy: trackById" class="border-b border-line-2 cursor-pointer hover:bg-surface-2" (click)="openJob(j.id)">
           <td class="py-1.5 font-num font-semibold">{{ j.serial_number }}</td>
           <td class="py-1.5 text-ink-3">{{ j.customer_name }}</td>
-          <td class="py-1.5 text-right font-num">จ่าย {{ j.paid_amount || 0 | number }}/{{ j.payment.total | number }}</td>
+          <td class="py-1.5 text-right font-num">จ่าย {{ j.paid_amount || 0 | number }}/{{ receivableOf(j) | number }}</td>
           <td class="py-1.5 text-right font-num font-bold text-red-700">ค้าง ฿{{ outstandingOf(j) | number }}</td>
         </tr>
         <tr *ngIf="outstandingDelivered.length === 0"><td class="py-2 text-ink-3">— ไม่มี —</td></tr>
       </tbody>
     </table>
+  </section>
+
+  <!-- F9 — ภาษี: VAT/WHT รวม + รอใบ 50 ทวิ -->
+  <section class="bg-white border-2 border-ink rounded-lg p-5 shadow-brutal">
+    <div class="flex flex-wrap gap-3.5 mb-3">
+      <div class="border-2 border-ink rounded px-3 py-2 bg-surface-2">
+        <div class="text-body-sm text-ink-3">VAT รวม (ส่งมอบแล้ว)</div>
+        <div class="font-num font-black">฿{{ totalVat | number }}</div>
+      </div>
+      <div class="border-2 border-ink rounded px-3 py-2 bg-amber-100">
+        <div class="text-body-sm text-ink-3">หัก ณ ที่จ่ายรวม</div>
+        <div class="font-num font-black">฿{{ totalWht | number }}</div>
+      </div>
+    </div>
+    <h4 class="text-h4 mt-0 mb-2">รอใบ 50 ทวิ (ถูกหัก ณ ที่จ่าย ยังไม่ได้ใบ) <span class="font-num">({{ whtPendingCert.length }})</span></h4>
+    <ul class="m-0 pl-0 list-none flex flex-col gap-1">
+      <li *ngFor="let j of whtPendingCert; trackBy: trackById" class="flex justify-between cursor-pointer hover:bg-surface-2 px-1 rounded" (click)="openJob(j.id)">
+        <span class="font-num">{{ j.serial_number }}</span>
+        <span class="text-ink-3">{{ j.customer_name }}</span>
+        <span class="font-num text-amber-700">WHT ฿{{ whtOf(j) | number }}</span>
+      </li>
+      <li *ngIf="whtPendingCert.length === 0" class="text-ink-3 text-body-sm">— ไม่มี —</li>
+    </ul>
   </section>
 
   <!-- F8.7 — Bank reconcile + reuse flags -->

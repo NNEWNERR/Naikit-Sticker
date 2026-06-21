@@ -115,6 +115,18 @@ interface Payment {
 // invariant บังคับฝั่ง BE (F1): work_item.total === quantity × unit_price.
 // แก้ payment หลังสร้างได้เฉพาะ finance/admin ผ่าน adjustPayment. ดู docs/FINANCE-CONTROLS.md
 
+interface Tax {                  // F9 — server คำนวณจาก payment.total + vat_mode/wht_rate
+  vat_mode: 'none' | 'exclusive' | 'inclusive'; // ไม่มี / VAT นอก / VAT ใน
+  vat_rate: number;             // 7 (0 ถ้า none)
+  wht_rate: number;             // 0|1|2|3 (% หัก ณ ที่จ่าย, คิดจากฐานก่อน VAT)
+  base: number; vat_amount: number; grand_total: number;
+  wht_amount: number;           // base × wht_rate%
+  net_receivable: number;       // grand_total − wht_amount (ยอดที่จะได้รับจริง)
+  wht_cert_ref: string;         // เลขใบ 50 ทวิ
+}
+// settlement (F9): paid_amount ≥ net_receivable = ปิดงาน (กัน WHT job ค้างตลอดกาล).
+// markDelivered ไม่ hard-gate การจ่ายแล้ว — รับบาลานซ์ตอนส่ง/ส่งแบบ AR. ดู docs/F9-TAX-PAYMENT-DESIGN.md
+
 interface Image {
   id: string;            // uuid
   url: string;

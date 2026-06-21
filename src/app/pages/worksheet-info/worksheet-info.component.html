@@ -244,6 +244,24 @@
               <span class="font-bold">คงเหลือ (ตามบิล)</span>
               <span class="text-[18px] font-black font-num">฿{{ paymentRemaining | number }}</span>
             </div>
+            <ng-container *ngIf="tax && (tax.vat_mode !== 'none' || tax.wht_rate > 0)">
+              <div *ngIf="tax.vat_mode !== 'none'" class="flex justify-between text-body mt-1.5 pt-1.5 border-t border-dashed border-line">
+                <span class="text-ink-3">VAT {{ tax.vat_rate }}%</span>
+                <span class="font-num">฿{{ tax.vat_amount | number }}</span>
+              </div>
+              <div class="flex justify-between text-body">
+                <span class="text-ink-3">ยอดบิล (รวม VAT)</span>
+                <span class="font-bold font-num">฿{{ tax.grand_total | number }}</span>
+              </div>
+              <div *ngIf="tax.wht_rate > 0" class="flex justify-between text-body text-amber-700">
+                <span>หัก ณ ที่จ่าย {{ tax.wht_rate }}%</span>
+                <span class="font-num">−฿{{ tax.wht_amount | number }}</span>
+              </div>
+              <div class="flex justify-between text-body font-bold">
+                <span>รับสุทธิ</span>
+                <span class="font-num">฿{{ tax.net_receivable | number }}</span>
+              </div>
+            </ng-container>
             <div class="flex justify-between text-body mt-1.5 pt-1.5 border-t border-dashed border-line">
               <span class="text-ink-3">จ่ายจริงแล้ว</span>
               <span class="font-bold font-num text-green-700">฿{{ paidAmount | number }}</span>
