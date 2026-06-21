@@ -38,7 +38,7 @@ related: F8-SLIP-PAYMENT-DESIGN.md, FINANCE-CONTROLS.md, SCHEMA.md
 interface Tax {
   vat_mode: 'none' | 'exclusive' | 'inclusive'; // ไม่มี / VAT นอก / VAT ใน
   vat_rate: number;        // default 7 (0 ถ้า none)
-  wht_rate: number;        // 0 | 1 | 2 | 3 | 5 (% หัก ณ ที่จ่าย, คิดจากฐานก่อน VAT)
+  wht_rate: number;        // 0 | 1 | 2 | 3 (% หัก ณ ที่จ่าย, คิดจากฐานก่อน VAT)
   // ── derived (server คำนวณ) ──
   base: number;            // ราคางานก่อน VAT
   vat_amount: number;
@@ -119,7 +119,7 @@ interface Tax {
 
 ## ✅ Defaults / decisions (เสนอ — confirm ได้)
 1. VAT เป็น **per-job toggle** (default `none`; เลือก นอก/ใน ต่องาน) — ตรง "บางงาน"
-2. VAT rate default **7**; WHT rate เลือก **0/1/2/3/5** (default 0)
+2. VAT rate default **7**; WHT rate เลือก **0/1/2/3** (default 0)
 3. WHT คิดจาก **ฐานก่อน VAT** (ตามสรรพากร)
 4. **markDelivered เลิก hard-gate** → รับบาลานซ์ตอนส่ง หรือ ส่งแบบ AR (revise D5)
 5. `payment.deposit` เก็บไว้เป็น display เฉยๆ; settlement ใช้ paid_amount + wht
