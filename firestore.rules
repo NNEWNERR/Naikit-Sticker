@@ -94,6 +94,23 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // ---- payments (F8 — สลิป/การจ่าย) -------------------------------------
+    // finance/admin อ่านได้ทั้งหมด; seller อ่านเฉพาะ payment ที่ผูกงานตัวเอง
+    // (denormalized seller_uids). เขียนผ่าน Cloud Functions เท่านั้น.
+    // ดู docs/F8-SLIP-PAYMENT-DESIGN.md
+    match /payments/{paymentId} {
+      allow read: if canReadAll()
+        || (isSignedIn() && request.auth.uid in resource.data.seller_uids);
+      allow write: if false;
+    }
+
+    // ---- refunds (F8 — คืนเงิน; seller ขอ → finance อนุมัติ) ---------------
+    match /refunds/{refundId} {
+      allow read: if canReadAll()
+        || (isSignedIn() && request.auth.uid == resource.data.seller_uid);
+      allow write: if false;
+    }
+
     // ---- default deny ------------------------------------------------------
     // Legacy v1 collections (groups/sites/schedules/slots/broadcasts/services,
     // job_drafts) are intentionally NOT matched → denied. Delete them from the

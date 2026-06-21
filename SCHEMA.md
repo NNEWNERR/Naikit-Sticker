@@ -217,6 +217,43 @@ interface Reply {
 
 Index: `cash_sessions (seller_uid, date desc)` + `jobs (is_deleted, seller_uid, status, payment.payment_method, date_of_completion)` สำหรับคำนวณ system_total
 
+### `payments/{paymentId}` (F8)
+
+หนึ่งการจ่ายจริง (สลิปโอน/เช็ค 1 ใบ) ผูกได้หลายใบงานผ่าน `allocations`. เขียนผ่าน Cloud Function เท่านั้น; อ่าน: finance/admin ทั้งหมด, seller เฉพาะที่ `seller_uids` มี uid ตัวเอง. ดู docs/F8-SLIP-PAYMENT-DESIGN.md
+
+| field | type | notes |
+|---|---|---|
+| `method` | `'โอน' \| 'เช็ค' \| ...` | เฟสนี้โฟกัส โอน/เช็ค (เงินสด via F5) |
+| `amount` | number | ยอดเงินจริงในสลิป |
+| `bank_ref` | string | เลขอ้างอิงโอน/เช็ค — ซ้ำ = soft flag (ไม่ block) |
+| `slip_url` / `slip_hash` | string\|null | hash = sha256 จับภาพซ้ำ/ตัดต่อ |
+| `paid_at` | Timestamp | |
+| `allocations` | `{job_id, amount}[]` | จัดสรรลงแต่ละใบงาน; Σ ≤ amount |
+| `allocated_total` | number | = Σ allocations.amount |
+| `seller_uids` | string[] | denormalized — rules read-scope |
+| `customer_name` | string | snapshot |
+| `status` | `'active' \| 'voided'` | voided ไม่นับใน paid_amount |
+| `voided_reason/by/at` | | เซ็ตเมื่อ void |
+| `created/updated_*` · `is_deleted/deleted_at` | | |
+
+### `refunds/{refundId}` (F8)
+
+คืนเงิน — seller ขอ (`pending`) → finance/admin อนุมัติ (`approved`). อ่าน: finance/admin + seller เจ้าของงาน
+
+| field | type | notes |
+|---|---|---|
+| `job_id` | string | |
+| `amount` | number | ≤ job.paid_amount |
+| `method` | `'เงินสด' \| 'โอน'` | ช่องทางคืน |
+| `reason` | string | บังคับ |
+| `status` | `'pending' \| 'approved' \| 'rejected'` | |
+| `seller_uid` | string | rules read-scope |
+| `requested_by_uid/at` · `approved_by_uid/at` | | แยกคนขอ/คนอนุมัติ |
+| `created/updated_at` · `is_deleted/deleted_at` | | |
+
+> `jobs` เพิ่ม field `paid_amount: number` (default 0) = Σ allocations active − refunds approved
+> Action enum เพิ่ม: `payment_record`, `payment_void`, `refund_request`, `refund_approve`, `refund_reject`
+
 ### Collections ที่ **เลิกใช้**
 
 ลบทิ้งทั้งหมดจาก Firebase console ก่อนเริ่ม Phase 3:

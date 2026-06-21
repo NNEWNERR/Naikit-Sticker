@@ -107,6 +107,8 @@ export interface Job {
   confirm_date: Timestamp | null;
   print_date: Timestamp | null;
   date_of_completion: Timestamp | null;
+  /** F8 — Σ payment active − refund approved; optional (เอกสารเก่าก่อน F8 ไม่มี) */
+  paid_amount?: number;
   remark: string;
   created_at: Timestamp;
   created_by_uid: string;
@@ -119,7 +121,9 @@ export interface Job {
 export type JobAction =
   | 'create' | 'edit' | 'claim_design' | 'claim_print' | 'submit_design'
   | 'confirm_design' | 'request_revision' | 'start_print' | 'upload_print'
-  | 'mark_delivered' | 'payment_adjust' | 'comment_add' | 'comment_delete'
+  | 'mark_delivered' | 'payment_adjust'
+  | 'payment_record' | 'payment_void' | 'refund_request' | 'refund_approve' | 'refund_reject'
+  | 'comment_add' | 'comment_delete'
   | 'admin_reassign' | 'delete' | 'restore';
 
 export interface JobEvent {
