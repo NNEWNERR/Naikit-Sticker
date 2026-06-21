@@ -1,7 +1,7 @@
 ---
 version: design v1 (ยังไม่ implement — รอ lock decisions)
 project: naikit-sticker
-status: DESIGN — ต้องยืนยัน "Open decisions" ก่อนเริ่ม build
+status: DESIGN LOCKED (decisions ยืนยันแล้ว 2026-06-22) — พร้อม build ตาม F8.1–F8.7
 related: FINANCE-CONTROLS.md (F1–F6), SCHEMA.md
 audience: ทั้ง FE (Naikit-Sticker) + BE (Naikit-Sticker-BE)
 ---
@@ -69,22 +69,24 @@ audience: ทั้ง FE (Naikit-Sticker) + BE (Naikit-Sticker-BE)
 2. **method ∈ {โอน, เช็ค} → `bank_ref` ไม่ว่าง + `slip_url` ไม่ว่าง**
 3. **per-job: Σ(allocations active ของใบงานนั้น) ≤ job.payment.total** — จ่ายเกินยอดงานไม่ได้ (เกิน = ต้องผ่าน refund §15)
 4. ทุก `allocations[].job_id` ต้องมีจริง + ไม่ถูกลบ + (ถ้า seller สร้าง) ต้องเป็นงานของตัวเอง
-5. **`bank_ref` (ไม่ว่าง) ต้อง unique ข้าม payments ที่ไม่ลบ** ← กฎหลักกันสลิปซ้ำ (ดู §6)
+5. **`bank_ref` ซ้ำ = soft flag (ไม่ block)** [D1] — สร้าง payment ได้แม้ ref ซ้ำ แต่ตั้งธงให้ finance review (ดู §6); reuse จับจริงด้วย bank reconcile (F8.7) + finance review
 6. **`editJob`/`adjustPayment` ห้ามทำให้ `job.payment.total < paid_amount`** — ถ้าจะลดยอดต่ำกว่าที่จ่ายมาแล้ว ต้องคืนเงินส่วนเกิน (refund §15) ก่อน → CF reject พร้อมข้อความชี้ไป refund flow
 7. **`deleteJob` ของงานที่มี active payment → reject** ("ต้อง void/refund payment ก่อนลบ") — กันเงินค้างลอย (orphaned allocation)
 
-## 6. การตรวจจับสลิปซ้ำ (reuse detection)
-- **Hard rule (CF reject):** `bank_ref` ซ้ำ = ปฏิเสธตอนสร้าง payment. โอน 1 ครั้งจริง = ref เดียว = payment doc เดียว → จะใช้ซ้ำอีกใบไม่ได้. **เคส multi-job รองรับด้วย `allocations` หลายงานใน payment เดียว** (ไม่ต้องสร้าง doc ซ้ำ)
-- **Soft flag (dashboard):**
-  - `slip_hash` เดียวกันแต่ `bank_ref`/`customer_name` ต่าง → ภาพสลิปซ้ำ/ตัดต่อ
-  - `amount` ของ payment < `allocated_total` (จัดสรรไม่ครบ — ปกติ; เกิน = ถูก reject แล้ว)
-  - payment ที่ allocations ชี้ไปงานต่าง `customer_name` กัน → น่าสงสัย (สลิปลูกค้า A ไปจ่ายงานลูกค้า B)
+## 6. การตรวจจับสลิปซ้ำ (reuse detection) — **soft flag ทั้งหมด [D1]**
+ไม่บล็อกตอนสร้าง (สร้างได้ตลอด) แต่ dashboard ขึ้นธงให้ finance review:
+- **`bank_ref` ซ้ำ** ข้าม payments ที่ active → ธงแดง (อาจใช้สลิปซ้ำ)
+- **`slip_hash` ซ้ำ** แต่ `bank_ref`/`customer_name` ต่าง → ภาพสลิปซ้ำ/ตัดต่อ
+- payment ที่ allocations ชี้ไปงานต่าง `customer_name` กัน → สลิปลูกค้า A ไปจ่ายงานลูกค้า B
+- `amount < allocated_total` → จัดสรรเกินยอดสลิป (อันนี้ invariant #1 บล็อกอยู่แล้ว)
+
+> ⚠️ เพราะ ref ซ้ำ **ไม่ถูกบล็อก** การจับ reuse จริงพึ่ง **bank reconcile (F8.7)** + finance ดูธง — ไม่ใช่กฎ DB. ดู §16
 
 ## 7. เคส multi-job / one-slip (หัวใจ)
 ลูกค้าสั่ง 3 ใบงาน (รวม 4,500) โอนสลิปเดียว 4,500:
 → สร้าง **payment 1 doc**: amount 4500, bank_ref "x", allocations `[{J1,1500},{J2,2000},{J3,1000}]`
 → invariant ผ่าน (Σ=4500 ≤ 4500), แต่ละงาน paid_amount ครบ → ปิดงานได้
-→ ใช้ ref นี้ซ้ำอีกไม่ได้ (hard rule #5). **legit ผ่าน, reuse ถูกปิด** ด้วยโมเดลเดียว
+→ ถ้ามีคนเอา ref นี้ไปสร้าง payment ใบที่สอง = สร้างได้ แต่ **dashboard ขึ้นธง ref ซ้ำ** [D1] → finance ตรวจเจอ. **legit ผ่านลื่น, reuse ถูก surface** (ไม่บล็อก)
 
 ### 7b. จ่ายหลายงวด / 1 งาน (มัดจำโอน → ที่เหลือเงินสดวันรับงาน)
 งาน J1 ยอด 3,000: มัดจำโอน 1,000 (วันสั่ง) + เงินสด 2,000 (วันรับ)
@@ -131,18 +133,17 @@ audience: ทั้ง FE (Naikit-Sticker) + BE (Naikit-Sticker-BE)
 | F8.4 | BE refund/void-job-and-refund flow + total<paid guard + deleteJob guard (§15) |
 | F8.5 | FE: ฟอร์มบันทึกการจ่าย (amount/ref/slip/หลายงาน) + ปุ่ม void/refund (finance) |
 | F8.6 | FE Finance Dashboard: panel reuse detection + outstanding + refund/void log |
-| F8.7 (opt) | bank reconcile: เทียบ Σ โอน/เช็ค active กับ statement ธนาคารจริง (mirror F5 cash) |
+| F8.7 | **bank reconcile** (สำคัญ ไม่ใช่ option): เทียบ Σ โอน/เช็ค active กับ statement ธนาคารจริง (mirror F5 cash) — เพราะ D1 ไม่บล็อก ref ซ้ำ ตัวจับ reuse/โอนปลอมจริงอยู่ที่นี่ |
 
-## 13. ⚠️ Open decisions (ต้องยืนยันก่อน build)
-1. **bank_ref ซ้ำ = hard reject หรือ soft flag?** — แนะนำ **hard reject** (กันได้จริง) แต่ถ้าบางทีลูกค้าโอนหลายรอบ ref ใกล้กัน/กรอกผิด อาจรำคาญ → fallback: reject เฉพาะซ้ำ "ทั้ง ref+amount เท่ากัน"
-2. **seller สร้าง payment ได้ไหม หรือเฉพาะ finance/admin?** — seller สร้าง = สะดวก (คนรับเงิน) แต่ลด separation; finance-only = ปลอดภัยกว่าแต่คอขวด. แนะนำ seller สร้างได้ (งานตัวเอง) + dashboard/reconcile เป็นตัวจับ
-3. **markDelivered ผูกกับ payment เลย หรือยังให้แนบรูปได้อยู่?** — แนะนำเปลี่ยนเป็น payment-based แต่ช่วง transition ให้ยอมรับทั้งสอง
-4. **เก็บ slip_hash ไหม?** (ต้องคำนวณ sha256 ฝั่ง FE ตอน upload) — แนะนำเก็บ (ถูก + เพิ่มสัญญาณจับภาพซ้ำ)
-5. **เงินสดเป็น payment doc ด้วยไหม หรือเฉพาะ โอน/เช็ค?** — เฟสนี้โฟกัส โอน/เช็ค (ตัวที่มีสลิป); เงินสดทำผ่าน F5 reconcile ไปก่อน
-6. **partial payment / มัดจำ:** payment ก้อนมัดจำ (โอน) + ก้อน balance (เงินสด) = 2 payments ต่อ 1 งาน — โมเดล allocations รองรับ (§7b) ยืนยันว่าโอเค
-7. **markDelivered บังคับ `paid_amount ≥ total` ไหม?** — แนะนำบังคับเฉพาะ โอน/เช็ค; เงินสด/อื่นๆ ผ่าน F5; **เครดิต = ปล่อย outstanding ได้** (จ่ายทีหลัง) + flag dashboard. ยืนยันว่าธุรกิจมี "ส่งของก่อนเก็บเงิน" จริงไหม
-8. **refund/void อนุมัติโดยใคร?** — แนะนำ **finance/admin เท่านั้น** (seller ขอ refund เองไม่ได้ = กันปลอมยกเลิกดูดเงิน). ยืนยัน
-9. **void ต่างจาก delete payment ยังไง?** — void = เคยจ่ายจริงแต่ภายหลังเสีย (เช็คเด้ง/ยกเลิก) เก็บประวัติ; delete = กรอกผิดล้วนๆ. ทั้งคู่ลด paid_amount แต่ void เก็บ audit ชัดกว่า
+## 13. ✅ Decisions (ยืนยันแล้ว 2026-06-22 — พร้อม build)
+1. **bank_ref ซ้ำ → flag ไม่ block** (soft) — สร้างได้ตลอด แต่ dashboard ขึ้นธงถ้า ref ซ้ำ. ⚠️ tradeoff: reuse ไม่ถูกบล็อก แค่ surface → **ต้องพึ่ง bank reconcile (F8.7) + finance review เป็นตัวจับจริง** (ดู §6, §16)
+2. **createPayment: seller (งานตัวเอง) + finance/admin** — dashboard/reconcile เป็นตัวจับ
+3. **slip_hash: เก็บ** — FE คำนวณ sha256 ตอน upload → flag ภาพซ้ำ/ตัดต่อใน dashboard
+4. **เฟสนี้โฟกัส โอน/เช็ค** — เงินสดยังผ่าน F5 cash reconcile (ไม่เป็น payment doc); refactor cash→payments ไว้เฟสหลัง
+5. **markDelivered (ร้านมีขายเชื่อจริง):** โอน/เช็ค → บังคับ `paid_amount ≥ total`; **เครดิต → ปล่อย outstanding ได้** (ขายเชื่อ จ่ายทีหลัง) + flag dashboard เป็น "ลูกหนี้ (AR)"; เงินสด/อื่นๆ → ผ่าน F5
+6. **refund มี workflow request→approve:** seller **ขอ** refund ได้ (status `pending`) → **finance/admin อนุมัติ** (`approved`) ถึงมีผลลด net; ปฏิเสธได้ (`rejected`). void payment (เช็คเด้ง) = finance/admin โดยตรง (§15)
+7. **partial/multi-payment ต่อ 1 งาน:** รองรับด้วย allocations (§7b) — ยืนยัน
+8. **void vs delete payment:** void = จ่ายจริงแต่เสียภายหลัง (เก็บ audit); delete = กรอกผิดล้วนๆ. ทั้งคู่ลด paid_amount
 
 ## 15. Refund / Void / Reversal (ยกเลิก, คืนเงิน, เช็คเด้ง)
 
@@ -156,22 +157,25 @@ audience: ทั้ง FE (Naikit-Sticker) + BE (Naikit-Sticker-BE)
 | **กรอก payment ผิดล้วนๆ** | `deletePayment` → soft delete | ลดคืน |
 | **ลูกค้ายกเลิก/คืนงานหลังจ่ายจริง** (เงินออกจริง) | `createRefund` → doc แยก money-out | net = paid − refunded |
 
-### `refunds/{refundId}` (เงินออก — ต้อง finance/admin อนุมัติ)
+### `refunds/{refundId}` (เงินออก — request→approve workflow [D6])
 | field | type | notes |
 |---|---|---|
 | `job_id` (หรือ allocations หลายงาน) | string | งานที่คืนเงิน |
 | `amount` | number | ยอดคืน (≤ paid_amount ของงาน) |
 | `method` | enum | ช่องทางคืน (เงินสด/โอน) |
 | `reason` | string | บังคับ |
-| `approved_by_uid` | string | finance/admin (ไม่ใช่ seller) |
+| `status` | `'pending' \| 'approved' \| 'rejected'` | seller ขอ = pending; finance อนุมัติ = approved |
+| `requested_by_uid` / `requested_at` | string / Timestamp | seller (หรือ finance/admin) ที่ขอ |
+| `approved_by_uid` / `approved_at` | string\|null / Timestamp\|null | finance/admin ที่อนุมัติ/ปฏิเสธ |
 | `created_at` / `is_deleted` ... | | |
 
-**กฎ:**
-- `createRefund` role **finance/admin เท่านั้น** (seller ขอเองไม่ได้ = กันปลอมยกเลิกดูดเงิน)
+**กฎ (D6 — แยกคนขอ/คนอนุมัติ):**
+- `requestRefund` — **seller (งานตัวเอง) / finance / admin** สร้างคำขอ status `pending`
+- `approveRefund` / `rejectRefund` — **finance/admin เท่านั้น**; เฉพาะ `approved` ที่มีผลลด net (paid − refunded). กันปลอมยกเลิกดูดเงิน = seller ขอได้แต่อนุมัติเองไม่ได้
 - `amount ≤ job.paid_amount` (คืนเกินที่จ่ายมาไม่ได้)
-- ยกเลิกงานที่จ่ายแล้ว = `createRefund` (ถ้าคืนเงิน) → แล้วค่อย void/delete job; **`deleteJob` ที่มี active payment ถูก block** (invariant #7) จนกว่าจะ void/refund ก่อน
+- ยกเลิกงานที่จ่ายแล้ว = refund approved → แล้วค่อย void/delete job; **`deleteJob` ที่มี active payment ถูก block** (invariant #7) จนกว่าจะ void/refund ก่อน
 - **total < paid (invariant #6):** ลด total ต่ำกว่าจ่ายแล้ว → CF ชี้ไป refund ส่วนเกินก่อน
-- ทุก void/refund → audit event (`payment_void` / `refund`) before/after + reason + actor → โผล่ใน dashboard
+- ทุก request/approve/void → audit event (`refund_request`/`refund_approve`/`payment_void`) + reason + actor → dashboard. **flag: refund pending ค้าง + refund บ่อยผิดปกติต่อ seller**
 
 ### Dashboard (F8.6) เพิ่ม flag
 - refund/void log (ใคร/เมื่อ/ยอด/เหตุผล) — โดยเฉพาะ **refund บ่อยผิดปกติต่อ seller**
