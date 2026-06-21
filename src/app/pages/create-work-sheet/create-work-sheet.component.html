@@ -11,8 +11,8 @@
 
   <!-- ── Page header ──────────────────────────────────────────────────── -->
   <app-page-header
-    breadcrumb="CREATE · สร้างใบงานใหม่"
-    title="สร้างใบงาน"
+    [breadcrumb]="editMode ? 'EDIT · แก้ไขใบงาน' : 'CREATE · สร้างใบงานใหม่'"
+    [title]="editMode ? 'แก้ไขใบงาน' : 'สร้างใบงาน'"
     [yellow]="true"
     [onBack]="goBack"
   >
@@ -198,6 +198,9 @@
           <h3 class="text-h3 m-0">การชำระเงิน · Payment</h3>
         </div>
 
+        <p *ngIf="editMode" class="text-body-sm text-ink-3 m-0 mb-2">
+          🔒 โหมดแก้ไข: ส่วนลด/มัดจำ/วิธีจ่าย แก้ผ่าน "การเงิน" (ปุ่มปรับยอดเงินในใบงาน) — ที่นี่แก้ได้แค่รายการงาน
+        </p>
         <div formGroupName="payment" class="grid grid-cols-2 md:grid-cols-4 gap-3.5">
           <app-field label="ยอดรวม">
             <div class="input-base flex items-center gap-2 bg-surface-3">
@@ -211,6 +214,7 @@
               <input
                 type="number"
                 formControlName="discount"
+                [readonly]="editMode"
                 class="flex-1 bg-transparent border-0 outline-none font-num font-bold"
                 placeholder="0"
               />
@@ -222,6 +226,7 @@
               <input
                 type="number"
                 formControlName="deposit"
+                [readonly]="editMode"
                 class="flex-1 bg-transparent border-0 outline-none font-num font-bold"
                 placeholder="0"
               />
@@ -234,7 +239,7 @@
             </div>
           </app-field>
           <app-field label="ช่องทาง">
-            <select formControlName="payment_method" class="input-base focus-ring w-full font-semibold">
+            <select formControlName="payment_method" [attr.disabled]="editMode ? '' : null" class="input-base focus-ring w-full font-semibold">
               <option value="" disabled>เลือกช่องทาง</option>
               <option value="เงินสด">เงินสด</option>
               <option value="โอน">โอนเงิน</option>
@@ -352,7 +357,7 @@
           (clicked)="submit()"
           [disabled]="!worksheetForm.valid || isSubmitting"
         >
-          <span *ngIf="!isSubmitting">✓ บันทึกใบงาน</span>
+          <span *ngIf="!isSubmitting">{{ editMode ? '✓ บันทึกการแก้ไข' : '✓ บันทึกใบงาน' }}</span>
           <span *ngIf="isSubmitting">กำลังบันทึก...</span>
         </app-button>
       </div>

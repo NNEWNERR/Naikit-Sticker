@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, computed, inject, Input, OnDestroy, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { Timestamp } from 'firebase/firestore';
 
 import { AppStateService } from 'src/app/services/app-state.service';
@@ -75,6 +76,7 @@ export class WorksheetInfoComponent implements OnInit, OnDestroy {
   private appState = inject(AppStateService);
   private usersSvc = inject(UsersService);
   private paymentSvc = inject(PaymentService);
+  private router = inject(Router);
 
   job = signal<Job | null>(null);
   jobLoading = signal(true);
@@ -195,6 +197,20 @@ export class WorksheetInfoComponent implements OnInit, OnDestroy {
 
   canDelete = computed(() => this.role() === 'admin' && !!this.job() && !this.job()!.is_deleted);
   canRestore = computed(() => this.role() === 'admin' && !!this.job()?.is_deleted);
+
+  /** แก้ไขใบงาน: admin ทุก status; seller(เจ้าของ) เฉพาะก่อนคอนเฟิร์ม (ตรงกับ BE editJob guard). */
+  canEditJob = computed(() => {
+    const j = this.job(); const r = this.role(); const uid = this.uid();
+    if (!j || j.is_deleted) return false;
+    if (r === 'admin') return true;
+    const beforeConfirm = ['รอออกแบบ', 'กำลังออกแบบ', 'รอคอนเฟิร์มแบบ'];
+    return r === 'seller' && j.seller_uid === uid && beforeConfirm.includes(j.status);
+  });
+
+  onEditJob() {
+    this.modalCtrl.dismiss();
+    this.router.navigate(['/naikit-sticker/create-work-sheet', this.jobId]);
+  }
 
   /** F2/F6 — finance/admin ปรับยอดเงินหลังสร้าง (มี audit before/after + reason). */
   canAdjustPayment = computed(() => {

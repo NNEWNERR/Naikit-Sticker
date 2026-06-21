@@ -32,6 +32,8 @@
       [onBack]="goBack"
     >
       <div header-right class="flex items-center gap-2">
+        <button *ngIf="canEditJob()" type="button" (click)="onEditJob()"
+          class="text-body-sm font-bold border-2 border-ink bg-white px-2 py-0.5 rounded cursor-pointer">✏️ แก้ไข</button>
         <span *ngIf="j.is_deleted" class="text-body-sm font-bold text-danger border-2 border-danger px-2 py-0.5 rounded">ถูกลบ</span>
         <span *ngIf="j.is_urgent" class="text-body-sm font-bold text-warn border-2 border-warn px-2 py-0.5 rounded">ด่วน!</span>
         <app-badge [tone]="badgeTone" [dot]="true">{{ j.status }}</app-badge>

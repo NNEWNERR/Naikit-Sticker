@@ -2,6 +2,7 @@ import { Injectable, signal } from '@angular/core';
 import {
   collection,
   doc,
+  getDoc,
   onSnapshot,
   orderBy,
   query,
@@ -115,6 +116,12 @@ export class JobsService {
   }
 
   // ── Firestore live listeners ─────────────────────────────────────────────
+
+  /** อ่าน job ครั้งเดียว (สำหรับ prefill edit form). */
+  async getJob(jobId: string): Promise<Job | null> {
+    const snap = await getDoc(doc(db, 'jobs', jobId));
+    return snap.exists() ? ({ id: snap.id, ...snap.data() } as Job) : null;
+  }
 
   /** Subscribe to a single job document. Returns a cleanup fn. */
   watchJob(jobId: string, onUpdate: (job: Job | null) => void, onError?: () => void): () => void {

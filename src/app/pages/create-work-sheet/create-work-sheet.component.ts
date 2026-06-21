@@ -4,7 +4,7 @@ import { ModalController } from 'src/app/services/modal.service';
 import { ToastController, AlertController } from 'src/app/services/service.service';
 import { v4 as uuidv4 } from 'uuid';
 import { WorkItemModalComponent } from './work-item-modal/work-item-modal.component';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { StorageService } from 'src/app/services/storage.service';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -15,6 +15,7 @@ import { WorksheetPreviewModalComponent } from '../../components/worksheet-previ
 import { JobAdminError, JobsService } from '../../services/jobs.service';
 import {
   CreateJobPayload,
+  Job,
   Payment,
   UnitOfLength,
   WorkItem,
@@ -314,6 +315,10 @@ export class CreateWorkSheetComponent implements OnInit {
     { value: 'อีเมล',    label: '📧 อีเมล' },
   ];
 
+  /** Edit mode — เปิดผ่าน route create-work-sheet/:jobId */
+  editMode = false;
+  editJobId: string | null = null;
+
   constructor(
     private jobsService: JobsService,
     private storageService: StorageService,
@@ -321,13 +326,55 @@ export class CreateWorkSheetComponent implements OnInit {
     private toastController: ToastController,
     private fb: FormBuilder,
     private router: Router,
+    private route: ActivatedRoute,
     private alertController: AlertController,
   ) {
     this.initNewForm();
   }
 
   ngOnInit() {
-    // this.calculateTotal();
+    const jobId = this.route.snapshot.paramMap.get('jobId');
+    if (jobId) {
+      this.editMode = true;
+      this.editJobId = jobId;
+      void this.loadJobForEdit(jobId);
+    }
+  }
+
+  /** โหลด job มา prefill (edit mode). */
+  private async loadJobForEdit(jobId: string): Promise<void> {
+    const job = await this.jobsService.getJob(jobId);
+    if (!job) {
+      const t = await this.toastController.create({ message: 'ไม่พบใบงาน', duration: 2500, position: 'top', color: 'danger' });
+      await t.present();
+      this.router.navigate(['/naikit-sticker/home']);
+      return;
+    }
+    this.worksheetForm.patchValue({
+      contact: job.contact ?? '',
+      customer_name: job.customer_name ?? '',
+      line_name: job.line_name ?? '',
+      phone: job.phone ?? '',
+      is_urgent: !!job.is_urgent,
+      remark: job.remark ?? '',
+      date_of_acceptance: job.date_of_acceptance ? new Date(job.date_of_acceptance.seconds * 1000) : '',
+      payment: {
+        discount: job.payment?.discount ?? 0,
+        deposit: job.payment?.deposit ?? 0,
+        payment_method: job.payment?.payment_method ?? '',
+      },
+    });
+    // rebuild work_items FormArray
+    const arr = this.workItems;
+    arr.clear();
+    for (const wi of job.work_items ?? []) {
+      arr.push(this.fb.group({
+        type: [wi.type], width: [wi.width], height: [wi.height],
+        unit_of_length: [wi.unit_of_length], option: [wi.option],
+        quantity: [wi.quantity], total: [wi.total],
+      }));
+    }
+    this.calculateTotal();
   }
 
   // ── Wizard navigation ─────────────────────────────────────────────────────
@@ -695,6 +742,7 @@ export class CreateWorkSheetComponent implements OnInit {
     if (!this.validateForm()) {
       return;
     }
+    if (this.editMode) { await this.submitEdit(); return; }
 
     this.isSubmitting = true;
     try {
@@ -733,6 +781,58 @@ export class CreateWorkSheetComponent implements OnInit {
         color: 'danger',
         cssClass: 'custom-toast',
         icon: 'alert-circle',
+      });
+      await toast.present();
+    } finally {
+      this.isSubmitting = false;
+    }
+  }
+
+  /**
+   * Edit mode — ส่งเฉพาะ field ที่ seller แก้ได้ผ่าน editJob (ไม่รวม payment;
+   * BE recompute total/remaining จาก work_items + คง discount/deposit/method เดิม,
+   * และ guard: แก้ได้ก่อนคอนเฟิร์ม + ลด total ต่ำกว่าที่จ่ายแล้วไม่ได้).
+   */
+  private async submitEdit() {
+    if (!this.editJobId) return;
+    this.isSubmitting = true;
+    try {
+      const v = this.worksheetForm.value;
+      const work_items: WorkItem[] = (v.workItems as WorkItemFormValue[]).map((wi) => {
+        const quantity = Number(wi.quantity) || 1;
+        const itemTotal = Number(wi.total) || 0;
+        return {
+          type: String(wi.type ?? ''),
+          width: Number(wi.width) || 0,
+          height: Number(wi.height) || 0,
+          unit_of_length: mapUnitOfLength(wi.unit_of_length),
+          option: String(wi.option ?? ''),
+          quantity,
+          unit_price: quantity > 0 ? itemTotal / quantity : 0,
+          total: itemTotal,
+        };
+      });
+      const patch: Record<string, unknown> = {
+        customer_name: String(v.customer_name ?? '').trim(),
+        contact: v.contact,
+        phone: String(v.phone ?? '').trim() || undefined,
+        line_name: String(v.line_name ?? '').trim() || undefined,
+        is_urgent: !!v.is_urgent,
+        remark: String(v.remark ?? '').trim(),
+        date_of_acceptance: v.date_of_acceptance ? new Date(v.date_of_acceptance).toISOString() : undefined,
+        work_items,
+      };
+      await this.jobsService.editJob(this.editJobId, patch);
+      const toast = await this.toastController.create({
+        message: 'แก้ไขใบงานสำเร็จ', duration: 2500, position: 'top', color: 'success',
+        cssClass: 'custom-toast', icon: 'checkmark-circle',
+      });
+      await toast.present();
+      this.router.navigate(['/naikit-sticker/home']);
+    } catch (error: unknown) {
+      const message = error instanceof JobAdminError ? error.message : 'แก้ไขไม่สำเร็จ ลองใหม่อีกครั้ง';
+      const toast = await this.toastController.create({
+        message, duration: 3000, position: 'top', color: 'danger', cssClass: 'custom-toast', icon: 'alert-circle',
       });
       await toast.present();
     } finally {

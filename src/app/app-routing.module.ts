@@ -47,6 +47,11 @@ export const routes: Routes = [
         canActivate: [roleGuard(['seller', 'admin'])],
       },
       {
+        path: 'create-work-sheet/:jobId',
+        component: CreateWorkSheetComponent,
+        canActivate: [roleGuard(['seller', 'admin'])],
+      },
+      {
         path: 'finance',
         component: FinanceComponent,
         canActivate: [roleGuard(['admin', 'finance'])],
