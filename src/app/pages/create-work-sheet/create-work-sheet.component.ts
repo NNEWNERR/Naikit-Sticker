@@ -384,10 +384,25 @@ export class CreateWorkSheetComponent implements OnInit {
     return total;
   }
 
+  /** ส่วนลด (Step 3 input). */
+  get paymentDiscount(): number {
+    const p = this.worksheetForm.get('payment')?.value || {};
+    return Number(p.discount) || 0;
+  }
+
+  /**
+   * ยอดรวมที่ต้องชำระ = ผลรวม work_items − ส่วนลด (read-only ใน Step 3).
+   * ตรงกับ BE: total เป็น server-authoritative = Σ items − discount.
+   * ดู docs/FINANCE-CONTROLS.md
+   */
+  get paymentTotal(): number {
+    return Math.max(0, this.workItemPriceTotal - this.paymentDiscount);
+  }
+
   /** คงเหลือ = total - deposit, used by Step 3 payment summary. */
   get paymentRemaining(): number {
     const p = this.worksheetForm.get('payment')?.value || {};
-    return (Number(p.total) || 0) - (Number(p.deposit) || 0);
+    return Math.max(0, this.paymentTotal - (Number(p.deposit) || 0));
   }
 
 
@@ -405,6 +420,7 @@ export class CreateWorkSheetComponent implements OnInit {
       deposit: [0],
       payment: this.fb.group({
         total: [0],
+        discount: [0],
         deposit: [0],
         date_of_payment: [new Date()],
         payment_method: [''],
@@ -742,9 +758,8 @@ export class CreateWorkSheetComponent implements OnInit {
     // type="number" controls can hand back strings, so coerce explicitly — the
     // BE rejects a non-number payment.total ("payment.total ต้องเป็นตัวเลข").
     const paymentForm = v.payment ?? {};
-    const total = Number(paymentForm.total ?? this.totalAmount) || 0;
     const deposit = Number(paymentForm.deposit ?? v.deposit) || 0;
-    const remaining = Math.max(0, total - deposit);
+    const discount = Number(paymentForm.discount) || 0;
 
     const work_items: WorkItem[] = (v.workItems as WorkItemFormValue[]).map((wi) => {
       const quantity = Number(wi.quantity) || 1;
@@ -762,8 +777,16 @@ export class CreateWorkSheetComponent implements OnInit {
       };
     });
 
+    // total เป็น server-authoritative ฝั่ง BE (= Σ items − discount) — ส่งค่าที่
+    // คำนวณตรงกันไปด้วยเพื่อ display ความสอดคล้อง แต่ BE จะคิดใหม่เองอยู่ดี.
+    // ดู docs/FINANCE-CONTROLS.md
+    const itemsTotal = work_items.reduce((sum, w) => sum + w.total, 0);
+    const total = Math.max(0, itemsTotal - discount);
+    const remaining = Math.max(0, total - deposit);
+
     const payment: Payment = {
       total,
+      discount,
       deposit,
       remaining,
       payment_method: (paymentForm.payment_method ?? '') as Payment['payment_method'],

@@ -92,13 +92,13 @@ role ที่ 5: `seller | graphic | production | admin | finance`
 
 **⚠️ deploy:** finance ใช้งานได้ต่อเมื่อ **rules + FE deploy พร้อมกัน** (rules ไม่อยู่ใน CI hosting workflow → ต้อง `firebase deploy --only firestore:rules` เอง). **อย่าสร้าง user role finance จนกว่า rules+FE จะ live** (ไม่งั้น login ได้แต่ FE prod ยังไม่รู้จัก finance → หน้าโล่ง). finance ยังไม่มี dashboard เฉพาะ (F6) — ระหว่างนี้ใช้ home(read-all) + report + diary ได้
 
-## Phase F4 — บังคับหลักฐานตามวิธีจ่าย (ปิดช่อง D) — planned
+## Phase F4 — บังคับหลักฐานตามวิธีจ่าย (ปิดช่อง D) ✅ implemented (รอ deploy พร้อม FE sprint)
 
-ตอน `markDelivered`:
-- `payment_method` ต้องไม่ว่าง
-- `โอน`/`เช็ค`/`เครดิต` → ต้องมี `delivery_slips` ≥ 1
-- `เงินสด` → บันทึกเข้า cash session ของวันนั้น (F5)
-- FE create: ช่อง "ยอดรวม" read-only = Σ items + ช่อง "ส่วนลด"
+**ทำแล้ว:**
+- BE `markDelivered`: ปฏิเสธถ้า `job.payment.payment_method === ''` (ต้องระบุวิธีชำระก่อนส่งมอบ); ถ้า method ∈ `โอน/เช็ค/เครดิต` → ต้องมี `delivery_slips` ≥ 1 (เดิม + ที่แนบใหม่). `เงินสด`/`อื่นๆ` ไม่บังคับสลิป (เงินสด → cash session F5)
+- FE `create-work-sheet`: ช่อง "ยอดรวม" เป็น **read-only** = Σ items − ส่วนลด (getter `paymentTotal`) + เพิ่มช่อง **"ส่วนลด"** (formControl `discount`) + payment_method มี placeholder "เลือกช่องทาง" (default ''); `buildCreateJobPayload` ส่ง `discount` + total derived
+
+**⚠️ deploy:** markDelivered enforcement เป็น behavior change บน live (งานที่ยังไม่มี method/สลิป จะส่งมอบไม่ได้จนกว่าจะแก้) → **bundle deploy พร้อม FE sprint** ไม่ปล่อย BE เดี่ยว (กันบล็อกการส่งมอบงานที่ค้างอยู่)
 
 ## Phase F5 — Cash reconciliation (กระทบยอดเงินสดรายวัน) — planned
 
