@@ -202,41 +202,19 @@
           🔒 โหมดแก้ไข: ส่วนลด/มัดจำ/วิธีจ่าย แก้ผ่าน "การเงิน" (ปุ่มปรับยอดเงินในใบงาน) — ที่นี่แก้ได้แค่รายการงาน
         </p>
         <div formGroupName="payment" class="grid grid-cols-2 md:grid-cols-4 gap-3.5">
-          <app-field label="ยอดรวม">
-            <div class="input-base flex items-center gap-2 bg-surface-3">
-              <span class="font-num font-bold text-ink-3">฿</span>
-              <span class="flex-1 font-num font-bold text-ink">{{ paymentTotal | number }}</span>
-            </div>
+          <app-field label="ยอดรวม (฿)">
+            <div class="input-base bg-surface-3 w-full font-num font-bold">{{ paymentTotal | number }}</div>
           </app-field>
-          <app-field label="ส่วนลด">
-            <div class="input-base focus-ring flex items-center gap-2">
-              <span class="font-num font-bold text-ink-3">฿</span>
-              <input
-                type="number"
-                formControlName="discount"
-                [readonly]="editMode"
-                class="flex-1 bg-transparent border-0 outline-none font-num font-bold"
-                placeholder="0"
-              />
-            </div>
+          <app-field label="ส่วนลด (฿)">
+            <input type="number" formControlName="discount" [readonly]="editMode"
+              class="input-base focus-ring w-full font-num font-bold" placeholder="0" />
           </app-field>
-          <app-field label="มัดจำ">
-            <div class="input-base focus-ring flex items-center gap-2">
-              <span class="font-num font-bold text-ink-3">฿</span>
-              <input
-                type="number"
-                formControlName="deposit"
-                [readonly]="editMode"
-                class="flex-1 bg-transparent border-0 outline-none font-num font-bold"
-                placeholder="0"
-              />
-            </div>
+          <app-field label="มัดจำ (฿)">
+            <input type="number" formControlName="deposit" [readonly]="editMode"
+              class="input-base focus-ring w-full font-num font-bold" placeholder="0" />
           </app-field>
-          <app-field label="คงเหลือ">
-            <div class="input-base flex items-center gap-2 bg-surface-3">
-              <span class="font-num font-bold text-ink-3">฿</span>
-              <span class="flex-1 font-num font-bold text-ink">{{ paymentRemaining | number }}</span>
-            </div>
+          <app-field label="คงเหลือ (฿)">
+            <div class="input-base bg-surface-3 w-full font-num font-bold">{{ paymentRemaining | number }}</div>
           </app-field>
           <app-field label="ช่องทาง">
             <select formControlName="payment_method" [attr.disabled]="editMode ? '' : null" class="input-base focus-ring w-full font-semibold">
