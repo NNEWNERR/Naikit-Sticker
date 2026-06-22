@@ -8,10 +8,12 @@ import { JobsService } from 'src/app/services/jobs.service';
 import { UsersService } from 'src/app/services/users.service';
 import { CashService } from 'src/app/services/cash.service';
 import { PaymentService } from 'src/app/services/payment.service';
+import { PriceAuditService } from 'src/app/services/price-audit.service';
 import { ModalController } from 'src/app/services/modal.service';
 import { Job, JobEvent } from 'src/app/core/models/job';
 import { CashSession } from 'src/app/core/models/cash';
 import { PaymentRecord, RefundRecord } from 'src/app/core/models/payment';
+import { PriceAudit } from 'src/app/core/models/price-audit';
 import { WorksheetInfoComponent } from '../worksheet-info/worksheet-info.component';
 
 interface SellerRow {
@@ -42,6 +44,14 @@ interface AdjustRow {
   at: Timestamp | null;
 }
 
+interface PriceVarianceRow {
+  uid: string;
+  name: string;
+  jobCount: number;   // จำนวนงานที่ติดธง
+  hardCount: number;
+  underTotal: number; // Σ |variance| เฉพาะที่ขายต่ำกว่ากลาง (บาทที่อาจรั่ว)
+}
+
 const DELIVERED = 'ส่งมอบแล้ว';
 const CASH = 'เงินสด';
 
@@ -64,6 +74,7 @@ export class FinanceComponent implements OnInit, OnDestroy {
   cashSessions: CashSession[] = [];
   payments: PaymentRecord[] = [];
   refunds: RefundRecord[] = [];
+  priceAudits: PriceAudit[] = []; // F7 — งานที่ติดธงราคา (severity soft/hard)
 
   // reconcile form
   recSellerUid = '';
@@ -82,6 +93,7 @@ export class FinanceComponent implements OnInit, OnDestroy {
     private users: UsersService,
     private cashSvc: CashService,
     private paymentSvc: PaymentService,
+    private priceAuditSvc: PriceAuditService,
     private modalController: ModalController,
   ) {}
 
@@ -97,6 +109,7 @@ export class FinanceComponent implements OnInit, OnDestroy {
     this.cleanups.push(this.cashSvc.watchSessions((s) => (this.cashSessions = s)));
     this.cleanups.push(this.paymentSvc.watchAllPayments((p) => (this.payments = p)));
     this.cleanups.push(this.paymentSvc.watchAllRefunds((r) => (this.refunds = r)));
+    this.cleanups.push(this.priceAuditSvc.watchFlagged((a) => (this.priceAudits = a)));
   }
 
   ngOnDestroy(): void {
@@ -180,6 +193,40 @@ export class FinanceComponent implements OnInit, OnDestroy {
   }
 
   discountOf(j: Job): number { return j.payment?.discount ?? 0; }
+
+  // ── F7 — Price variance vs ราคากลาง (covert audit) ─────────────────────────
+
+  /** งานที่ขายต่ำกว่าราคากลาง (variance ติดลบ) เรียงต่ำสุดก่อน — เป้าหลักของการตรวจ. */
+  get underpricedAudits(): PriceAudit[] {
+    return this.priceAudits
+      .filter((a) => a.variance_baht < 0)
+      .sort((a, b) => a.variance_baht - b.variance_baht);
+  }
+
+  /** จำนวนงาน hard flag (เด่นสุด). */
+  get hardFlagCount(): number {
+    return this.priceAudits.filter((a) => a.severity === 'hard').length;
+  }
+
+  /** บาทที่อาจรั่วรวม = Σ ส่วนต่างที่ขายต่ำกว่ากลาง. */
+  get totalUnderpriced(): number {
+    return this.underpricedAudits.reduce((s, a) => s + Math.abs(a.variance_baht), 0);
+  }
+
+  /** ส่วนต่างราคากลางแยกตาม seller — คนกดราคาบ่อยลอยขึ้น (สัญญาณเชิงสถิติ). */
+  get priceVarianceRows(): PriceVarianceRow[] {
+    const map = new Map<string, PriceVarianceRow>();
+    for (const a of this.priceAudits) {
+      const row = map.get(a.seller_uid) ?? {
+        uid: a.seller_uid, name: this.nameOf(a.seller_uid), jobCount: 0, hardCount: 0, underTotal: 0,
+      };
+      row.jobCount += 1;
+      if (a.severity === 'hard') row.hardCount += 1;
+      if (a.variance_baht < 0) row.underTotal += Math.abs(a.variance_baht);
+      map.set(a.seller_uid, row);
+    }
+    return [...map.values()].sort((a, b) => b.underTotal - a.underTotal);
+  }
 
   // ── F8 — Payments / Refund / reuse detection ───────────────────────────────
 

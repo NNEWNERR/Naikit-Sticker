@@ -125,6 +125,24 @@
         { "fieldPath": "seller_uid", "order": "ASCENDING" },
         { "fieldPath": "requested_at", "order": "DESCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "price_audits",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "is_deleted", "order": "ASCENDING" },
+        { "fieldPath": "severity", "order": "ASCENDING" },
+        { "fieldPath": "job_created_at", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "price_audits",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "is_deleted", "order": "ASCENDING" },
+        { "fieldPath": "seller_uid", "order": "ASCENDING" },
+        { "fieldPath": "severity", "order": "ASCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

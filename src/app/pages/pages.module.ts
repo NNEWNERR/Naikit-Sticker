@@ -9,6 +9,7 @@ import { HomeComponent } from './home/home.component';
 import { LoginComponent } from './login/login.component';
 import { SettingComponent } from './setting/setting.component';
 import { UserComponent } from './setting/user/user.component';
+import { RateCardComponent } from './setting/rate-card/rate-card.component';
 import { ReportComponent } from './report/report.component';
 import { DiarySummaryComponent } from './diary-summary/diary-summary.component';
 import { ShowImageComponent } from './show-image/show-image.component';
@@ -37,6 +38,7 @@ import {
     HomeComponent,
     SettingComponent,
     UserComponent,
+    RateCardComponent,
     LoginComponent,
     CreateWorkSheetComponent,
     ReportComponent,

@@ -111,6 +111,22 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // ---- rate_cards (F7 — ราคากลาง) ---------------------------------------
+    // อ่านได้เฉพาะ finance/admin (ใช้ในหน้า manage + audit); เขียนผ่าน Cloud Function
+    // (upsertRateCard, admin) เท่านั้น. ดู docs/F7-RATE-CARD-DESIGN.md
+    match /rate_cards/{rateId} {
+      allow read: if canReadAll();
+      allow write: if false;
+    }
+
+    // ---- price_audits (F7 — variance snapshot) ----------------------------
+    // ⚠️ canReadAll เท่านั้น — seller/graphic/production อ่านไม่ได้เด็ดขาด (Q4: covert
+    // audit; Firestore ซ่อน field รายตัวไม่ได้ จึงแยก collection). เขียนผ่าน CF เท่านั้น.
+    match /price_audits/{jobId} {
+      allow read: if canReadAll();
+      allow write: if false;
+    }
+
     // ---- default deny ------------------------------------------------------
     // Legacy v1 collections (groups/sites/schedules/slots/broadcasts/services,
     // job_drafts) are intentionally NOT matched → denied. Delete them from the

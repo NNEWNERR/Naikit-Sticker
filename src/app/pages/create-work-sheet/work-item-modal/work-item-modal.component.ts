@@ -2,6 +2,12 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ModalController } from 'src/app/services/modal.service';
 import { v4 as uuidv4 } from 'uuid';
+import {
+  WORK_ITEM_TYPES,
+  UNIT_OPTIONS,
+  optionsForType,
+  typeHasPresetOptions,
+} from 'src/app/core/data/work-item-catalog';
 
 @Component({
     selector: 'app-work-item-modal',
@@ -44,80 +50,21 @@ export class WorkItemModalComponent implements OnInit {
     }
 
 
+    // dropdown source เดียวจาก core/data/work-item-catalog (ตรง canonical กับ BE pricing.ts — F7)
     getWorkItemTypes() {
-        return [
-            { value: 'ไวนิล', label: 'ไวนิล' },
-            { value: 'สติกเกอร์', label: 'สติกเกอร์ พิมพ์' },
-            { value: 'สติกเกอร์ตัด', label: 'สติกเกอร์ ตัด' },
-            { value: 'ฉลาก', label: 'ฉลาก' },
-            { value: 'นามบัตร', label: 'นามบัตร' },
-            { value: 'ใบปลิว', label: 'ใบปลิว' },
-            { value: 'โปสเตอร์', label: 'โปสเตอร์' },
-            { value: 'พลาสวูด', label: 'พลาสวูด' },
-            { value: 'ตรายาง', label: 'ตรายาง' },
-            { value: 'กล่องไฟ', label: 'กล่องไฟ' },
-            { value: 'โลอัพ', label: 'โลอัพ' },
-            { value: 'แบล็คลิส', label: 'แบล็คลิส' },
-        ];
+        return WORK_ITEM_TYPES;
     }
 
     getUnitOptions() {
-        return [
-            { value: 'มม.', label: 'มม.' },
-            { value: 'ซม.', label: 'ซม.' },
-            { value: 'นิ้ว', label: 'นิ้ว' },
-            { value: 'เมตร', label: 'เมตร' }
-        ];
+        return UNIT_OPTIONS;
     }
 
     getWorkItemOptions(type: string) {
-        const optionMap: { [key: string]: { value: string, label: string }[] } = {
-            'ไวนิล': [
-                { value: 'ตาไก่', label: 'ตาไก่' },
-                { value: 'ร้อยท่อ', label: 'ร้อยท่อ' },
-                { value: 'โครงไม้', label: 'โครงไม้' },
-                { value: 'พับขอบ', label: 'พับขอบ' },
-                { value: 'ธงญี่ปุ่นหน้า', label: 'ธงญี่ปุ่นหน้า' },
-                { value: 'ธงญี่ปุ่นหน้า-หลัง', label: 'ธงญี่ปุ่นหน้า-หลัง' },
-                { value: 'ปล่อยขอบ', label: 'ปล่อยขอบ' },
-                { value: 'โครงเหล็ก', label: 'โครงเหล็ก' },
-                { value: 'กรอบไม้', label: 'กรอบไม้' }
-            ],
-            'สติกเกอร์': [
-                { value: 'ติดฟิวเจอร์บอร์ด 3 มิล', label: 'ติดฟิวเจอร์บอร์ด 3 มิล' },
-                { value: 'ติดฟิวเจอร์บอร์ด 5 มิล', label: 'ติดฟิวเจอร์บอร์ด 5 มิล' },
-                { value: 'ติดพลาสวูด 3 มิล', label: 'ติดพลาสวูด 3 มิล' },
-                { value: 'ติดพลาสวูด 5 มิล', label: 'ติดพลาสวูด 5 มิล' },
-                { value: 'ติดพลาสวูด 10 มิล', label: 'ติดพลาสวูด 10 มิล' },
-                { value: 'ติดอะคริลิค', label: 'ติดอะคริลิค' },
-            ],
-            'สติกเกอร์ตัด': [
-                { value: 'ติดฟิวเจอร์บอร์ด', label: 'ติดฟิวเจอร์บอร์ด' },
-                { value: 'ติดอะคริลิค', label: 'ติดอะคริลิค' },
-                { value: 'ติดพลาสวูด', label: 'ติดพลาสวูด' }
-            ],
-            'ตรายาง': [
-                { value: 'Q-04', label: 'Q-04(4x60 MM.)' },
-                { value: 'Q-05', label: 'Q-05(11x25 MM.)' },
-                { value: 'Q-10', label: 'Q-10(11x40 MM.)' },
-                { value: 'Q-11', label: 'Q-11(16x48 MM.)' },
-                { value: 'Q-12', label: 'Q-12(24x49 MM.)' },
-                { value: 'Q-13', label: 'Q-13(13x49 MM.)' },
-                { value: 'Q-14', label: 'Q-14(14x60 MM.)' },
-                { value: 'Q-16', label: 'Q-16(36x61 MM.)' },
-                { value: 'Q-18', label: 'Q-18(22x69 MM.)' },
-                { value: 'Q-24', label: 'Q-24(28x78 MM.)' },
-                { value: 'Q-26', label: 'Q-26(16x83 MM.)' },
-                { value: 'Q-32', label: 'Q-32(16 MM.)' },
-                { value: 'Q-34', label: 'Q-34(20 MM.)' },
-                { value: 'Q-53', label: 'Q-53(38 MM.)' }
-            ]
-        };
-        return optionMap[type] || [];
+        return optionsForType(type);
     }
 
     hasPresetOptions(type: string): boolean {
-        return ['ไวนิล', 'สติกเกอร์', 'สติกเกอร์ตัด', 'ตรายาง'].includes(type);
+        return typeHasPresetOptions(type);
     }
 
     dismiss() {

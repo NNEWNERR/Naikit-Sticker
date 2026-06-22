@@ -139,7 +139,9 @@ collection `cash_sessions/{seller_uid}_{YYYYMMDD}` (วันตาม ICT/UTC+7
 
 ปิดช่องโหว่ `delivery_slips` ที่เก็บแค่รูป (ไม่มี amount/ref → ตรวจสลิปซ้ำไม่ได้). โมเดล `payments` + `allocations` (1 การจ่าย ผูกหลายใบงาน) → hard rule `bank_ref` unique กันใช้สลิปซ้ำ พร้อมรองรับเคส multi-job/one-slip. **ยังเป็น design — รอ lock open decisions ก่อน build.** รายละเอียด: [`docs/F8-SLIP-PAYMENT-DESIGN.md`](./F8-SLIP-PAYMENT-DESIGN.md)
 
-> F7 (ราคากลาง advisory) ยังเป็นแนวคิด — ทำทีหลังถ้าต้องการ
+## Phase F7 — ราคากลาง (Rate Card + covert variance audit) — DESIGN (ดู F7-RATE-CARD-DESIGN.md)
+
+ปิดช่องโหว่ที่ F1–F9 ยังไม่แตะ: **seller กดราคาในใบงานต่ำกว่าราคากลาง** แล้วเก็บเงินตามจริง ส่วนต่างเข้ากระเป๋า (ปนกับส่วนลดจริง → block ไม่ได้). เพิ่ม `rate_cards` (rate ขั้นบันไดตามขนาด, per_sqm/per_unit) → BE คำนวณ `price_audit` snapshot ลง job ตอนสร้าง/แก้ (silent, ไม่แตะ seller) → Finance Dashboard เห็นส่วนต่างแยก seller เชิงสถิติ. **ปิด "กดราคาในใบงาน" ได้ แต่ยังไม่ปิด "เก็บสดเกินที่บันทึก" (= ชั้น 2 receipt/QR แยกเฟส).** decisions D1–D7 lock แล้ว — รอ rate จริง + review ก่อน build. รายละเอียด: [`docs/F7-RATE-CARD-DESIGN.md`](./F7-RATE-CARD-DESIGN.md)
 
 ## Phase F9 — VAT + หัก ณ ที่จ่าย (WHT) + จังหวะรับเงิน — DESIGN (ดู F9-TAX-PAYMENT-DESIGN.md)
 

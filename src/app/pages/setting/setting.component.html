@@ -12,9 +12,14 @@
     [yellow]="true"
   ></app-page-header>
 
-  <div class="px-4 md:px-6 py-5">
+  <div class="px-4 md:px-6 py-5 flex flex-col gap-5">
     <div class="bg-white border-2 border-ink rounded-lg p-5 md:p-[22px] shadow-brutal min-w-0">
       <app-user></app-user>
+    </div>
+
+    <!-- F7 — ราคากลาง (admin เท่านั้น) -->
+    <div *ngIf="isAdmin" class="bg-white border-2 border-ink rounded-lg p-5 md:p-[22px] shadow-brutal min-w-0">
+      <app-rate-card></app-rate-card>
     </div>
   </div>
 </div>

@@ -72,49 +72,6 @@ export class CreateWorkSheetComponent implements OnInit {
   @ViewChild('referenceInput') referenceInput: ElementRef;
 
   form: FormGroup;
-  type = 'vinyl';
-  types = [
-    {
-      title: 'ไวนิล',
-      value: 'vinyl',
-      disabled: false,
-    },
-    {
-      title: 'สติกเกอร์',
-      value: 'sticker',
-      disabled: false,
-    },
-    {
-      title: 'ฉลาก',
-      value: 'label',
-      disabled: false,
-    },
-    {
-      title: 'นามบัตร',
-      value: 'card',
-      disabled: false,
-    },
-    {
-      title: 'ใบปลิว',
-      value: 'plow',
-      disabled: false,
-    },
-    {
-      title: 'กล่องไฟ',
-      value: 'light_box',
-      disabled: false,
-    },
-    {
-      title: 'พลาสวูด',
-      value: 'plastic',
-      disabled: false,
-    },
-    {
-      title: 'ตรายาง',
-      value: 'tarp',
-      disabled: false,
-    },
-  ];
 
   contacts = [
     {
@@ -505,71 +462,6 @@ export class CreateWorkSheetComponent implements OnInit {
   }
   get whtAmount(): number { return this.r2((this.taxBase * this.whtRate) / 100); }
   get netReceivable(): number { return this.r2(this.grandTotal - this.whtAmount); }
-
-  getWorkItemTypes() {
-    return [
-      { value: 'ไวนิล', label: 'ไวนิล' },
-      { value: 'สติกเกอร์', label: 'สติกเกอร์ พิมพ์' },
-      { value: 'สติกเกอร์ตัด', label: 'สติกเกอร์ ตัด' },
-      { value: 'ฉลาก', label: 'ฉลาก' },
-      { value: 'นามบัตร', label: 'นามบัตร' },
-      { value: 'ใบปลิว', label: 'ใบปลิว' },
-      { value: 'โปสเตอร์', label: 'โปสเตอร์' },
-      { value: 'พลาสวูด', label: 'พลาสวูด' },
-      { value: 'ตรายาง', label: 'ตรายาง' },
-      { value: 'กล่องไฟ', label: 'กล่องไฟ' }
-    ];
-  }
-
-  getUnitOptions() {
-    return [
-      { value: 'mm.', label: 'มม.' },
-      { value: 'cm.', label: 'ซม.' },
-      { value: 'inch', label: 'นิ้ว' },
-      { value: 'm.', label: 'เมตร' }
-    ];
-  }
-
-  getWorkItemOptions(type: string) {
-    const optionMap: { [key: string]: { value: string, label: string }[] } = {
-      'ไวนิล': [
-        { value: 'takai', label: 'ตาไก่' },
-        { value: 'roty', label: 'ร้อยท่อ' },
-        { value: 'wood', label: 'โครงไม้' },
-        { value: 'seal', label: 'พับขอบ' },
-        { value: 'non-seal', label: 'ปล่อยขอบ' },
-        { value: 'metal', label: 'โครงเหล็ก' },
-        { value: 'frame-wood', label: 'กรอบไม้' }
-      ],
-      'สติกเกอร์': [
-        { value: 'future-board', label: 'ติดฟิวเจอร์บอร์ด' },
-        { value: 'acrylic', label: 'ติดอะคริลิค' },
-        { value: 'plaswood', label: 'ติดพลาสวูด' }
-      ],
-      'สติกเกอร์ตัด': [
-        { value: 'future-board', label: 'ติดฟิวเจอร์บอร์ด' },
-        { value: 'acrylic', label: 'ติดอะคริลิค' },
-        { value: 'plaswood', label: 'ติดพลาสวูด' }
-      ],
-      'ตรายาง': [
-        { value: 'Q-04', label: 'Q-04(4x60 MM.)' },
-        { value: 'Q-05', label: 'Q-05(11x25 MM.)' },
-        { value: 'Q-10', label: 'Q-10(11x40 MM.)' },
-        { value: 'Q-11', label: 'Q-11(16x48 MM.)' },
-        { value: 'Q-12', label: 'Q-12(24x49 MM.)' },
-        { value: 'Q-13', label: 'Q-13(13x49 MM.)' },
-        { value: 'Q-14', label: 'Q-14(14x60 MM.)' },
-        { value: 'Q-16', label: 'Q-16(36x61 MM.)' },
-        { value: 'Q-18', label: 'Q-18(22x69 MM.)' },
-        { value: 'Q-24', label: 'Q-24(28x78 MM.)' },
-        { value: 'Q-26', label: 'Q-26(16x83 MM.)' },
-        { value: 'Q-32', label: 'Q-32(16 MM.)' },
-        { value: 'Q-34', label: 'Q-34(20 MM.)' },
-        { value: 'Q-53', label: 'Q-53(38 MM.)' }
-      ]
-    };
-    return optionMap[type] || [];
-  }
 
   get workItems() {
     return this.worksheetForm.get('workItems') as FormArray;
@@ -1109,10 +1001,6 @@ export class CreateWorkSheetComponent implements OnInit {
   showOption(index: number, item: any) {
     // no-op (debug logging removed)
     void index; void item;
-  }
-
-  hasPresetOptions(type: string): boolean {
-    return ['ไวนิล', 'สติกเกอร์', 'สติกเกอร์ตัด', 'ตรายาง'].includes(type);
   }
 
   //#endregion

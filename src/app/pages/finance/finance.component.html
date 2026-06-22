@@ -33,6 +33,82 @@
     </div>
   </div>
 
+  <!-- F7 — ส่วนต่างราคากลาง (covert audit การกดราคา) -->
+  <section class="bg-white border-2 border-ink rounded-lg p-5 shadow-brutal flex flex-col gap-4">
+    <div class="flex items-center justify-between flex-wrap gap-2">
+      <h3 class="text-h3 m-0">🎯 ส่วนต่างราคากลาง (ตรวจการกดราคา)</h3>
+      <div class="flex gap-2.5">
+        <div class="border-2 border-ink rounded px-3 py-2 bg-surface-2">
+          <div class="text-body-sm text-ink-3">งานติดธงแดง</div>
+          <div class="font-num font-black" [class.text-red-700]="hardFlagCount > 0">{{ hardFlagCount }}</div>
+        </div>
+        <div class="border-2 border-ink rounded px-3 py-2" [class.bg-red-50]="totalUnderpriced > 0">
+          <div class="text-body-sm text-ink-3">ต่ำกว่ากลางรวม</div>
+          <div class="font-num font-black text-red-700">−฿{{ totalUnderpriced | number }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- per-seller aggregate (คนกดราคาบ่อยลอยขึ้น) -->
+    <div class="overflow-x-auto">
+      <table class="w-full text-body-sm border-collapse">
+        <thead>
+          <tr class="text-left border-b-2 border-ink">
+            <th class="py-2 pr-3">ผู้ขาย</th>
+            <th class="py-2 pr-3 text-right">งานติดธง</th>
+            <th class="py-2 pr-3 text-right">ธงแดง</th>
+            <th class="py-2 pr-3 text-right">ต่ำกว่ากลางรวม</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let r of priceVarianceRows; trackBy: trackById" class="border-b border-line-2">
+            <td class="py-2 pr-3 font-semibold">{{ r.name }}</td>
+            <td class="py-2 pr-3 text-right font-num">{{ r.jobCount }}</td>
+            <td class="py-2 pr-3 text-right font-num font-bold" [class.text-red-700]="r.hardCount > 0">{{ r.hardCount }}</td>
+            <td class="py-2 pr-3 text-right font-num font-bold text-red-700">−฿{{ r.underTotal | number }}</td>
+          </tr>
+          <tr *ngIf="priceVarianceRows.length === 0">
+            <td colspan="4" class="py-3 text-center text-ink-3">— ยังไม่มีงานติดธง (ต้องตั้ง rate card ก่อน) —</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- flagged jobs ที่ขายต่ำกว่ากลาง (คลิกเปิดใบงาน) -->
+    <div *ngIf="underpricedAudits.length" class="overflow-x-auto">
+      <div class="text-body-sm text-ink-3 mb-1">งานที่ขายต่ำกว่าราคากลาง</div>
+      <table class="w-full text-body-sm border-collapse">
+        <thead>
+          <tr class="text-left border-b-2 border-ink">
+            <th class="py-2 pr-3">ใบงาน</th>
+            <th class="py-2 pr-3">ผู้ขาย</th>
+            <th class="py-2 pr-3 text-right">ราคากลาง</th>
+            <th class="py-2 pr-3 text-right">ขายจริง</th>
+            <th class="py-2 pr-3 text-right">ส่วนต่าง</th>
+            <th class="py-2 pr-3">ระดับ</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let a of underpricedAudits; trackBy: trackById"
+              class="border-b border-line-2 cursor-pointer hover:bg-surface-2" (click)="openJob(a.job_id)"
+              [class.bg-red-50]="a.severity === 'hard'">
+            <td class="py-2 pr-3 font-num font-semibold">{{ a.serial_number }}</td>
+            <td class="py-2 pr-3">{{ nameOf(a.seller_uid) }}</td>
+            <td class="py-2 pr-3 text-right font-num">{{ a.expected_total | number }}</td>
+            <td class="py-2 pr-3 text-right font-num">{{ a.actual_total | number }}</td>
+            <td class="py-2 pr-3 text-right font-num font-bold text-red-700">{{ a.variance_baht | number }} ({{ a.variance_pct | number:'1.0-0' }}%)</td>
+            <td class="py-2 pr-3">
+              <span class="px-2 py-0.5 rounded border-2 border-ink text-body-sm font-bold"
+                    [class.bg-red-200]="a.severity === 'hard'" [class.bg-amber-100]="a.severity === 'soft'">
+                {{ a.severity === 'hard' ? 'แดง' : 'เหลือง' }}
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
   <!-- Cash reconciliation -->
   <section class="bg-white border-2 border-ink rounded-lg p-5 shadow-brutal flex flex-col gap-4">
     <h3 class="text-h3 m-0">กระทบยอดเงินสดรายวัน</h3>
