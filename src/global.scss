@@ -372,6 +372,19 @@ html, body {
 }
 .input-base::placeholder { color: var(--ink-4); font-weight: 500; }
 
+/* Number inputs — ตัด spinner + native appearance ออก เพื่อให้ input ที่ฝังใน
+   wrapper .input-base (เช่น ฿-prefix ของ ส่วนลด/มัดจำ) แบนเรียบ ไม่เป็น box ซ้อน box */
+input[type='number'] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+  margin: 0;
+}
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
 .input-brutal {
   /* Heavier variant used on the login / hero forms with the 4px shadow */
   background: var(--panel);
