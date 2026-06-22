@@ -232,6 +232,14 @@
               <span class="text-ink-3">ส่วนลด</span>
               <span class="font-bold font-num text-amber-700">−฿{{ (j.payment?.discount || 0) | number }}</span>
             </div>
+            <div *ngIf="(j.payment?.shipping_fee || 0) > 0" class="flex justify-between text-body mb-1">
+              <span class="text-ink-3">ค่าส่ง</span>
+              <span class="font-bold font-num">+฿{{ (j.payment?.shipping_fee || 0) | number }}</span>
+            </div>
+            <div *ngIf="(j.payment?.transfer_fee || 0) > 0" class="flex justify-between text-body mb-1">
+              <span class="text-ink-3">ค่าธรรมเนียม</span>
+              <span class="font-bold font-num">+฿{{ (j.payment?.transfer_fee || 0) | number }}</span>
+            </div>
             <div class="flex justify-between text-body mb-1.5">
               <span class="text-ink-3">มัดจำ</span>
               <span class="font-bold font-num">฿{{ (j.payment?.deposit || 0) | number }}</span>
@@ -262,6 +270,11 @@
                 <span class="font-num">฿{{ tax.net_receivable | number }}</span>
               </div>
             </ng-container>
+            <div *ngIf="(j.payment?.shipping_fee || 0) > 0 || (j.payment?.transfer_fee || 0) > 0"
+                 class="flex justify-between text-body font-bold mt-1.5 pt-1.5 border-t border-dashed border-line">
+              <span>ยอดที่ลูกค้าต้องจ่าย</span>
+              <span class="font-num">฿{{ receivable | number }}</span>
+            </div>
             <div class="flex justify-between text-body mt-1.5 pt-1.5 border-t border-dashed border-line">
               <span class="text-ink-3">จ่ายจริงแล้ว</span>
               <span class="font-bold font-num text-green-700">฿{{ paidAmount | number }}</span>
@@ -288,6 +301,12 @@
                 </label>
                 <label class="flex flex-col gap-1 text-body-sm">มัดจำ (฿)
                   <input type="number" [(ngModel)]="adjDeposit" class="input-base focus-ring font-num" placeholder="0" />
+                </label>
+                <label class="flex flex-col gap-1 text-body-sm">ค่าส่ง (฿)
+                  <input type="number" [(ngModel)]="adjShipping" class="input-base focus-ring font-num" placeholder="0" />
+                </label>
+                <label class="flex flex-col gap-1 text-body-sm">ค่าธรรมเนียม (฿)
+                  <input type="number" [(ngModel)]="adjTransfer" class="input-base focus-ring font-num" placeholder="0" />
                 </label>
               </div>
               <label class="flex flex-col gap-1 text-body-sm">วิธีจ่าย

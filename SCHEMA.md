@@ -107,11 +107,15 @@ interface WorkItem {
 interface Payment {
   total: number;         // SERVER-AUTHORITATIVE = sum(work_items.total) - discount; client total ถูก ignore
   discount: number;      // default 0; 0 ≤ discount ≤ sum(work_items.total)
+  shipping_fee: number;  // F10 — ค่าส่ง (ลูกค้าจ่ายเพิ่ม), บวกท้ายบิล นอกฐาน VAT/WHT; default 0
+  transfer_fee: number;  // F10 — ค่าธรรมเนียม เช็ค/โอน (ลูกค้าจ่ายเพิ่ม), นอกฐาน VAT/WHT; default 0
   deposit: number;       // 0 ≤ deposit ≤ total
-  remaining: number;     // SERVER-DERIVED = total - deposit
+  remaining: number;     // SERVER-DERIVED = total - deposit (ค่างาน)
   payment_method: 'เงินสด' | 'โอน' | 'เช็ค' | 'เครดิต' | 'อื่นๆ' | '';
   date_of_payment: Timestamp | null;
 }
+// ยอดที่ลูกค้าต้องจ่าย/ร้านต้องได้รับ (F10) = tax.net_receivable + shipping_fee + transfer_fee
+// settlement (paid_amount), markDelivered/editJob/adjustPayment guards, payment cap ใช้ยอดนี้
 // invariant บังคับฝั่ง BE (F1): work_item.total === quantity × unit_price.
 // แก้ payment หลังสร้างได้เฉพาะ finance/admin ผ่าน adjustPayment. ดู docs/FINANCE-CONTROLS.md
 

@@ -106,6 +106,8 @@ export class WorksheetInfoComponent implements OnInit, OnDestroy {
   showAdjust = false;
   adjDeposit: number | null = null;
   adjDiscount: number | null = null;
+  adjShipping: number | null = null;
+  adjTransfer: number | null = null;
   adjMethod = '';
   adjReason = '';
   readonly paymentMethods = ['เงินสด', 'โอน', 'เช็ค', 'เครดิต', 'อื่นๆ'];
@@ -351,8 +353,12 @@ export class WorksheetInfoComponent implements OnInit, OnDestroy {
   canRequestRefund = computed(() => this.canHandleMoney() && (this.job()?.paid_amount ?? 0) > 0);
 
   get paidAmount(): number { return this.job()?.paid_amount ?? 0; }
-  /** F9 — ยอดที่จะได้รับจริง (net_receivable = ยอดบิล − WHT); fallback ยอดงาน */
-  get receivable(): number { return this.job()?.tax?.net_receivable ?? this.job()?.payment?.total ?? 0; }
+  /** F9/F10 — ยอดที่ลูกค้าต้องจ่ายร้าน = รับสุทธิ + ค่าส่ง + ค่าธรรมเนียม */
+  get receivable(): number {
+    const p = this.job()?.payment;
+    return (this.job()?.tax?.net_receivable ?? p?.total ?? 0)
+      + (p?.shipping_fee ?? 0) + (p?.transfer_fee ?? 0);
+  }
   get outstanding(): number { return Math.max(0, this.receivable - this.paidAmount); }
   get tax() { return this.job()?.tax; }
 
@@ -496,6 +502,8 @@ export class WorksheetInfoComponent implements OnInit, OnDestroy {
     const p = this.job()?.payment;
     this.adjDeposit = p?.deposit ?? 0;
     this.adjDiscount = p?.discount ?? 0;
+    this.adjShipping = p?.shipping_fee ?? 0;
+    this.adjTransfer = p?.transfer_fee ?? 0;
     this.adjMethod = p?.payment_method ?? '';
     this.adjReason = '';
     this.actionError.set('');
@@ -516,6 +524,8 @@ export class WorksheetInfoComponent implements OnInit, OnDestroy {
         reason: this.adjReason.trim(),
         deposit: this.adjDeposit ?? undefined,
         discount: this.adjDiscount ?? undefined,
+        shipping_fee: this.adjShipping ?? undefined,
+        transfer_fee: this.adjTransfer ?? undefined,
         payment_method: this.adjMethod || undefined,
       });
       this.showAdjust = false;

@@ -53,6 +53,10 @@ export interface Payment {
   total: number;
   /** ส่วนลด default 0; optional ใน read (เอกสารเก่าก่อน F1 ไม่มี field นี้) */
   discount?: number;
+  /** F10 — ค่าส่ง (ลูกค้าจ่ายเพิ่ม, นอกฐาน VAT/WHT); optional ใน read (งานเก่าไม่มี) */
+  shipping_fee?: number;
+  /** F10 — ค่าธรรมเนียม เช็ค/โอน (ลูกค้าจ่ายเพิ่ม, นอกฐาน VAT/WHT); optional ใน read */
+  transfer_fee?: number;
   deposit: number;
   remaining: number;
   payment_method: PaymentMethod;

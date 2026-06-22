@@ -209,6 +209,14 @@
             <input type="number" formControlName="discount" [readonly]="editMode"
               class="input-base focus-ring w-full font-num font-bold" placeholder="0" />
           </app-field>
+          <app-field label="ค่าส่ง (฿)">
+            <input type="number" formControlName="shipping_fee" [readonly]="editMode"
+              class="input-base focus-ring w-full font-num font-bold" placeholder="0" />
+          </app-field>
+          <app-field label="ค่าธรรมเนียม (฿)">
+            <input type="number" formControlName="transfer_fee" [readonly]="editMode"
+              class="input-base focus-ring w-full font-num font-bold" placeholder="0" />
+          </app-field>
           <app-field label="มัดจำ (฿)">
             <input type="number" formControlName="deposit" [readonly]="editMode"
               class="input-base focus-ring w-full font-num font-bold" placeholder="0" />
@@ -252,7 +260,15 @@
           <div *ngIf="vatMode !== 'none'" class="flex justify-between"><span class="text-ink-3">VAT 7%</span><span class="font-num">฿{{ vatAmount | number }}</span></div>
           <div class="flex justify-between font-bold"><span>ยอดบิล (รวม VAT)</span><span class="font-num">฿{{ grandTotal | number }}</span></div>
           <div *ngIf="whtRate > 0" class="flex justify-between text-amber-700"><span>หัก ณ ที่จ่าย {{ whtRate }}%</span><span class="font-num">−฿{{ whtAmount | number }}</span></div>
-          <div class="flex justify-between font-black pt-1 border-t border-line-2"><span>รับสุทธิ</span><span class="font-num text-[16px]">฿{{ netReceivable | number }}</span></div>
+          <div class="flex justify-between font-black pt-1 border-t border-line-2"><span>รับสุทธิ (ค่างาน)</span><span class="font-num text-[16px]">฿{{ netReceivable | number }}</span></div>
+        </div>
+
+        <!-- F10 — ยอดที่ลูกค้าต้องจ่าย (รวมค่าส่ง/ค่าธรรมเนียม) -->
+        <div class="mt-3 p-3 border-2 border-ink rounded-md bg-surface-2 flex flex-col gap-1 text-body-sm">
+          <div class="flex justify-between"><span class="text-ink-3">ค่างาน{{ vatMode !== 'none' || whtRate > 0 ? ' (รับสุทธิ)' : '' }}</span><span class="font-num">฿{{ netReceivable | number }}</span></div>
+          <div *ngIf="shippingFee > 0" class="flex justify-between"><span class="text-ink-3">+ ค่าส่ง</span><span class="font-num">฿{{ shippingFee | number }}</span></div>
+          <div *ngIf="transferFee > 0" class="flex justify-between"><span class="text-ink-3">+ ค่าธรรมเนียม</span><span class="font-num">฿{{ transferFee | number }}</span></div>
+          <div class="flex justify-between font-black pt-1 border-t border-line-2"><span>ยอดที่ลูกค้าต้องจ่าย</span><span class="font-num text-[18px]">฿{{ netPayable | number }}</span></div>
         </div>
       </div>
 

@@ -82,6 +82,8 @@ export class JobsService {
       reason: string;
       deposit?: number;
       discount?: number;
+      shipping_fee?: number;
+      transfer_fee?: number;
       payment_method?: string;
       date_of_payment?: string | null;
     },

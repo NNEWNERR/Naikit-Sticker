@@ -317,6 +317,8 @@ export class CreateWorkSheetComponent implements OnInit {
       date_of_acceptance: job.date_of_acceptance ? new Date(job.date_of_acceptance.seconds * 1000) : '',
       payment: {
         discount: job.payment?.discount ?? 0,
+        shipping_fee: job.payment?.shipping_fee ?? 0,
+        transfer_fee: job.payment?.transfer_fee ?? 0,
         deposit: job.payment?.deposit ?? 0,
         payment_method: job.payment?.payment_method ?? '',
       },
@@ -413,6 +415,14 @@ export class CreateWorkSheetComponent implements OnInit {
     return Math.max(0, this.paymentTotal - (Number(p.deposit) || 0));
   }
 
+  /** F10 — ค่าส่ง / ค่าธรรมเนียม (บวกเพิ่มเข้ายอดที่ลูกค้าจ่าย, นอกฐาน VAT/WHT). */
+  get shippingFee(): number {
+    return Number(this.worksheetForm.get('payment')?.value?.shipping_fee) || 0;
+  }
+  get transferFee(): number {
+    return Number(this.worksheetForm.get('payment')?.value?.transfer_fee) || 0;
+  }
+
 
   private initNewForm() {
     // Fields that the BE owns (serial_number / seller_uid / status / created_*
@@ -429,6 +439,8 @@ export class CreateWorkSheetComponent implements OnInit {
       payment: this.fb.group({
         total: [0],
         discount: [0],
+        shipping_fee: [0],
+        transfer_fee: [0],
         deposit: [0],
         date_of_payment: [new Date()],
         payment_method: [''],
@@ -462,6 +474,8 @@ export class CreateWorkSheetComponent implements OnInit {
   }
   get whtAmount(): number { return this.r2((this.taxBase * this.whtRate) / 100); }
   get netReceivable(): number { return this.r2(this.grandTotal - this.whtAmount); }
+  /** F10 — ยอดที่ลูกค้าต้องจ่าย = รับสุทธิ + ค่าส่ง + ค่าธรรมเนียม */
+  get netPayable(): number { return this.r2(this.netReceivable + this.shippingFee + this.transferFee); }
 
   get workItems() {
     return this.worksheetForm.get('workItems') as FormArray;
@@ -781,6 +795,8 @@ export class CreateWorkSheetComponent implements OnInit {
     const paymentForm = v.payment ?? {};
     const deposit = Number(paymentForm.deposit ?? v.deposit) || 0;
     const discount = Number(paymentForm.discount) || 0;
+    const shipping_fee = Number(paymentForm.shipping_fee) || 0;
+    const transfer_fee = Number(paymentForm.transfer_fee) || 0;
 
     const work_items: WorkItem[] = (v.workItems as WorkItemFormValue[]).map((wi) => {
       const quantity = Number(wi.quantity) || 1;
@@ -808,6 +824,8 @@ export class CreateWorkSheetComponent implements OnInit {
     const payment: Payment = {
       total,
       discount,
+      shipping_fee,
+      transfer_fee,
       deposit,
       remaining,
       payment_method: (paymentForm.payment_method ?? '') as Payment['payment_method'],

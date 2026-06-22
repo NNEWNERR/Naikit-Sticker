@@ -253,8 +253,11 @@ export class FinanceComponent implements OnInit, OnDestroy {
   get pendingRefunds(): RefundRecord[] { return this.refunds.filter((r) => r.status === 'pending'); }
   get refundLog(): RefundRecord[] { return this.refunds.filter((r) => r.status !== 'pending'); }
 
-  /** F9 — ยอดรับสุทธิของงาน (net_receivable = ยอดบิล − WHT); fallback ยอดงาน */
-  receivableOf(j: Job): number { return j.tax?.net_receivable ?? j.payment?.total ?? 0; }
+  /** F9/F10 — ยอดที่ลูกค้าต้องจ่ายร้าน = รับสุทธิ + ค่าส่ง + ค่าธรรมเนียม */
+  receivableOf(j: Job): number {
+    return (j.tax?.net_receivable ?? j.payment?.total ?? 0)
+      + (j.payment?.shipping_fee ?? 0) + (j.payment?.transfer_fee ?? 0);
+  }
   outstandingOf(j: Job): number { return this.receivableOf(j) - (j.paid_amount ?? 0); }
 
   /** งานส่งมอบแล้วแต่ยังจ่ายไม่ครบ (ลูกหนี้/AR เทียบยอดรับสุทธิ). */
