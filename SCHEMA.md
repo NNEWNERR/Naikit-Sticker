@@ -317,8 +317,8 @@ Index: `cash_sessions (seller_uid, date desc)` + `jobs (is_deleted, seller_uid, 
 | `confirm_design` | ✓ ถ้า `seller_uid=self` AND `status='รอคอนเฟิร์มแบบ'` | — | — | ✓ | `รอคอนเฟิร์มแบบ` → `คอนเฟิร์มแล้ว` |
 | `request_revision` | ✓ ถ้า `seller_uid=self` AND `status='รอคอนเฟิร์มแบบ'` | — | — | ✓ | `รอคอนเฟิร์มแบบ` → `กำลังออกแบบ` |
 | `send_to_production` | — | ✓ ถ้า `design_uid=self` AND `status='คอนเฟิร์มแล้ว'` | — | ✓ | `คอนเฟิร์มแล้ว` → `รอผลิต` |
-| `claim_print` | — | — | ✓ ถ้า `status='รอผลิต'` AND `print_uid=null` | ✓ | `รอผลิต` → `กำลังผลิต` |
-| `upload_print` | — | — | ✓ ถ้า `print_uid=self` AND `status='กำลังผลิต'` | ✓ | `กำลังผลิต` → `รอส่งมอบ` |
+| `claim_print` (F13 ต่อ task) | — | ✓ ถ้า task `eligible` มี `fuji` (งาน FUJI) | ✓ ถ้า task `eligible` มี non-FUJI | ✓ | task `รอผลิต` → `กำลังผลิต`; job = derived (`deriveProductionStatus`) |
+| `upload_print` (F13 ต่อ task) | — | ✓ ตรงเครื่อง (FUJI) | ✓ ตรงเครื่อง (non-FUJI) | ✓ | **คนแนบ ≠ คนผลิตได้** (แค่อยู่ทีมที่ทำเครื่องนั้น). ทุก task เสร็จ → job `รอส่งมอบ` |
 | `mark_delivered` | ✓ ถ้า `seller_uid=self` AND `status='รอส่งมอบ'` | — | — | ✓ | `รอส่งมอบ` → `ส่งมอบแล้ว`. **F9 (แทนที่ F4 เดิม):** ไม่ hard-gate การจ่ายแล้ว — ส่งมอบแบบค้างชำระได้ (เครดิต/ลูกหนี้/AR); settlement ปิดเมื่อ `paid_amount ≥ net_receivable`. `delivery_slips` = optional (แนบถ้ามี). ดู docs/F9-TAX-PAYMENT-DESIGN.md |
 | `adjust_payment` (F2) | — | — | — | ✓ ทุก status | **finance** ด้วย (role ที่ 5 — ดู F3). แก้ discount/deposit/method/date + บังคับ `reason` → event `payment_adjust` before/after. total ยังคิดจาก work_items |
 | `admin_reassign` | — | — | — | ✓ ทุก status | (เปลี่ยน design_uid หรือ print_uid; status ตามที่ admin เลือก) |
