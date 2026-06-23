@@ -223,11 +223,11 @@ export class WorksheetInfoComponent implements OnInit, OnDestroy {
     return t.print_uid_name || this.personName(t.print_uid);
   }
 
+  // ยึดว่าผู้ขายเป็นคนส่งมอบ/รับเงิน — graphic/production ส่งมอบไม่ได้ (ตรงกับ BE markDelivered)
   canMarkDelivered = computed(() => {
     const j = this.job(); const r = this.role(); const uid = this.uid();
     return !!j && !j.is_deleted && j.status === 'รอส่งมอบ'
-      && (r === 'admin' || j.seller_uid === uid || j.print_uid === uid
-          || canProduceMachines(r, j.machines));
+      && (r === 'admin' || (r === 'seller' && j.seller_uid === uid));
   });
 
   canDelete = computed(() => this.role() === 'admin' && !!this.job() && !this.job()!.is_deleted);
