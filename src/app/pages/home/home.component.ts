@@ -44,9 +44,14 @@ const TEAM_STATUSES: Record<TeamKey, readonly Status[]> = {
 // อยู่แล้ว, คอลัมน์ไม่ควรซ่อนสถานะ (ไม่งั้น seller ไม่เห็นงานตัวเองที่ยัง 'รอออกแบบ',
 // graphic ไม่เห็น 'คอนเฟิร์มแล้ว' → ส่งผลิตไม่ได้). คอลัมน์ที่ไม่มีงานจะว่างเฉยๆ.
 const ROLE_DEFAULT_COLUMNS: Record<Role, readonly Status[]> = {
+  // seller/graphic เห็นทุกสถานะ: query ดึงงานตัวเองได้ทุก stage (seller=seller_uid,
+  // graphic=design_uid+FUJI) → คอลัมน์ต้องครบ ไม่งั้นงานตัวเองหาย.
   seller:     STATUS_ORDER,
   graphic:    STATUS_ORDER,
-  production: STATUS_ORDER,
+  // production: query ดึงเฉพาะคิวผลิต (คอนเฟิร์มแล้ว→รอส่งมอบ) + งานที่ตน claim. คอลัมน์
+  // ออกแบบ (รอออกแบบ/กำลังออกแบบ/รอคอนเฟิร์มแบบ) ว่างเสมอ → ตัดออกให้เหลือคิวที่ผลิต
+  // ทำได้จริง (ตรงกับ MOBILE_TABS.production). ส่งเข้าผลิต=กราฟิก → ไม่ต้องมี 'คอนเฟิร์มแล้ว'.
+  production: ['รอผลิต', 'กำลังผลิต', 'รอส่งมอบ'],
   admin:      STATUS_ORDER,
   finance:    STATUS_ORDER,
 };
