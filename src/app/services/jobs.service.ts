@@ -55,12 +55,12 @@ export class JobsService {
     await this._call('sendToProduction', { job_id: jobId });
   }
 
-  async claimPrint(jobId: string): Promise<void> {
-    await this._call('claimPrint', { job_id: jobId });
+  async claimPrint(jobId: string, machine: string): Promise<void> {
+    await this._call('claimPrint', { job_id: jobId, machine });
   }
 
-  async uploadPrint(jobId: string, printImageUrls: string[]): Promise<void> {
-    await this._call('uploadPrint', { job_id: jobId, print_images: printImageUrls });
+  async uploadPrint(jobId: string, machine: string, printImageUrls: string[]): Promise<void> {
+    await this._call('uploadPrint', { job_id: jobId, machine, print_images: printImageUrls });
   }
 
   async markDelivered(jobId: string, slipUrls: string[] = []): Promise<void> {
@@ -84,6 +84,8 @@ export class JobsService {
       discount?: number;
       shipping_fee?: number;
       transfer_fee?: number;
+      other_fee?: number;
+      other_fee_note?: string;
       payment_method?: string;
       date_of_payment?: string | null;
     },
@@ -143,7 +145,12 @@ export class JobsService {
    *
    * Returns a cleanup fn that unsubscribes all underlying listeners.
    */
-  watchMyJobs(role: Role, uid: string, onUpdate: (jobs: Job[]) => void): () => void {
+  watchMyJobs(
+    role: Role,
+    uid: string,
+    onUpdate: (jobs: Job[]) => void,
+    onError?: (e: Error) => void,
+  ): () => void {
     // Each query owns a slot in `buckets`; all slots are merged on every change.
     const buckets: Map<string, Job>[] = [];
     const cleanups: Array<() => void> = [];
@@ -152,20 +159,30 @@ export class JobsService {
       const idx = buckets.length;
       buckets.push(new Map<string, Job>());
       cleanups.push(
-        onSnapshot(q, (snap) => {
-          buckets[idx].clear();
-          for (const d of snap.docs) {
-            buckets[idx].set(d.id, { id: d.id, ...d.data() } as Job);
-          }
-          const merged = new Map<string, Job>();
-          for (const b of buckets) b.forEach((v, k) => merged.set(k, v));
-          onUpdate([...merged.values()]);
-        }),
+        onSnapshot(
+          q,
+          (snap) => {
+            buckets[idx].clear();
+            for (const d of snap.docs) {
+              buckets[idx].set(d.id, { id: d.id, ...d.data() } as Job);
+            }
+            const merged = new Map<string, Job>();
+            for (const b of buckets) b.forEach((v, k) => merged.set(k, v));
+            onUpdate([...merged.values()]);
+          },
+          // A rejected listener (rules/index edge) otherwise leaves the caller
+          // stuck on its loading state forever — surface it instead.
+          (err) => onError?.(err),
+        ),
       );
     };
 
     const base = collection(db, 'jobs');
     const notDeleted = where('is_deleted', '==', false);
+    // คิวผลิต "active" สำหรับ home — ไม่รวม 'ส่งมอบแล้ว' (ประวัติ; ไม่งั้น listener โตไม่จำกัด).
+    // งานที่ตัวเอง claim (print_uid==me) ยังเห็นทุก stage ผ่าน query แยกอยู่แล้ว; ประวัติดูที่ report/diary.
+    // rules อนุญาตอ่านกว้างกว่านี้ (รวมส่งมอบแล้ว) ได้ — query เป็น subset จึงผ่าน rules เสมอ.
+    const PROD_STAGES = ['คอนเฟิร์มแล้ว', 'รอผลิต', 'กำลังผลิต', 'รอส่งมอบ'];
 
     switch (role) {
       case 'admin':
@@ -175,15 +192,24 @@ export class JobsService {
       case 'seller':
         addQuery(query(base, notDeleted, where('seller_uid', '==', uid)));
         break;
-      case 'graphic':
+      case 'graphic': {
         // unclaimed design queue
         addQuery(query(base, notDeleted, where('status', '==', 'รอออกแบบ'), where('design_uid', '==', null)));
-        // jobs currently or previously assigned to me
+        // jobs currently or previously assigned to me (design)
         addQuery(query(base, notDeleted, where('design_uid', '==', uid)));
+        // FUJI งานผลิต — graphic พิมพ์งาน FUJI ได้ทุก stage (machines มี 'fuji')
+        // (in + array-contains[single] = ใช้ disjunction ตัวเดียว → valid)
+        addQuery(query(base, notDeleted, where('status', 'in', PROD_STAGES), where('machines', 'array-contains', 'fuji')));
+        // jobs I'm printing (claimed by me)
+        addQuery(query(base, notDeleted, where('print_uid', '==', uid)));
         break;
+      }
       case 'production':
-        // unclaimed production queue (confirmed + waiting)
-        addQuery(query(base, notDeleted, where('status', 'in', ['คอนเฟิร์มแล้ว', 'รอผลิต']), where('print_uid', '==', null)));
+        // งานผลิต non-FUJI — 1 query ต่อเครื่อง (array-contains[single] + in; เลี่ยง
+        // array-contains-any + in ซึ่งเป็น 2 disjunctions ที่ Firestore ห้าม)
+        for (const m of ['vinyl', 'large_sticker', 'cut_sticker', 'other']) {
+          addQuery(query(base, notDeleted, where('status', 'in', PROD_STAGES), where('machines', 'array-contains', m)));
+        }
         // jobs assigned to me
         addQuery(query(base, notDeleted, where('print_uid', '==', uid)));
         break;
@@ -203,7 +229,12 @@ export class JobsService {
    * Predicates mirror firestore.rules so the list query is never rejected.
    * Returns a cleanup fn.
    */
-  watchVisibleJobs(role: Role, uid: string, onUpdate: (jobs: Job[]) => void): () => void {
+  watchVisibleJobs(
+    role: Role,
+    uid: string,
+    onUpdate: (jobs: Job[]) => void,
+    onError?: (e: Error) => void,
+  ): () => void {
     const base = collection(db, 'jobs');
     const notDeleted = where('is_deleted', '==', false);
 
@@ -217,8 +248,10 @@ export class JobsService {
       return () => undefined;
     }
 
-    return onSnapshot(q, (snap) =>
-      onUpdate(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Job))),
+    return onSnapshot(
+      q,
+      (snap) => onUpdate(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Job))),
+      (err) => onError?.(err),
     );
   }
 
@@ -244,6 +277,26 @@ export class JobsService {
       query(
         collection(db, 'job_events'),
         where('action', '==', 'payment_adjust'),
+        orderBy('at', 'desc'),
+      ),
+      (snap) => onUpdate(snap.docs.map((d) => ({ id: d.id, ...d.data() } as JobEvent))),
+    );
+  }
+
+  /**
+   * Finance Dashboard (F6) — all `edit` audit events, newest first.
+   * Used to surface seller edits that changed the money (work_items → total):
+   * the BE records `{ payment_before, payment_after }` in the payload, but those
+   * never went through `adjustPayment`, so the payment_adjust log alone misses
+   * them. The dashboard filters to events where total actually changed.
+   * Read scoped to staff by rules; only finance/admin reach the dashboard.
+   * Returns a cleanup fn.
+   */
+  watchEditEvents(onUpdate: (events: JobEvent[]) => void): () => void {
+    return onSnapshot(
+      query(
+        collection(db, 'job_events'),
+        where('action', '==', 'edit'),
         orderBy('at', 'desc'),
       ),
       (snap) => onUpdate(snap.docs.map((d) => ({ id: d.id, ...d.data() } as JobEvent))),

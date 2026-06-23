@@ -36,6 +36,7 @@ interface AdjustRow {
   jobId: string;
   serial: string;
   actor: string;
+  source: 'ปรับยอด (การเงิน)' | 'แก้รายการงาน';
   reason: string;
   beforeTotal: number;
   afterTotal: number;
@@ -71,6 +72,7 @@ export class FinanceComponent implements OnInit, OnDestroy {
   private jobs: Job[] = [];          // non-deleted, all (finance/admin)
   deletedJobs: Job[] = [];
   adjustEvents: JobEvent[] = [];
+  editEvents: JobEvent[] = [];   // F6 — seller edits; filtered to total-changing ones
   cashSessions: CashSession[] = [];
   payments: PaymentRecord[] = [];
   refunds: RefundRecord[] = [];
@@ -84,6 +86,7 @@ export class FinanceComponent implements OnInit, OnDestroy {
   recBusy = false;
   recMsg = '';
   recErr = false;
+  loadError = '';
 
   private cleanups: Array<() => void> = [];
 
@@ -103,9 +106,16 @@ export class FinanceComponent implements OnInit, OnDestroy {
     if (!role || !uid) return;
 
     this.cleanups.push(this.users.attachListener());
-    this.cleanups.push(this.jobsSvc.watchVisibleJobs(role, uid, (j) => (this.jobs = j)));
+    this.cleanups.push(this.jobsSvc.watchVisibleJobs(
+      role,
+      uid,
+      (j) => { this.jobs = j; this.loadError = ''; },
+      // A silent-empty dashboard could read as "nothing to audit" — surface it.
+      () => { this.loadError = 'โหลดข้อมูลการเงินไม่สำเร็จ กรุณารีเฟรชหน้าหรือเข้าสู่ระบบใหม่'; },
+    ));
     this.cleanups.push(this.jobsSvc.watchDeletedJobs((j) => (this.deletedJobs = j)));
     this.cleanups.push(this.jobsSvc.watchPaymentAdjustEvents((e) => (this.adjustEvents = e)));
+    this.cleanups.push(this.jobsSvc.watchEditEvents((e) => (this.editEvents = e)));
     this.cleanups.push(this.cashSvc.watchSessions((s) => (this.cashSessions = s)));
     this.cleanups.push(this.paymentSvc.watchAllPayments((p) => (this.payments = p)));
     this.cleanups.push(this.paymentSvc.watchAllRefunds((r) => (this.refunds = r)));
@@ -260,9 +270,28 @@ export class FinanceComponent implements OnInit, OnDestroy {
   }
   outstandingOf(j: Job): number { return this.receivableOf(j) - (j.paid_amount ?? 0); }
 
-  /** งานส่งมอบแล้วแต่ยังจ่ายไม่ครบ (ลูกหนี้/AR เทียบยอดรับสุทธิ). */
+  /** F12 — เครดิตค้างเกินจำนวนนี้ = ธงแดง (ดู docs/F12-PAYMENT-LEDGER-DESIGN.md D6). */
+  readonly AR_OVERDUE_DAYS = 30;
+
+  /** จำนวนวันที่ค้างชำระ นับจากวันส่งมอบ (date_of_completion). 0 ถ้าไม่มีวันส่งมอบ. */
+  overdueDaysOf(j: Job): number {
+    const ts = j.date_of_completion;
+    if (!ts) return 0;
+    const ms = Date.now() - ts.seconds * 1000;
+    return Math.max(0, Math.floor(ms / 86400000));
+  }
+  isOverdue(j: Job): boolean { return this.overdueDaysOf(j) > this.AR_OVERDUE_DAYS; }
+
+  /** งานส่งมอบแล้วแต่ยังจ่ายไม่ครบ (ลูกหนี้/AR เทียบยอดรับสุทธิ) — เรียงค้างนานสุดก่อน. */
   get outstandingDelivered(): Job[] {
-    return this.jobs.filter((j) => j.status === 'ส่งมอบแล้ว' && (j.paid_amount ?? 0) + 0.01 < this.receivableOf(j));
+    return this.jobs
+      .filter((j) => j.status === 'ส่งมอบแล้ว' && (j.paid_amount ?? 0) + 0.01 < this.receivableOf(j))
+      .sort((a, b) => this.overdueDaysOf(b) - this.overdueDaysOf(a));
+  }
+
+  /** จำนวนลูกหนี้ที่ค้างเกินกำหนด (> 30 วัน) — ใช้โชว์ธงเตือนรวม. */
+  get overdueCount(): number {
+    return this.outstandingDelivered.filter((j) => this.isOverdue(j)).length;
   }
 
   /** งานที่ถูกหัก ณ ที่จ่าย แต่ยังไม่ได้ใบ 50 ทวิ. */
@@ -301,24 +330,65 @@ export class FinanceComponent implements OnInit, OnDestroy {
 
   // ── Payment-adjust audit log ───────────────────────────────────────────────
 
+  /**
+   * รวมทุกการเปลี่ยน "ยอดเงิน" ของใบงานไว้ที่เดียว เพื่อให้คนตรวจไม่ต้องไล่ทีละใบ:
+   *  - `payment_adjust` — การเงิน/แอดมินปรับ discount/deposit (payload: before/after)
+   *  - `edit` ที่ total เปลี่ยน — seller แก้ work_items ก่อนคอนเฟิร์ม
+   *    (payload: payment_before/payment_after; กรองเฉพาะที่ total ต่างจริง)
+   * เรียงตามเวลาใหม่สุดก่อน; คอลัมน์ "ที่มา" บอกว่ามาจากช่องทางไหน.
+   */
   get adjustRows(): AdjustRow[] {
     const byId = new Map(this.jobs.concat(this.deletedJobs).map((j) => [j.id, j]));
-    return this.adjustEvents.map((e) => {
-      const before = (e.payload?.['before'] ?? {}) as Record<string, number>;
-      const after = (e.payload?.['after'] ?? {}) as Record<string, number>;
-      return {
-        id: e.id,
-        jobId: e.job_id,
-        serial: byId.get(e.job_id)?.serial_number ?? e.job_id.slice(0, 6),
-        actor: this.nameOf(e.actor_uid),
-        reason: String(e.payload?.['reason'] ?? ''),
-        beforeTotal: Number(before['total']) || 0,
-        afterTotal: Number(after['total']) || 0,
-        beforeDeposit: Number(before['deposit']) || 0,
-        afterDeposit: Number(after['deposit']) || 0,
-        at: e.at ?? null,
-      };
+    const rowOf = (
+      e: JobEvent,
+      source: AdjustRow['source'],
+      before: Record<string, number>,
+      after: Record<string, number>,
+      reason: string,
+    ): AdjustRow => ({
+      id: e.id,
+      jobId: e.job_id,
+      serial: byId.get(e.job_id)?.serial_number ?? e.job_id.slice(0, 6),
+      actor: this.nameOf(e.actor_uid),
+      source,
+      reason,
+      beforeTotal: Number(before['total']) || 0,
+      afterTotal: Number(after['total']) || 0,
+      beforeDeposit: Number(before['deposit']) || 0,
+      afterDeposit: Number(after['deposit']) || 0,
+      at: e.at ?? null,
     });
+
+    const adjust = this.adjustEvents.map((e) =>
+      rowOf(
+        e,
+        'ปรับยอด (การเงิน)',
+        (e.payload?.['before'] ?? {}) as Record<string, number>,
+        (e.payload?.['after'] ?? {}) as Record<string, number>,
+        String(e.payload?.['reason'] ?? ''),
+      ),
+    );
+
+    const edits = this.editEvents
+      .filter((e) => {
+        const b = e.payload?.['payment_before'] as Record<string, number> | undefined;
+        const a = e.payload?.['payment_after'] as Record<string, number> | undefined;
+        // เฉพาะ edit ที่กระทบ "ยอด" จริง — แก้ชื่อ/เบอร์/หมายเหตุ ไม่ขึ้น audit นี้
+        return b && a && Number(b['total']) !== Number(a['total']);
+      })
+      .map((e) =>
+        rowOf(
+          e,
+          'แก้รายการงาน',
+          e.payload['payment_before'] as Record<string, number>,
+          e.payload['payment_after'] as Record<string, number>,
+          'แก้รายการงาน (work_items)',
+        ),
+      );
+
+    return [...adjust, ...edits].sort(
+      (x, y) => (y.at?.seconds ?? 0) - (x.at?.seconds ?? 0),
+    );
   }
 
   // ── Cash reconciliation ────────────────────────────────────────────────────

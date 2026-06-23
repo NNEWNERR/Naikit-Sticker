@@ -57,6 +57,10 @@ export interface Payment {
   shipping_fee?: number;
   /** F10 — ค่าธรรมเนียม เช็ค/โอน (ลูกค้าจ่ายเพิ่ม, นอกฐาน VAT/WHT); optional ใน read */
   transfer_fee?: number;
+  /** ค่าใช้จ่ายอื่นๆ ที่เป็นบริการ (เช่น ค่าออกแบบ) — **อยู่ในฐาน VAT/WHT**; optional ใน read (งานเก่าไม่มี) */
+  other_fee?: number;
+  /** หมายเหตุค่าใช้จ่ายอื่นๆ — บังคับเมื่อ other_fee > 0 */
+  other_fee_note?: string;
   deposit: number;
   remaining: number;
   payment_method: PaymentMethod;
@@ -103,6 +107,16 @@ export interface JobImageDoc {
   uploaded_by_uid: string;
 }
 
+/** F13 — งานผลิตต่อเครื่อง (sub-task). ดู docs/F13-PRODUCTION-TASKS-DESIGN.md */
+export interface ProductionTask {
+  machine: string;
+  status: 'รอผลิต' | 'กำลังผลิต' | 'เสร็จ';
+  print_uid: string | null;
+  print_date: Timestamp | null;
+  done_at: Timestamp | null;
+  images: JobImageDoc[];
+}
+
 /** Firestore `jobs/{jobId}` document with the doc ID merged in. */
 export interface Job {
   id: string;
@@ -117,6 +131,10 @@ export interface Job {
   design_uid: string | null;
   print_uid: string | null;
   work_items: WorkItem[];
+  /** denormalized เครื่อง/กลุ่มผลิต (fuji/vinyl/large_sticker/cut_sticker/other); optional ใน read (งานเก่า) */
+  machines?: string[];
+  /** F13 — งานผลิตต่อเครื่อง (1 task/machine); optional ใน read (งานเก่า/ยังไม่ส่งผลิต) */
+  print_tasks?: ProductionTask[];
   payment: Payment;
   tax?: Tax;
   worksheet_image: string | null;

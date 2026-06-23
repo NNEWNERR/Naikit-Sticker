@@ -34,6 +34,7 @@ export class DiarySummaryComponent implements OnInit, OnDestroy {
 
   /** Raw jobs visible to the current user (admin = all, seller = own). */
   private rawJobs: Job[] = [];
+  loadError = '';
 
   private jobsCleanup?: () => void;
   private usersCleanup?: () => void;
@@ -72,9 +73,15 @@ export class DiarySummaryComponent implements OnInit, OnDestroy {
       this.usersCleanup = this.users.attachListener();
     }
 
-    this.jobsCleanup = this.jobs.watchVisibleJobs(role, uid, (jobs) => {
-      this.rawJobs = jobs;
-    });
+    this.jobsCleanup = this.jobs.watchVisibleJobs(
+      role,
+      uid,
+      (jobs) => {
+        this.rawJobs = jobs;
+        this.loadError = '';
+      },
+      () => { this.loadError = 'โหลดสมุดงานไม่สำเร็จ กรุณารีเฟรชหน้าหรือเข้าสู่ระบบใหม่'; },
+    );
   }
 
   ngOnDestroy() {

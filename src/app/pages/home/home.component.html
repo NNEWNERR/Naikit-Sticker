@@ -29,6 +29,11 @@
     </div>
   </app-page-header>
 
+  <!-- Listener error — shown on both layouts when the jobs query is rejected -->
+  <div *ngIf="loadError" class="mx-6 my-3 px-4 py-3 bg-red-50 border-2 border-red-300 rounded-md text-body-sm text-red-800 font-bold">
+    ⚠️ {{ loadError }}
+  </div>
+
   <!-- ── DESKTOP: stats + team filter (admin only) + kanban ───────────── -->
   <div class="hidden md:flex md:flex-col px-6 py-4 gap-4">
 
@@ -55,6 +60,12 @@
         ]"
         (change)="setTeam($event)"
       ></app-segmented>
+    </div>
+
+    <!-- Machine/type filter — ฝ่ายผลิต/กราฟิก/แอดมิน (ดูง่ายว่างานเครื่องไหน) -->
+    <div *ngIf="showMachineFilter" class="flex items-center gap-2">
+      <span class="text-[11px] font-extrabold text-ink-3 tracking-wider mr-1">เครื่อง:</span>
+      <app-segmented size="md" [value]="machineFilter" [options]="machineOptions" (change)="setMachine($event)"></app-segmented>
     </div>
 
     <!-- Loading skeleton -->
@@ -101,6 +112,11 @@
         [options]="mobileTabs"
         (change)="setMobileTab($event)"
       ></app-segmented>
+    </div>
+
+    <!-- Machine/type filter (ฝ่ายผลิต/กราฟิก/แอดมิน) -->
+    <div *ngIf="showMachineFilter" class="px-3.5 pb-2.5 overflow-x-auto">
+      <app-segmented size="sm" [value]="machineFilter" [options]="machineOptions" (change)="setMachine($event)"></app-segmented>
     </div>
 
     <!-- Card list -->

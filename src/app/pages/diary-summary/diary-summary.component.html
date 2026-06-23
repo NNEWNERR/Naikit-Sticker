@@ -21,6 +21,10 @@
     </div>
   </app-page-header>
 
+  <div *ngIf="loadError" class="mx-4 md:mx-5 my-3 px-4 py-3 bg-red-50 border-2 border-red-300 rounded-md text-body-sm text-red-800 font-bold">
+    ⚠️ {{ loadError }}
+  </div>
+
   <div class="px-4 md:px-5 py-4 md:py-5">
 
     <!-- ── Date filter (นัดรับ) ────────────────────────────────────────── -->

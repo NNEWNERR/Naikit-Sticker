@@ -124,10 +124,14 @@ collection `cash_sessions/{seller_uid}_{YYYYMMDD}` (วันตาม ICT/UTC+7
 - **กระทบยอดเงินสด**: ฟอร์ม reconcile (เลือก seller + วันที่ YYYYMMDD + ยอดนับได้) → `CashService.reconcile`; ตาราง sessions + variance + ปุ่มปิดรอบ (`close`)
 - **ยอดขายแยก seller**: count/total/เงินสด/% เงินสด (เรียง % เงินสดมากก่อน — เพ่งเล็งคนเงินสดสูง)
 - **ยอดขายแยกวิธีจ่าย**
-- **payment_adjust audit log**: วันที่/ใบงาน/โดย/ยอด before→after/มัดจำ before→after/เหตุผล (คลิกเปิดใบงาน)
+- **audit ประวัติการเปลี่ยนยอดเงิน** (รวมทุกช่องทางที่เปลี่ยนยอด — ปิดช่องโหว่ risk B/C):
+  วันที่/ใบงาน/**ที่มา**/โดย/ยอด before→after/มัดจำ before→after/เหตุผล (คลิกเปิดใบงาน). รวม 2 แหล่ง:
+  - `payment_adjust` — การเงิน/แอดมินปรับ discount/deposit (payload `before`/`after`)
+  - `edit` ที่ total เปลี่ยน — seller แก้ `work_items` ก่อนคอนเฟิร์ม (payload `payment_before`/`payment_after`);
+    กรอง client-side เฉพาะที่ `total` ต่างจริง (แก้ชื่อ/เบอร์/หมายเหตุ ไม่ขึ้น). คอลัมน์ "ที่มา" ไฮไลต์ "แก้รายการงาน" สีเหลือง
 - **outlier scan**: ส่งมอบแต่ deposit=0, ส่งมอบแต่ total=0, งานมีส่วนลด, งานที่ถูกลบ
 
-**ทำแล้ว:** `finance.component.{ts,html}` (standalone); JobsService `watchPaymentAdjustEvents` + `watchDeletedJobs`; `firestore.indexes.json` +1 (`job_events action,at`); FE JobAction + worksheet-info ACTION_LABELS += payment_adjust; route + nav (sidebar+mobile)
+**ทำแล้ว:** `finance.component.{ts,html}` (standalone); JobsService `watchPaymentAdjustEvents` + `watchEditEvents` + `watchDeletedJobs`; `firestore.indexes.json` +1 (`job_events action,at` — ใช้ทั้ง payment_adjust + edit); FE JobAction + worksheet-info ACTION_LABELS += payment_adjust; route + nav (sidebar+mobile)
 
 **adjustPayment UI (ครบลูป):** ใน `worksheet-info` มีปุ่ม "💰 ปรับยอดเงิน (การเงิน)" สำหรับ role finance/admin → ฟอร์มปรับ discount/deposit/payment_method + เหตุผล (บังคับ) → `JobsService.adjustPayment` → event `payment_adjust`. payment summary แสดงส่วนลด + วิธีจ่ายด้วย
 

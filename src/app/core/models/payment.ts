@@ -14,6 +14,8 @@ export interface PaymentAllocation {
 export interface PaymentRecord {
   id?: string;
   method: PaymentMethod;
+  /** F12 — 'deposit' = มัดจำตอนสร้าง, 'payment' = งวดถัดไป; optional ใน read (งานเก่าไม่มี) */
+  source?: 'deposit' | 'payment';
   amount: number;
   bank_ref: string;
   slip_url: string | null;

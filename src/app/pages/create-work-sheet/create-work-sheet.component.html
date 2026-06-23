@@ -43,7 +43,7 @@
           <button
             type="button"
             (click)="setUrgent(false)"
-            class="px-4 py-2 rounded-md border-2 border-brand text-body font-bold cursor-pointer transition-colors"
+            class="px-4 py-2 rounded-md border-2 border-brand text-body font-bold cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-ink"
             [class.bg-brand]="!worksheetForm.get('is_urgent')?.value"
             [class.text-ink]="!worksheetForm.get('is_urgent')?.value"
             [class.text-brand]="worksheetForm.get('is_urgent')?.value"
@@ -51,7 +51,7 @@
           <button
             type="button"
             (click)="setUrgent(true)"
-            class="px-4 py-2 rounded-md border-2 border-urgent text-brand text-body font-extrabold cursor-pointer transition-all"
+            class="px-4 py-2 rounded-md border-2 border-urgent text-brand text-body font-extrabold cursor-pointer transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-ink"
             [class.bg-urgent]="worksheetForm.get('is_urgent')?.value"
             [class.shadow-brutal-brand]="worksheetForm.get('is_urgent')?.value"
             [class.bg-transparent]="!worksheetForm.get('is_urgent')?.value"
@@ -88,7 +88,7 @@
               *ngFor="let c of contactOptions"
               type="button"
               (click)="setContact(c.value)"
-              class="px-3.5 py-2 rounded-md border-2 border-ink text-body font-bold cursor-pointer transition-all"
+              class="px-3.5 py-2 rounded-md border-2 border-ink text-body font-bold cursor-pointer transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2"
               [class.bg-brand]="worksheetForm.get('contact')?.value === c.value"
               [class.bg-white]="worksheetForm.get('contact')?.value !== c.value"
               [class.shadow-brutal-sm]="worksheetForm.get('contact')?.value === c.value"
@@ -141,7 +141,7 @@
         <!-- Table -->
         <div class="border-2 border-ink rounded-md overflow-hidden">
           <!-- Header -->
-          <div class="grid grid-cols-[1fr_90px] md:grid-cols-[36px_2fr_1.2fr_1.2fr_80px_100px_44px] bg-ink text-brand text-[11px] font-extrabold">
+          <div class="grid grid-cols-[1fr_90px] md:grid-cols-[36px_2fr_1.2fr_1.2fr_80px_100px_44px] bg-ink text-brand text-body-sm font-extrabold">
             <div class="hidden md:block px-3 py-2.5">#</div>
             <div class="px-3 py-2.5">ประเภท</div>
             <div class="hidden md:block px-3 py-2.5">ขนาด</div>
@@ -159,7 +159,7 @@
             <div class="hidden md:block px-3 py-2.5 text-body-sm font-bold text-ink-3 font-num">{{ i + 1 }}</div>
             <div class="px-3 py-2.5">
               <div class="text-body-lg font-bold">{{ item.value.type }}</div>
-              <div class="md:hidden text-[11px] text-ink-3 font-num">
+              <div class="md:hidden text-body-sm text-ink-3 font-num">
                 {{ item.value.width }}×{{ item.value.height }} {{ item.value.unit_of_length }} · {{ item.value.quantity | number }} ชิ้น
               </div>
             </div>
@@ -168,10 +168,13 @@
             </div>
             <div class="hidden md:block px-3 py-2.5 text-body text-ink-2">{{ item.value.option }}</div>
             <div class="hidden md:block px-3 py-2.5 text-body font-bold font-num">{{ item.value.quantity | number }}</div>
-            <div class="px-3 py-2.5 text-body-lg font-extrabold font-num">฿{{ item.value.total | number }}</div>
-            <div class="hidden md:flex px-3 py-2.5 gap-2 text-ink-3 text-body-lg">
-              <button type="button" (click)="editWorkItem(i)" class="cursor-pointer hover:text-ink" aria-label="แก้ไข">✏️</button>
-              <button type="button" (click)="removeWorkItem(i)" class="cursor-pointer hover:text-danger" aria-label="ลบ">🗑</button>
+            <div class="px-3 py-2.5 text-body-lg font-extrabold font-num">
+              <ng-container *ngIf="item.value.total > 0; else rowPending">฿{{ item.value.total | number }}</ng-container>
+              <ng-template #rowPending><span class="text-body-sm font-bold text-ink-3">รอประเมินราคา</span></ng-template>
+            </div>
+            <div class="hidden md:flex px-3 py-2.5 gap-1 text-ink-3 text-body-lg">
+              <button type="button" (click)="editWorkItem(i)" class="inline-flex items-center justify-center min-w-[28px] min-h-[28px] rounded cursor-pointer hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink" aria-label="แก้ไข">✏️</button>
+              <button type="button" (click)="removeWorkItem(i)" class="inline-flex items-center justify-center min-w-[28px] min-h-[28px] rounded cursor-pointer hover:text-danger focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger" aria-label="ลบ">🗑</button>
             </div>
           </div>
 
@@ -186,7 +189,10 @@
             <span class="text-body font-bold text-ink-2">
               รวม {{ workItemCount }} รายการ · <span class="font-num">{{ workItemQtyTotal | number }}</span> ชิ้น
             </span>
-            <span class="text-[18px] font-black font-num">฿{{ workItemPriceTotal | number }}</span>
+            <span class="text-[18px] font-black font-num">
+              <ng-container *ngIf="workItemPriceTotal > 0; else totalPending">฿{{ workItemPriceTotal | number }}</ng-container>
+              <ng-template #totalPending><span class="text-body font-bold text-ink-3">รอประเมินราคา</span></ng-template>
+            </span>
           </div>
         </div>
       </div>
@@ -203,29 +209,40 @@
         </p>
         <div formGroupName="payment" class="grid grid-cols-2 md:grid-cols-4 gap-3.5">
           <app-field label="ยอดรวม (฿)">
-            <div class="input-base bg-surface-3 w-full font-num font-bold">{{ paymentTotal | number }}</div>
+            <div class="input-base w-full font-num font-bold">
+              <ng-container *ngIf="paymentTotal > 0; else payTotalPending">{{ paymentTotal | number }}</ng-container>
+              <ng-template #payTotalPending><span class="font-bold text-ink-3">รอประเมินราคา</span></ng-template>
+            </div>
           </app-field>
           <app-field label="ส่วนลด (฿)">
-            <input type="number" formControlName="discount" [readonly]="editMode"
+            <input type="number" formControlName="discount" [readonly]="editMode" [class.opacity-60]="editMode"
               class="input-base focus-ring w-full font-num font-bold" placeholder="0" />
           </app-field>
           <app-field label="ค่าส่ง (฿)">
-            <input type="number" formControlName="shipping_fee" [readonly]="editMode"
+            <input type="number" formControlName="shipping_fee" [readonly]="editMode" [class.opacity-60]="editMode"
               class="input-base focus-ring w-full font-num font-bold" placeholder="0" />
           </app-field>
           <app-field label="ค่าธรรมเนียม (฿)">
-            <input type="number" formControlName="transfer_fee" [readonly]="editMode"
+            <input type="number" formControlName="transfer_fee" [readonly]="editMode" [class.opacity-60]="editMode"
               class="input-base focus-ring w-full font-num font-bold" placeholder="0" />
           </app-field>
+          <app-field label="ค่าใช้จ่ายอื่นๆ (฿)">
+            <input type="number" formControlName="other_fee" [readonly]="editMode" [class.opacity-60]="editMode"
+              class="input-base focus-ring w-full font-num font-bold" placeholder="0" />
+          </app-field>
+          <app-field *ngIf="otherFee > 0" label="หมายเหตุค่าใช้จ่ายอื่นๆ (บังคับ)" class="col-span-2">
+            <input type="text" formControlName="other_fee_note" [readonly]="editMode" [class.opacity-60]="editMode"
+              class="input-base focus-ring w-full" placeholder="เช่น ค่าออกแบบ, ค่าติดตั้ง, ค่าตัดต่อ" />
+          </app-field>
           <app-field label="มัดจำ (฿)">
-            <input type="number" formControlName="deposit" [readonly]="editMode"
+            <input type="number" formControlName="deposit" [readonly]="editMode" [class.opacity-60]="editMode"
               class="input-base focus-ring w-full font-num font-bold" placeholder="0" />
           </app-field>
           <app-field label="คงเหลือ (฿)">
-            <div class="input-base bg-surface-3 w-full font-num font-bold">{{ paymentRemaining | number }}</div>
+            <div class="input-base w-full font-num font-bold">{{ paymentRemaining | number }}</div>
           </app-field>
           <app-field label="ช่องทาง">
-            <select formControlName="payment_method" [attr.disabled]="editMode ? '' : null" class="input-base focus-ring w-full font-semibold">
+            <select formControlName="payment_method" [attr.disabled]="editMode ? '' : null" [class.opacity-60]="editMode" class="input-base focus-ring w-full font-semibold">
               <option value="" disabled>เลือกช่องทาง</option>
               <option value="เงินสด">เงินสด</option>
               <option value="โอน">โอนเงิน</option>
@@ -266,6 +283,7 @@
         <!-- F10 — ยอดที่ลูกค้าต้องจ่าย (รวมค่าส่ง/ค่าธรรมเนียม) -->
         <div class="mt-3 p-3 border-2 border-ink rounded-md bg-surface-2 flex flex-col gap-1 text-body-sm">
           <div class="flex justify-between"><span class="text-ink-3">ค่างาน{{ vatMode !== 'none' || whtRate > 0 ? ' (รับสุทธิ)' : '' }}</span><span class="font-num">฿{{ netReceivable | number }}</span></div>
+          <div *ngIf="otherFee > 0" class="flex justify-between text-ink-3 pl-3 text-[12px]"><span>• รวมค่าใช้จ่ายอื่นๆ (คิด VAT/หักภาษีแล้ว)</span><span class="font-num">฿{{ otherFee | number }}</span></div>
           <div *ngIf="shippingFee > 0" class="flex justify-between"><span class="text-ink-3">+ ค่าส่ง</span><span class="font-num">฿{{ shippingFee | number }}</span></div>
           <div *ngIf="transferFee > 0" class="flex justify-between"><span class="text-ink-3">+ ค่าธรรมเนียม</span><span class="font-num">฿{{ transferFee | number }}</span></div>
           <div class="flex justify-between font-black pt-1 border-t border-line-2"><span>ยอดที่ลูกค้าต้องจ่าย</span><span class="font-num text-[18px]">฿{{ netPayable | number }}</span></div>
@@ -311,7 +329,7 @@
                 <button
                   type="button"
                   (click)="removeFile(p, 'worksheet')"
-                  class="absolute top-1 right-1 bg-white border-2 border-ink rounded-full w-7 h-7 flex items-center justify-center cursor-pointer"
+                  class="absolute top-1 right-1 bg-white border-2 border-ink rounded-full w-7 h-7 flex items-center justify-center cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger"
                   aria-label="ลบไฟล์"
                 >🗑</button>
               </div>
@@ -350,7 +368,7 @@
                 <button
                   type="button"
                   (click)="removeFile(p, 'reference')"
-                  class="absolute top-1 right-1 bg-white border-2 border-ink rounded-full w-6 h-6 flex items-center justify-center cursor-pointer text-body-sm"
+                  class="absolute top-1 right-1 bg-white border-2 border-ink rounded-full w-6 h-6 flex items-center justify-center cursor-pointer text-body-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger"
                   aria-label="ลบไฟล์"
                 >🗑</button>
               </div>
@@ -359,8 +377,8 @@
         </div>
       </div>
 
-      <!-- ━━━ NAV (sticky to form bottom) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
-      <div class="flex justify-between items-center mt-5 pt-5 border-t-2 border-dashed border-line-2">
+      <!-- ━━━ NAV (sticky to viewport bottom — keeps CTA in thumb zone) ━━━ -->
+      <div class="sticky bottom-0 z-10 flex justify-between items-center mt-5 pt-4 pb-4 border-t-2 border-dashed border-line-2 bg-surface-2">
         <app-button variant="ghost" size="md" (clicked)="step > 1 ? prevStep() : cancel()">
           ← {{ step > 1 ? 'ย้อนกลับ' : 'ยกเลิก' }}
         </app-button>

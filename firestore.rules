@@ -63,13 +63,22 @@ service cloud.firestore {
     // constrains its where-clauses so every returned doc satisfies the predicate
     // below; single-doc detail reads (watchJob) are checked the same way.
     match /jobs/{jobId} {
+      // graphic เห็น: งานที่ตนออกแบบ/รับพิมพ์ + คิวออกแบบ + **คิวพิมพ์ FUJI** (machines มี 'fuji')
+      // production เห็น: งานที่ตนรับพิมพ์ + **คิวพิมพ์ที่ไม่ใช่ FUJI** (machines มี vinyl/large_sticker/cut_sticker/other)
+      // machines = denormalized จาก work_items.type (ดู lib/machines.ts) — rules วน work_items ไม่ได้
       allow read: if isSignedIn() && (
         canReadAll() ||
         (role() == 'seller'     && resource.data.seller_uid == request.auth.uid) ||
         (role() == 'graphic'    && (resource.data.design_uid == request.auth.uid
-                                    || resource.data.status == 'รอออกแบบ')) ||
+                                    || resource.data.print_uid == request.auth.uid
+                                    || resource.data.status == 'รอออกแบบ'
+                                    || (resource.data.status in ['คอนเฟิร์มแล้ว', 'รอผลิต', 'กำลังผลิต', 'รอส่งมอบ', 'ส่งมอบแล้ว']
+                                        && 'machines' in resource.data
+                                        && resource.data.machines.hasAny(['fuji'])))) ||
         (role() == 'production'  && (resource.data.print_uid == request.auth.uid
-                                    || resource.data.status in ['คอนเฟิร์มแล้ว', 'รอผลิต']))
+                                    || (resource.data.status in ['คอนเฟิร์มแล้ว', 'รอผลิต', 'กำลังผลิต', 'รอส่งมอบ', 'ส่งมอบแล้ว']
+                                        && 'machines' in resource.data
+                                        && resource.data.machines.hasAny(['vinyl', 'large_sticker', 'cut_sticker', 'other']))))
       );
       allow write: if false; // all mutations via Cloud Functions
     }

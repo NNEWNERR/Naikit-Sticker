@@ -109,17 +109,21 @@ interface Payment {
   discount: number;      // default 0; 0 ≤ discount ≤ sum(work_items.total)
   shipping_fee: number;  // F10 — ค่าส่ง (ลูกค้าจ่ายเพิ่ม), บวกท้ายบิล นอกฐาน VAT/WHT; default 0
   transfer_fee: number;  // F10 — ค่าธรรมเนียม เช็ค/โอน (ลูกค้าจ่ายเพิ่ม), นอกฐาน VAT/WHT; default 0
-  deposit: number;       // 0 ≤ deposit ≤ total
-  remaining: number;     // SERVER-DERIVED = total - deposit (ค่างาน)
+  other_fee: number;     // ค่าใช้จ่ายอื่นๆ ที่เป็นบริการ (เช่น ค่าออกแบบ) — **อยู่ในฐาน VAT/WHT**;
+                         // แยกจาก total เพื่อไม่ให้ F7 price-audit เพี้ยน; default 0
+  other_fee_note: string;// บังคับเมื่อ other_fee > 0 (กัน catch-all ไร้ที่มา)
+  deposit: number;       // 0 ≤ deposit ≤ (total + other_fee)
+  remaining: number;     // SERVER-DERIVED = (total + other_fee) - deposit (ค่างาน)
   payment_method: 'เงินสด' | 'โอน' | 'เช็ค' | 'เครดิต' | 'อื่นๆ' | '';
   date_of_payment: Timestamp | null;
 }
 // ยอดที่ลูกค้าต้องจ่าย/ร้านต้องได้รับ (F10) = tax.net_receivable + shipping_fee + transfer_fee
-// settlement (paid_amount), markDelivered/editJob/adjustPayment guards, payment cap ใช้ยอดนี้
+//   (other_fee อยู่ในฐาน VAT/WHT แล้ว → สะท้อนใน tax.net_receivable; ไม่บวกซ้ำ)
+// ฐานภาษี (F9) = total + other_fee (taxableTotal); settlement/guards/payment cap ใช้ net_receivable+fees
 // invariant บังคับฝั่ง BE (F1): work_item.total === quantity × unit_price.
 // แก้ payment หลังสร้างได้เฉพาะ finance/admin ผ่าน adjustPayment. ดู docs/FINANCE-CONTROLS.md
 
-interface Tax {                  // F9 — server คำนวณจาก payment.total + vat_mode/wht_rate
+interface Tax {                  // F9 — server คำนวณจาก (payment.total + other_fee) + vat_mode/wht_rate
   vat_mode: 'none' | 'exclusive' | 'inclusive'; // ไม่มี / VAT นอก / VAT ใน
   vat_rate: number;             // 7 (0 ถ้า none)
   wht_rate: number;             // 0|1|2|3 (% หัก ณ ที่จ่าย, คิดจากฐานก่อน VAT)
@@ -139,16 +143,16 @@ interface Image {
 }
 ```
 
-**Indexes ที่ต้องสร้าง** (`firestore.indexes.json`):
+**Indexes** — `firestore.indexes.json` คือ authoritative (ตรงกับ query จริงใน `jobs.service.ts`)
+รายการข้างล่างเป็น guideline เชิงแนวคิด; query ปัจจุบัน **ไม่ได้ `orderBy('created_at')`** (sort ฝั่ง client)
+จึงไม่ได้สร้าง composite index ที่มี `created_at` — เพิ่มเมื่อ query เปลี่ยนไป `orderBy` จริงเท่านั้น
 
 ```
-jobs: (is_deleted, status, created_at desc)
-jobs: (is_deleted, seller_uid, created_at desc)
-jobs: (is_deleted, design_uid, created_at desc)
-jobs: (is_deleted, print_uid, created_at desc)
-jobs: (is_deleted, status, design_uid)         # for graphic queue
-jobs: (is_deleted, status, print_uid)          # for production queue
-jobs: (is_deleted, is_urgent, status, created_at desc)
+jobs: (is_deleted, seller_uid)
+jobs: (is_deleted, design_uid)
+jobs: (is_deleted, print_uid)
+jobs: (is_deleted, status, design_uid)         # graphic queue
+jobs: (is_deleted, status, print_uid)          # production queue
 ```
 
 ### `job_events/{eventId}`
@@ -233,9 +237,10 @@ interface Reply {
 
 Index: `cash_sessions (seller_uid, date desc)` + `jobs (is_deleted, seller_uid, status, payment.payment_method, date_of_completion)` สำหรับคำนวณ system_total
 
-### `payments/{paymentId}` (F8)
+### `payments/{paymentId}` (F8 + F12)
 
-หนึ่งการจ่ายจริง (สลิปโอน/เช็ค 1 ใบ) ผูกได้หลายใบงานผ่าน `allocations`. เขียนผ่าน Cloud Function เท่านั้น; อ่าน: finance/admin ทั้งหมด, seller เฉพาะที่ `seller_uids` มี uid ตัวเอง. ดู docs/F8-SLIP-PAYMENT-DESIGN.md
+หนึ่งการจ่ายจริง (เงินสด/สลิปโอน/เช็ค 1 รายการ) ผูกได้หลายใบงานผ่าน `allocations`. เขียนผ่าน Cloud Function เท่านั้น; อ่าน: finance/admin ทั้งหมด, seller เฉพาะที่ `seller_uids` มี uid ตัวเอง. ดู docs/F8-SLIP-PAYMENT-DESIGN.md + docs/F12-PAYMENT-LEDGER-DESIGN.md
+**F12:** ทุกการจ่าย (มัดจำ+งวด+เงินสด+โอน/เช็ค) เป็น ledger record เดียวกัน · field `source: 'deposit' | 'payment'` (deposit = มัดจำที่ createJob post อัตโนมัติ). เงินสดไม่ต้องมี slip/bank_ref
 
 | field | type | notes |
 |---|---|---|
@@ -267,7 +272,8 @@ Index: `cash_sessions (seller_uid, date desc)` + `jobs (is_deleted, seller_uid, 
 | `requested_by_uid/at` · `approved_by_uid/at` | | แยกคนขอ/คนอนุมัติ |
 | `created/updated_at` · `is_deleted/deleted_at` | | |
 
-> `jobs` เพิ่ม field `paid_amount: number` (default 0) = Σ allocations active − refunds approved
+> `jobs` field `paid_amount: number` (default 0) = Σ allocations active − refunds approved
+> **F12:** รวมมัดจำด้วย (มัดจำ = ledger entry `source:'deposit'`) → `paid_amount` = source of truth ของ "จ่ายแล้ว" ทุกวิธี; `payment.deposit` กลายเป็น snapshot (ไม่ใช้คำนวณ outstanding). `outstanding = (net_receivable+ค่าส่ง+ค่าธรรมเนียม) − paid_amount`
 > Action enum เพิ่ม: `payment_record`, `payment_void`, `refund_request`, `refund_approve`, `refund_reject`
 
 ### Collections ที่ **เลิกใช้**
@@ -313,7 +319,7 @@ Index: `cash_sessions (seller_uid, date desc)` + `jobs (is_deleted, seller_uid, 
 | `send_to_production` | — | ✓ ถ้า `design_uid=self` AND `status='คอนเฟิร์มแล้ว'` | — | ✓ | `คอนเฟิร์มแล้ว` → `รอผลิต` |
 | `claim_print` | — | — | ✓ ถ้า `status='รอผลิต'` AND `print_uid=null` | ✓ | `รอผลิต` → `กำลังผลิต` |
 | `upload_print` | — | — | ✓ ถ้า `print_uid=self` AND `status='กำลังผลิต'` | ✓ | `กำลังผลิต` → `รอส่งมอบ` |
-| `mark_delivered` | ✓ ถ้า `seller_uid=self` AND `status='รอส่งมอบ'` | — | — | ✓ | `รอส่งมอบ` → `ส่งมอบแล้ว`. **F4:** ต้องมี `payment_method` (ไม่ว่าง); ถ้า โอน/เช็ค/เครดิต ต้องมี `delivery_slips` ≥ 1 |
+| `mark_delivered` | ✓ ถ้า `seller_uid=self` AND `status='รอส่งมอบ'` | — | — | ✓ | `รอส่งมอบ` → `ส่งมอบแล้ว`. **F9 (แทนที่ F4 เดิม):** ไม่ hard-gate การจ่ายแล้ว — ส่งมอบแบบค้างชำระได้ (เครดิต/ลูกหนี้/AR); settlement ปิดเมื่อ `paid_amount ≥ net_receivable`. `delivery_slips` = optional (แนบถ้ามี). ดู docs/F9-TAX-PAYMENT-DESIGN.md |
 | `adjust_payment` (F2) | — | — | — | ✓ ทุก status | **finance** ด้วย (role ที่ 5 — ดู F3). แก้ discount/deposit/method/date + บังคับ `reason` → event `payment_adjust` before/after. total ยังคิดจาก work_items |
 | `admin_reassign` | — | — | — | ✓ ทุก status | (เปลี่ยน design_uid หรือ print_uid; status ตามที่ admin เลือก) |
 | `delete_job` (soft) | — | — | — | ✓ | (set `is_deleted=true`) |
@@ -362,16 +368,25 @@ Index: `cash_sessions (seller_uid, date desc)` + `jobs (is_deleted, seller_uid, 
 
 ## Storage paths
 
+มี 2 รูปแบบ path จริง (ดู `storage.rules` ที่บังคับ + เป็น source of truth ฝั่ง Storage):
+
 ```
-worksheets/{year}/{month}/{serial}/worksheet/{uuid}-{name}.{ext}
-worksheets/{year}/{month}/{serial}/reference/{uuid}-{name}.{ext}
-worksheets/{year}/{month}/{serial}/design/{uuid}-{name}.{ext}
-worksheets/{year}/{month}/{serial}/print/{uuid}-{name}.{ext}
+# Create flow — create-work-sheet.component.ts
+# bucket = per-submission UUID (serial ยัง gen ฝั่ง server ตอนยังอัปไฟล์ จึงใช้ UUID แทน)
+images/{year}/{month}/{bucket-uuid}/worksheet/{uuid}-{name}.{ext}
+images/{year}/{month}/{bucket-uuid}/reference/{uuid}-{name}.{ext}
+
+# Design/print/slip artwork — jobs.service.ts uploadImages() (submitDesign / uploadPrint / markDelivered)
+jobs/{jobId}/design/{uuid}.{ext}
+jobs/{jobId}/print/{uuid}.{ext}
+jobs/{jobId}/slip/{uuid}.{ext}        # F4/F8 delivery slips
 ```
 
-Rules:
-- Read: ใครก็ตามที่อ่าน job ที่เกี่ยวข้องได้
-- Write: ผ่าน Cloud Function เท่านั้น (verify role + job ownership) — client ไม่อัปตรง
+Rules (`storage.rules`):
+- Read: signed-in staff ทุกคน (อ่าน object ได้ถ้า login)
+- Write: client อัปตรงด้วย `uploadBytes` (authenticated) — rules บังคับ signed-in + content-type
+  (image/* | application/pdf) + size cap (images 20MB / jobs 50MB) + `{kind}` whitelist;
+  จากนั้นส่ง download URL ให้ Cloud Function บันทึกลง job. **ไม่ได้อัปผ่าน Function**
 
 ## Auth flow
 

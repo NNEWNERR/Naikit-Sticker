@@ -35,6 +35,7 @@ export class ReportComponent implements OnInit, OnDestroy {
 
   currentSearch = '';
   selectedStatusFilter: string | null = null;
+  loadError = '';
 
   private jobsCleanup?: () => void;
   private usersCleanup?: () => void;
@@ -85,9 +86,17 @@ export class ReportComponent implements OnInit, OnDestroy {
       this.usersCleanup = this.users.attachListener();
     }
 
-    this.jobsCleanup = this.jobs.watchVisibleJobs(role, uid, (jobs) => {
-      this.rawJobs = jobs;
-    });
+    this.jobsCleanup = this.jobs.watchVisibleJobs(
+      role,
+      uid,
+      (jobs) => {
+        this.rawJobs = jobs;
+        this.loadError = '';
+      },
+      // Surface a rejected listener — a silent empty report could read as
+      // "no jobs / nothing suspicious" to a finance reviewer.
+      () => { this.loadError = 'โหลดรายงานไม่สำเร็จ กรุณารีเฟรชหน้าหรือเข้าสู่ระบบใหม่'; },
+    );
   }
 
   ngOnDestroy() {

@@ -116,25 +116,36 @@
           📦 ส่งเข้าผลิต
         </button>
 
-        <!-- รอผลิต: Claim print -->
-        <button *ngIf="canClaimPrint()" type="button"
-          class="px-3 py-1.5 bg-status-printing-bg border-2 border-ink rounded font-bold text-body-sm cursor-pointer disabled:opacity-50"
-          [disabled]="actionLoading()"
-          (click)="onClaimPrint()">
-          🖨️ รับงานผลิต
-        </button>
+        <!-- F13 — งานผลิตต่อเครื่อง (claim/แนบงานพิมพ์ แยกแต่ละเครื่อง) -->
+        <div *ngIf="hasProductionTasks()" class="flex flex-col gap-2 w-full">
+          <div *ngFor="let t of productionTasks()"
+               class="p-2.5 border-2 border-ink rounded-md bg-surface-2 flex flex-col gap-1.5">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-body-sm">🖨️ {{ machineLabel(t.machine) }}</span>
+              <span class="px-2 py-0.5 rounded text-[11px] font-bold border border-ink"
+                    [class.bg-status-printq-bg]="t.status === 'รอผลิต'"
+                    [class.bg-status-printing-bg]="t.status === 'กำลังผลิต'"
+                    [class.bg-status-delivered-bg]="t.status === 'เสร็จ'">{{ t.status }}</span>
+            </div>
+            <span *ngIf="t.print_uid" class="text-[12px] text-ink-3">ผู้พิมพ์: {{ personName(t.print_uid) }}</span>
 
-        <!-- กำลังผลิต: Upload print -->
-        <div *ngIf="canUploadPrint()" class="flex flex-col gap-1.5 w-full">
-          <label class="text-body-sm font-semibold">แนบรูปงานพิมพ์ (บังคับ)</label>
-          <input type="file" accept="image/*" multiple class="text-body-sm" (change)="onPrintFilesChange($event)">
-          <span *ngIf="printFiles.length" class="text-body-sm text-ink-3">เลือก {{ printFiles.length }} ไฟล์</span>
-          <button type="button"
-            class="self-start px-3 py-1.5 bg-status-deliverq-bg border-2 border-ink rounded font-bold text-body-sm cursor-pointer disabled:opacity-50"
-            [disabled]="actionLoading() || printFiles.length === 0"
-            (click)="onUploadPrint()">
-            ✅ ส่งงานรอส่งมอบ
-          </button>
+            <!-- รอผลิต: claim -->
+            <button *ngIf="canClaimTask(t)" type="button"
+              class="self-start px-3 py-1.5 bg-status-printing-bg border-2 border-ink rounded font-bold text-body-sm cursor-pointer disabled:opacity-50"
+              [disabled]="actionLoading()" (click)="onClaimTask(t.machine)">รับงานเครื่องนี้</button>
+
+            <!-- กำลังผลิต: แนบรูป -->
+            <div *ngIf="canUploadTask(t)" class="flex flex-col gap-1.5">
+              <label class="text-body-sm font-semibold">แนบรูปงานพิมพ์ (บังคับ)</label>
+              <input type="file" accept="image/*" multiple class="text-body-sm" (change)="onPrintFilesChange(t.machine, $event)">
+              <span *ngIf="printFilesCount(t.machine)" class="text-body-sm text-ink-3">เลือก {{ printFilesCount(t.machine) }} ไฟล์</span>
+              <button type="button"
+                class="self-start px-3 py-1.5 bg-status-deliverq-bg border-2 border-ink rounded font-bold text-body-sm cursor-pointer disabled:opacity-50"
+                [disabled]="actionLoading() || printFilesCount(t.machine) === 0"
+                (click)="onUploadTask(t.machine)">✅ เสร็จเครื่องนี้</button>
+            </div>
+          </div>
+          <p class="text-[12px] text-ink-3 m-0">ทุกเครื่องเสร็จ → ใบงานเข้าสถานะ "รอส่งมอบ" อัตโนมัติ</p>
         </div>
 
         <!-- รอส่งมอบ: Mark delivered (+ optional payment slip) -->
@@ -232,6 +243,10 @@
               <span class="text-ink-3">ส่วนลด</span>
               <span class="font-bold font-num text-amber-700">−฿{{ (j.payment?.discount || 0) | number }}</span>
             </div>
+            <div *ngIf="(j.payment?.other_fee || 0) > 0" class="flex justify-between text-body mb-1">
+              <span class="text-ink-3">ค่าใช้จ่ายอื่นๆ<span *ngIf="j.payment?.other_fee_note" class="text-[11px]"> ({{ j.payment?.other_fee_note }})</span></span>
+              <span class="font-bold font-num">+฿{{ (j.payment?.other_fee || 0) | number }}</span>
+            </div>
             <div *ngIf="(j.payment?.shipping_fee || 0) > 0" class="flex justify-between text-body mb-1">
               <span class="text-ink-3">ค่าส่ง</span>
               <span class="font-bold font-num">+฿{{ (j.payment?.shipping_fee || 0) | number }}</span>
@@ -295,12 +310,10 @@
             <div *ngIf="showAdjust" class="p-3 bg-amber-50 border-2 border-ink rounded-md flex flex-col gap-2">
               <div class="font-bold text-body-sm">ปรับยอดเงิน · บันทึก audit</div>
               <p class="text-body-sm text-ink-3 m-0">ยอดรวมคิดจากผลรวมงาน − ส่วนลด (ปรับยอดรวมตรงๆ ไม่ได้)</p>
+              <p class="text-[12px] text-ink-3 m-0">มัดจำ/เงินที่รับ ปรับผ่าน "บันทึกการจ่าย" หรือ void รายการ — ไม่แก้ที่นี่ (F12)</p>
               <div class="grid grid-cols-2 gap-2">
                 <label class="flex flex-col gap-1 text-body-sm">ส่วนลด (฿)
                   <input type="number" [(ngModel)]="adjDiscount" class="input-base focus-ring font-num" placeholder="0" />
-                </label>
-                <label class="flex flex-col gap-1 text-body-sm">มัดจำ (฿)
-                  <input type="number" [(ngModel)]="adjDeposit" class="input-base focus-ring font-num" placeholder="0" />
                 </label>
                 <label class="flex flex-col gap-1 text-body-sm">ค่าส่ง (฿)
                   <input type="number" [(ngModel)]="adjShipping" class="input-base focus-ring font-num" placeholder="0" />
@@ -308,7 +321,14 @@
                 <label class="flex flex-col gap-1 text-body-sm">ค่าธรรมเนียม (฿)
                   <input type="number" [(ngModel)]="adjTransfer" class="input-base focus-ring font-num" placeholder="0" />
                 </label>
+                <label class="flex flex-col gap-1 text-body-sm">ค่าใช้จ่ายอื่นๆ (฿)
+                  <input type="number" [(ngModel)]="adjOther" class="input-base focus-ring font-num" placeholder="0" />
+                </label>
+                <label *ngIf="(adjOther ?? 0) > 0" class="flex flex-col gap-1 text-body-sm col-span-2">หมายเหตุค่าใช้จ่ายอื่นๆ (บังคับ)
+                  <input type="text" [(ngModel)]="adjOtherNote" class="input-base focus-ring" placeholder="เช่น ค่าออกแบบ, ค่าติดตั้ง" />
+                </label>
               </div>
+              <p class="text-[12px] text-ink-3 m-0">ค่าใช้จ่ายอื่นๆ คิด VAT/หัก ณ ที่จ่ายด้วย · ค่าส่ง/ค่าธรรมเนียมอยู่นอกฐานภาษี</p>
               <label class="flex flex-col gap-1 text-body-sm">วิธีจ่าย
                 <select [(ngModel)]="adjMethod" class="input-base focus-ring font-semibold">
                   <option value="">— ไม่ระบุ —</option>
@@ -348,20 +368,20 @@
               <div class="grid grid-cols-2 gap-2">
                 <label class="flex flex-col gap-1 text-body-sm">วิธี
                   <select [(ngModel)]="payMethod" class="input-base focus-ring font-semibold">
-                    <option value="โอน">โอน</option><option value="เช็ค">เช็ค</option>
+                    <option value="เงินสด">เงินสด</option><option value="โอน">โอน</option><option value="เช็ค">เช็ค</option>
                   </select>
                 </label>
                 <label class="flex flex-col gap-1 text-body-sm">จำนวนเงิน
                   <input type="number" [(ngModel)]="payAmount" class="input-base focus-ring font-num" />
                 </label>
               </div>
-              <label class="flex flex-col gap-1 text-body-sm">เลขอ้างอิงโอน/เช็ค
+              <label *ngIf="payMethod !== 'เงินสด'" class="flex flex-col gap-1 text-body-sm">เลขอ้างอิงโอน/เช็ค
                 <input type="text" [(ngModel)]="payBankRef" class="input-base focus-ring font-num" placeholder="เช่น 4 ตัวท้าย+เวลา" />
               </label>
               <label class="flex flex-col gap-1 text-body-sm">วันที่จ่าย
                 <input type="date" [(ngModel)]="payDate" class="input-base focus-ring font-num" />
               </label>
-              <label class="flex flex-col gap-1 text-body-sm">สลิป (รูป/PDF)
+              <label *ngIf="payMethod !== 'เงินสด'" class="flex flex-col gap-1 text-body-sm">สลิป (รูป/PDF)
                 <input type="file" accept="image/*,application/pdf" (change)="onSlipFileChange($event)" class="text-body-sm" />
               </label>
               <p *ngIf="actionError()" class="text-body-sm text-red-700 font-semibold m-0">{{ actionError() }}</p>
@@ -397,8 +417,9 @@
 
             <div *ngFor="let p of activePayments()" class="flex items-center justify-between text-body-sm py-1 border-b border-dashed border-line">
               <div>
+                <span *ngIf="p.source === 'deposit'" class="px-1 rounded bg-brand-50 border border-ink text-[11px] font-bold">มัดจำ</span>
                 <span class="font-num font-bold">฿{{ p.allocated_total | number }}</span>
-                <span class="text-ink-3"> · {{ p.method }} · {{ p.bank_ref }}</span>
+                <span class="text-ink-3"> · {{ p.method }}<span *ngIf="p.bank_ref"> · {{ p.bank_ref }}</span> · {{ formatTs(p.paid_at) }}</span>
               </div>
               <div class="flex items-center gap-2">
                 <a *ngIf="p.slip_url" [href]="p.slip_url" target="_blank" class="text-blue-700 underline">สลิป</a>

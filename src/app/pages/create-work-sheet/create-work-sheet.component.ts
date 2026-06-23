@@ -1,17 +1,11 @@
 import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ModalController } from 'src/app/services/modal.service';
-import { ToastController, AlertController } from 'src/app/services/service.service';
+import { ToastController } from 'src/app/services/service.service';
 import { v4 as uuidv4 } from 'uuid';
 import { WorkItemModalComponent } from './work-item-modal/work-item-modal.component';
 import { Router, ActivatedRoute } from '@angular/router';
 import { StorageService } from 'src/app/services/storage.service';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
-import { thSarabunFont } from '../../shared/fonts/th-sarabun-font';
-import * as XLSX from 'xlsx';
-import html2canvas from 'html2canvas';
-import { WorksheetPreviewModalComponent } from '../../components/worksheet-preview-modal/worksheet-preview-modal.component';
 import { JobAdminError, JobsService } from '../../services/jobs.service';
 import {
   CreateJobPayload,
@@ -73,172 +67,7 @@ export class CreateWorkSheetComponent implements OnInit {
 
   form: FormGroup;
 
-  contacts = [
-    {
-      title: 'หน้าร้าน',
-      value: 'front',
-      disabled: false,
-    },
-    {
-      title: 'โทรศัพท์',
-      value: 'phone',
-      disabled: false,
-    },
-    {
-      title: 'เฟสบุ๊ค',
-      value: 'facebook',
-      disabled: false,
-    },
-    {
-      title: 'ไลน์',
-      value: 'line',
-      disabled: false,
-    },
-    {
-      title: 'อีเมล',
-      value: 'email',
-      disabled: false,
-    },
-  ];
-
-  // contacts = ['หน้าร้าน', 'โทรศัพท์', 'เฟสบุ๊ค', 'ไลน์', 'อีเมล']
-  // designers = ฟลุ๊ค ไนซ์ เลย์ เอก เยาว์
-  // printers = ฟลุ๊ค ไนซ์ เลย์ เอก เยาว์ นิว ซี ฮอล อัน ดาว(พ) เลย์(ช)
-
-  payments = [
-    {
-      title: 'เงินสด',
-      value: 'เงินสด',
-      disabled: false,
-    },
-    {
-      title: 'โอน',
-      value: 'โอน',
-      disabled: false,
-    },
-    {
-      title: 'เช็ค',
-      value: 'เช็ค',
-      disabled: false,
-    },
-    {
-      title: 'เครดิต',
-      value: 'เครดิต',
-      disabled: false,
-    },
-    {
-      title: 'อื่นๆ',
-      value: 'อื่นๆ',
-      disabled: false,
-    },
-  ];
-
-  designers = [
-    {
-      title: 'admin',
-      value: 'admin',
-      disabled: false,
-    },
-    {
-      title: 'ฟลุ๊ค',
-      value: 'ฟลุ๊ค',
-      disabled: false,
-    },
-    {
-      title: 'ไนซ์',
-      value: 'ไนซ์',
-      disabled: false,
-    },
-    {
-      title: 'เลย์',
-      value: 'เลย์',
-      disabled: false,
-    },
-    {
-      title: 'เอก',
-      value: 'เอก',
-      disabled: false,
-    },
-    {
-      title: 'เยาว์',
-      value: 'เยาว์',
-      disabled: false,
-    },
-  ];
-
-  is_ergents = [
-    {
-      title: 'ไม่ด่วน',
-      value: 'ไม่ด่วน',
-      disabled: false,
-    },
-    {
-      title: 'ด่วน',
-      value: 'ด่วน',
-      disabled: false,
-    },
-  ];
-
-  printers = [
-    {
-      title: 'admin',
-      value: 'admin',
-      disabled: false,
-    },
-    {
-      title: 'ฟลุ๊ค',
-      value: 'ฟลุ๊ค',
-      disabled: false,
-    },
-    {
-      title: 'ไนซ์',
-      value: 'ไนซ์',
-      disabled: false,
-    },
-    {
-      title: 'เลย์',
-      value: 'เลย์',
-      disabled: false,
-    },
-    {
-      title: 'เอก',
-      value: 'เอก',
-      disabled: false,
-    },
-    {
-      title: 'เยาว์',
-      value: 'เยาว์',
-      disabled: false,
-    },
-    {
-      title: 'นิว',
-      value: 'นิว',
-      disabled: false,
-    },
-    {
-      title: 'ซี',
-      value: 'ซี',
-      disabled: false,
-    },
-    {
-      title: 'อัน',
-      value: 'อัน',
-      disabled: false,
-    },
-    {
-      title: 'ดาว',
-      value: 'ดาว',
-      disabled: false,
-    },
-    {
-      title: 'เลย์(ช)',
-      value: 'เลย์(ช)',
-      disabled: false,
-    },
-  ];
-
   worksheetForm: FormGroup;
-  filePreviews: string[] = [];
   isDragging = false;
   isSubmitting = false;
   totalAmount = 0;
@@ -284,7 +113,6 @@ export class CreateWorkSheetComponent implements OnInit {
     private fb: FormBuilder,
     private router: Router,
     private route: ActivatedRoute,
-    private alertController: AlertController,
   ) {
     this.initNewForm();
   }
@@ -319,6 +147,8 @@ export class CreateWorkSheetComponent implements OnInit {
         discount: job.payment?.discount ?? 0,
         shipping_fee: job.payment?.shipping_fee ?? 0,
         transfer_fee: job.payment?.transfer_fee ?? 0,
+        other_fee: job.payment?.other_fee ?? 0,
+        other_fee_note: job.payment?.other_fee_note ?? '',
         deposit: job.payment?.deposit ?? 0,
         payment_method: job.payment?.payment_method ?? '',
       },
@@ -422,6 +252,13 @@ export class CreateWorkSheetComponent implements OnInit {
   get transferFee(): number {
     return Number(this.worksheetForm.get('payment')?.value?.transfer_fee) || 0;
   }
+  /** ค่าใช้จ่ายอื่นๆ (บริการ เช่น ค่าออกแบบ) — อยู่ในฐาน VAT/WHT (ต่างจากค่าส่ง/ค่าธรรมเนียม). */
+  get otherFee(): number {
+    return Number(this.worksheetForm.get('payment')?.value?.other_fee) || 0;
+  }
+  get otherFeeNote(): string {
+    return String(this.worksheetForm.get('payment')?.value?.other_fee_note ?? '');
+  }
 
 
   private initNewForm() {
@@ -441,6 +278,8 @@ export class CreateWorkSheetComponent implements OnInit {
         discount: [0],
         shipping_fee: [0],
         transfer_fee: [0],
+        other_fee: [0],
+        other_fee_note: [''],
         deposit: [0],
         date_of_payment: [new Date()],
         payment_method: [''],
@@ -461,16 +300,18 @@ export class CreateWorkSheetComponent implements OnInit {
   private r2(n: number): number { return Math.round(n * 100) / 100; }
   get vatMode(): string { return this.worksheetForm.get('tax')?.get('vat_mode')?.value || 'none'; }
   get whtRate(): number { return Number(this.worksheetForm.get('tax')?.get('wht_rate')?.value) || 0; }
+  /** ยอดบริการที่คิดภาษี = ยอดงาน − ส่วนลด + ค่าใช้จ่ายอื่นๆ (mirror BE taxableTotal). */
+  get taxableServiceTotal(): number { return this.r2(this.paymentTotal + this.otherFee); }
   get taxBase(): number {
-    return this.vatMode === 'inclusive' ? this.r2(this.paymentTotal / (1 + this.VAT_RATE / 100)) : this.r2(this.paymentTotal);
+    return this.vatMode === 'inclusive' ? this.r2(this.taxableServiceTotal / (1 + this.VAT_RATE / 100)) : this.r2(this.taxableServiceTotal);
   }
   get vatAmount(): number {
-    if (this.vatMode === 'exclusive') return this.r2((this.paymentTotal * this.VAT_RATE) / 100);
-    if (this.vatMode === 'inclusive') return this.r2(this.paymentTotal - this.taxBase);
+    if (this.vatMode === 'exclusive') return this.r2((this.taxableServiceTotal * this.VAT_RATE) / 100);
+    if (this.vatMode === 'inclusive') return this.r2(this.taxableServiceTotal - this.taxBase);
     return 0;
   }
   get grandTotal(): number {
-    return this.vatMode === 'exclusive' ? this.r2(this.paymentTotal + this.vatAmount) : this.r2(this.paymentTotal);
+    return this.vatMode === 'exclusive' ? this.r2(this.taxableServiceTotal + this.vatAmount) : this.r2(this.taxableServiceTotal);
   }
   get whtAmount(): number { return this.r2((this.taxBase * this.whtRate) / 100); }
   get netReceivable(): number { return this.r2(this.grandTotal - this.whtAmount); }
@@ -611,7 +452,7 @@ export class CreateWorkSheetComponent implements OnInit {
     if (!input) return 'unknown';
     const cleaned = input
       // eslint-disable-next-line no-control-regex
-      .replace(/[ -]/g, '')
+      .replace(/[\u0000-\u001f\u007f]/g, '')
       .replace(/\.\./g, '')
       .replace(/[^A-Za-z0-9_\-฀-๿]/g, '_')
       .replace(/^\.+/, '');
@@ -657,15 +498,6 @@ export class CreateWorkSheetComponent implements OnInit {
     }
   }
 
-  previewFile(preview: string, type: 'worksheet' | 'reference') {
-    const files = type === 'worksheet' ? this.workSheetFiles : this.referenceFiles;
-    const index = (type === 'worksheet' ? this.workSheetPreviews : this.referencePreviews).indexOf(preview);
-
-    // Preview thumbnails are rendered from the *Previews arrays in the template;
-    // nothing to compute here once the index is resolved.
-    void index;
-  }
-
   isFieldInvalid(fieldName: string): boolean {
     const field = this.worksheetForm.get(fieldName);
     return field ? field.invalid && (field.dirty || field.touched) : false;
@@ -676,6 +508,17 @@ export class CreateWorkSheetComponent implements OnInit {
       return;
     }
     if (this.editMode) { await this.submitEdit(); return; }
+
+    // ค่าใช้จ่ายอื่นๆ ต้องมีหมายเหตุ (mirror BE) — เช็คก่อนอัปรูป กัน round-trip เสียเปล่า
+    if (this.otherFee > 0 && !this.otherFeeNote.trim()) {
+      const t = await this.toastController.create({
+        message: 'กรุณาระบุหมายเหตุค่าใช้จ่ายอื่นๆ (เช่น ค่าออกแบบ)',
+        duration: 3000, position: 'top', color: 'danger', cssClass: 'custom-toast', icon: 'alert-circle',
+      });
+      await t.present();
+      this.step = 3; // กลับไป Step ชำระเงิน
+      return;
+    }
 
     this.isSubmitting = true;
     try {
@@ -797,6 +640,8 @@ export class CreateWorkSheetComponent implements OnInit {
     const discount = Number(paymentForm.discount) || 0;
     const shipping_fee = Number(paymentForm.shipping_fee) || 0;
     const transfer_fee = Number(paymentForm.transfer_fee) || 0;
+    const other_fee = Number(paymentForm.other_fee) || 0;
+    const other_fee_note = String(paymentForm.other_fee_note ?? '').trim();
 
     const work_items: WorkItem[] = (v.workItems as WorkItemFormValue[]).map((wi) => {
       const quantity = Number(wi.quantity) || 1;
@@ -826,6 +671,8 @@ export class CreateWorkSheetComponent implements OnInit {
       discount,
       shipping_fee,
       transfer_fee,
+      other_fee,
+      other_fee_note,
       deposit,
       remaining,
       payment_method: (paymentForm.payment_method ?? '') as Payment['payment_method'],
@@ -929,7 +776,6 @@ export class CreateWorkSheetComponent implements OnInit {
   resetForm() {
     this.worksheetForm.reset();
     this.workItems.clear();
-    this.filePreviews = [];
     this.workSheetFiles = [];
     this.workSheetPreviews = [];
     this.referenceFiles = [];
@@ -939,51 +785,8 @@ export class CreateWorkSheetComponent implements OnInit {
     this.initNewForm();
   }
 
-  formatDate(date: Date): string {
-    if (!date) return '';
-    return new Date(date).toLocaleDateString('th-TH', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  }
-
   get isFormValid(): boolean {
     return this.worksheetForm.valid && this.workItems.length > 0;
-  }
-
-  get hasDeposit(): boolean {
-    return (this.worksheetForm.get('deposit')?.value || 0) > 0;
-  }
-
-  onDepositChange() {
-    const deposit = this.worksheetForm.get('deposit')?.value || 0;
-    if (deposit > this.totalAmount) {
-      this.worksheetForm.patchValue({ deposit: this.totalAmount });
-    }
-  }
-
-  async handleFileUpload(files: FileList) {
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      if (file.type.startsWith('image/')) {
-        try {
-          const base64 = await this.convertToBase64(file);
-          this.filePreviews.push(base64);
-        } catch (error) {
-          console.error('File conversion error:', error);
-        }
-      }
-    }
-  }
-
-  private convertToBase64(file: File): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = error => reject(error);
-      reader.readAsDataURL(file);
-    });
   }
 
   calculateTotal() {
@@ -991,12 +794,6 @@ export class CreateWorkSheetComponent implements OnInit {
       return sum + (item.get('total')?.value || 0);
     }, 0);
     this.worksheetForm.patchValue({ total: this.totalAmount });
-  }
-
-  calculateBalance() {
-    const total = this.worksheetForm.get('total')?.value || 0;
-    const deposit = this.worksheetForm.get('deposit')?.value || 0;
-    return total - deposit;
   }
 
   validateForm(): boolean {
@@ -1016,212 +813,9 @@ export class CreateWorkSheetComponent implements OnInit {
     return true;
   }
 
-  showOption(index: number, item: any) {
-    // no-op (debug logging removed)
-    void index; void item;
-  }
-
-  //#endregion
-
   cancel() {
     // นำทางกลับไปหน้าก่อนหน้า
     this.router.navigate(['../']);
-  }
-
-  async clearForm() {
-    const alert = await this.alertController.create({
-      header: 'ยืนยันการล้างแบบ',
-      message: 'คุณต้องการล้างข้อมูลทั้งหมดใช่หรือไม่?',
-      buttons: [
-        {
-          text: 'ยกเลิก',
-          role: 'cancel'
-        },
-        {
-          text: 'ยืนยัน',
-          handler: () => {
-            this.worksheetForm.reset();
-            this.workSheetFiles = [];
-            this.workSheetPreviews = [];
-            this.referenceFiles = [];
-            this.referencePreviews = [];
-          }
-        }
-      ]
-    });
-    await alert.present();
-  }
-
-
-  async exportToPDF() {
-    try {
-      if (true) {
-        const formData = this.worksheetForm.value;
-        
-        // เพิ่มข้อมูลรูปภาพ
-        const previewData = {
-          ...formData,
-          worksheet_preview: this.workSheetPreviews?.[0], // รูปใบงาน
-          reference_previews: this.referencePreviews || [], // รูปอ้างอิง
-        };
-
-        // แสดง Modal ยืนยันข้อมูล
-        const modal = await this.modalController.create({
-          component: WorksheetPreviewModalComponent,
-          componentProps: {
-            worksheetData: previewData
-          },
-          cssClass: 'modal-fullscreen'
-        });
-
-        await modal.present();
-
-        // รอผลลัพธ์จาก Modal
-        const { data } = await modal.onDidDismiss();
-        
-        if (data?.confirmed) {
-          // await this.submit();
-          
-          const toast = await this.toastController.create({
-            message: 'บันทึกข้อมูลสำเร็จ',
-            duration: 2000,
-            position: 'top',
-            color: 'success'
-          });
-          await toast.present();
-          
-          this.router.navigate(['/worksheets']);
-        }
-      } else {
-        const toast = await this.toastController.create({
-          message: 'กรุณากรอกข้อมูลให้ครบถ้วน',
-          duration: 2000,
-          position: 'top',
-          color: 'warning'
-        });
-        await toast.present();
-      }
-    } catch (error) {
-      console.error('Error:', error);
-      const toast = await this.toastController.create({
-        message: 'เกิดข้อผิดพลาดในการบันทึกข้อมูล',
-        duration: 2000,
-        position: 'top',
-        color: 'danger'
-      });
-      await toast.present();
-    }
-  }
-
-  async exportExcel() {
-    try {
-      const formData = this.worksheetForm.value;
-      const workItems = formData?.workItems ?? [];
-
-      // สร้างฟังก์ชันสำหรับจัดรูปแบบวันที่
-      const formatThaiDate = (dateString) => {
-        if (!dateString) return '';
-        const date = new Date(dateString);
-        return `${date.getDate()}-${date.getMonth() + 1}-${date.getFullYear()}`;
-      };
-
-      const worksheet = XLSX.utils.aoa_to_sheet([
-        ['', '', 'ใบสั่งงาน', '', `เลขที่ ${formData.serial_number}`],
-        [],
-        ['สั่งทาง', formData.contact || ''],
-        ['หน่วยงาน/ผู้สั่งงาน', formData.customer_name || '', 'โทร', formData.phone || '', 'ไลน์', formData.line_name || ''],
-        [],
-        ['ประเภทงาน'],
-        ['ลำดับ', 'ประเภท', 'ขนาด', 'ตัวเลือก', 'จำนวน', 'ราคา'],
-        ...workItems.map((item, index) => [
-          index + 1,
-          item.type,
-          `${item.height} × ${item.width} ${item.unit_of_length}`,
-          item.option,
-          item.quantity,
-          item.total
-        ]),
-        [],
-        ['อื่นๆ', formData.remark || ''],
-        ['ยอดรวม', formData.payment?.total || '', '', '', 'วันที่รับเงิน', formatThaiDate(formData.payment?.date_of_payment)],
-        ['มัดจำ', formData.payment?.deposit || '', '', '', 'วิธีชำระเงิน', formData.payment?.payment_method || ''],
-        ['คงเหลือ', formData.payment?.remaining || ''],
-        [],
-        ['วันที่รับงาน', formatThaiDate(formData.date_of_acceptance)],
-        ['งานด่วน', formData.is_urgent ? '✓' : ''],
-        ['สถานะ', formData.status || ''],
-        [],
-        ['ผู้ออกแบบ', '', 'วันที่ออกแบบ', ''],
-        ['ผู้พิมพ์', '', 'วันที่พิมพ์', ''],
-        ['ผู้รับงาน', formData.seller || ''],
-        [],
-      ]);
-
-      // กำหนดความกว้างของคอลัมน์
-      worksheet['!cols'] = [
-        { wch: 8 },   // ลำดับ
-        { wch: 12 },  // ประเภท
-        { wch: 15 },  // ขนาด
-        { wch: 15 },  // ตัวเลือก
-        { wch: 8 },   // จำนวน
-        { wch: 10 },  // ราคา
-      ];
-
-      // จัดสไตล์หัวข้อหลัก
-      const headerCells = ['A6'];
-      headerCells.forEach(cell => {
-        if (worksheet[cell]) {
-          worksheet[cell].s = {
-            font: { bold: true, color: { rgb: "FF0000" } },  // สีแดง
-            alignment: { horizontal: 'left' }
-          };
-        }
-      });
-
-      // จัดรูปแบบสีของข้อความสำหรับหัวข้อ
-      const redTextCells = ['A3', 'A17', 'A18', 'A19'];
-      redTextCells.forEach(cell => {
-        if (worksheet[cell]) {
-          worksheet[cell].s = {
-            font: { color: { rgb: "FF0000" } }
-          };
-        }
-      });
-
-      // จัดรูปแบบสำหรับหัวตาราง
-      const tableHeaderRow = 7; // แถวที่มีหัวตาราง
-      for (let i = 0; i < 6; i++) {
-        const cell = worksheet[XLSX.utils.encode_cell({ r: tableHeaderRow, c: i })];
-        if (cell) {
-          cell.s = {
-            font: { bold: true },
-            alignment: { horizontal: 'center' }
-          };
-        }
-      }
-
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, 'ใบสั่งงาน');
-      XLSX.writeFile(workbook, `ใบสั่งงาน_${formData.serial_number || 'no_id'}.xlsx`);
-
-      const toast = await this.toastController.create({
-        message: 'Export Excel สำเร็จ',
-        duration: 2000,
-        position: 'top',
-        color: 'success'
-      });
-      await toast.present();
-
-    } catch (error) {
-      console.error('Error:', error);
-      const toast = await this.toastController.create({
-        message: 'เกิดข้อผิดพลาด',
-        duration: 2000,
-        position: 'top',
-        color: 'danger'
-      });
-      await toast.present();
-    }
   }
 
 }

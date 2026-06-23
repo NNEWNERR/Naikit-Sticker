@@ -17,9 +17,10 @@ import {
   TimelineComponent,
   TimelineStep,
 } from 'src/app/shared/components';
-import { Job, JobAction, JobComment, JobEvent } from 'src/app/core/models/job';
+import { Job, JobAction, JobComment, JobEvent, ProductionTask } from 'src/app/core/models/job';
 import { PaymentRecord, RefundRecord } from 'src/app/core/models/payment';
 import { PaymentService } from 'src/app/services/payment.service';
+import { canProduceMachines } from 'src/app/core/data/work-item-catalog';
 
 const ACTION_LABELS: Record<JobAction, string> = {
   create:           'สร้างใบงาน',
@@ -45,11 +46,20 @@ const ACTION_LABELS: Record<JobAction, string> = {
   restore:          'กู้คืนใบงาน',
 };
 
+const MACHINE_LABELS: Record<string, string> = {
+  fuji:          'FUJI',
+  vinyl:         'ไวนิล',
+  large_sticker: 'สติ๊กเกอร์ใหญ่',
+  cut_sticker:   'สติกเกอร์ตัด',
+  other:         'อื่นๆ',
+};
+
 const ROLE_LABELS: Record<string, string> = {
   seller:     'ฝ่ายขาย',
   graphic:    'กราฟิก',
   production: 'ผลิต',
   admin:      'แอดมิน',
+  finance:    'การเงิน',
 };
 
 @Component({
@@ -97,17 +107,18 @@ export class WorksheetInfoComponent implements OnInit, OnDestroy {
 
   /** Files staged for design image upload (submitDesign). */
   designFiles: File[] = [];
-  /** Files staged for print image upload (uploadPrint). */
-  printFiles: File[] = [];
+  /** Files staged for print upload, keyed by machine (F13 — per-task). */
+  printFilesByMachine: Record<string, File[]> = {};
   /** Optional payment slips staged for markDelivered. */
   slipFiles: File[] = [];
 
-  /** F2/F6 — finance adjustPayment form state. */
+  /** F2/F6 — finance adjustPayment form state. (F12 D5: ไม่แก้มัดจำที่นี่แล้ว) */
   showAdjust = false;
-  adjDeposit: number | null = null;
   adjDiscount: number | null = null;
   adjShipping: number | null = null;
   adjTransfer: number | null = null;
+  adjOther: number | null = null;
+  adjOtherNote = '';
   adjMethod = '';
   adjReason = '';
   readonly paymentMethods = ['เงินสด', 'โอน', 'เช็ค', 'เครดิต', 'อื่นๆ'];
@@ -119,9 +130,9 @@ export class WorksheetInfoComponent implements OnInit, OnDestroy {
   private detachPayments?: () => void;
   private detachRefunds?: () => void;
 
-  // F8 — record payment form
+  // F8/F12 — record payment form (รองรับเงินสดด้วย — F12 D3)
   showPayForm = false;
-  payMethod: 'โอน' | 'เช็ค' = 'โอน';
+  payMethod: 'เงินสด' | 'โอน' | 'เช็ค' = 'โอน';
   payAmount: number | null = null;
   payBankRef = '';
   payDate = new Date().toISOString().slice(0, 10);
@@ -179,22 +190,33 @@ export class WorksheetInfoComponent implements OnInit, OnDestroy {
       && (r === 'admin' || (r === 'graphic' && j.design_uid === uid));
   });
 
-  canClaimPrint = computed(() => {
-    const j = this.job(); const r = this.role();
-    return !!j && !j.is_deleted && j.status === 'รอผลิต'
-      && (r === 'production' || r === 'admin') && j.print_uid === null;
-  });
+  // ── F13 — งานผลิตต่อเครื่อง (per-machine task) ────────────────────────────
+  productionTasks = computed<ProductionTask[]>(() => this.job()?.print_tasks ?? []);
+  hasProductionTasks = computed(() => this.productionTasks().length > 0);
 
-  canUploadPrint = computed(() => {
-    const j = this.job(); const r = this.role(); const uid = this.uid();
+  /** claim งานเครื่องนี้ได้ไหม (FUJI=graphic / non-FUJI=production) — task ยัง 'รอผลิต'. */
+  canClaimTask(t: ProductionTask): boolean {
+    const j = this.job();
+    return !!j && !j.is_deleted && (j.status === 'รอผลิต' || j.status === 'กำลังผลิต')
+      && t.status === 'รอผลิต' && canProduceMachines(this.role(), [t.machine]);
+  }
+  /** แนบงานพิมพ์เครื่องนี้ได้ไหม — task 'กำลังผลิต' + ทีมที่ทำเครื่องนี้ได้ (ไม่ต้องเป็น print_uid เดิม). */
+  canUploadTask(t: ProductionTask): boolean {
+    const j = this.job();
     return !!j && !j.is_deleted && j.status === 'กำลังผลิต'
-      && (r === 'admin' || j.print_uid === uid);
-  });
+      && t.status === 'กำลังผลิต' && canProduceMachines(this.role(), [t.machine]);
+  }
+  /** มี action ผลิตที่ทำได้อย่างน้อย 1 task. */
+  private hasProductionAction(): boolean {
+    return this.productionTasks().some((t) => this.canClaimTask(t) || this.canUploadTask(t));
+  }
+  machineLabel(machine: string): string { return MACHINE_LABELS[machine] ?? machine; }
 
   canMarkDelivered = computed(() => {
     const j = this.job(); const r = this.role(); const uid = this.uid();
     return !!j && !j.is_deleted && j.status === 'รอส่งมอบ'
-      && (r === 'admin' || j.seller_uid === uid || j.print_uid === uid);
+      && (r === 'admin' || j.seller_uid === uid || j.print_uid === uid
+          || canProduceMachines(r, j.machines));
   });
 
   canDelete = computed(() => this.role() === 'admin' && !!this.job() && !this.job()!.is_deleted);
@@ -222,8 +244,8 @@ export class WorksheetInfoComponent implements OnInit, OnDestroy {
 
   hasAnyAction = computed(() =>
     this.canClaimDesign() || this.canSubmitDesign() || this.canConfirmDesign() ||
-    this.canRequestRevision() || this.canSendToProduction() || this.canClaimPrint() ||
-    this.canUploadPrint() || this.canMarkDelivered() || this.canDelete() || this.canRestore()
+    this.canRequestRevision() || this.canSendToProduction() || this.hasProductionAction() ||
+    this.canMarkDelivered() || this.canDelete() || this.canRestore()
   );
 
   // ── Display helpers ────────────────────────────────────────────────────
@@ -381,14 +403,20 @@ export class WorksheetInfoComponent implements OnInit, OnDestroy {
   async onRecordPayment() {
     const amt = Number(this.payAmount);
     if (!amt || amt <= 0) { this.actionError.set('ระบุจำนวนเงิน'); return; }
-    if (!this.payBankRef.trim()) { this.actionError.set('ระบุเลขอ้างอิงโอน/เช็ค'); return; }
-    if (!this.paySlipFile) { this.actionError.set('แนบสลิป'); return; }
+    // F12 D3 — เงินสดไม่ต้องมีเลขอ้างอิง/สลิป; โอน/เช็คบังคับ
+    const isSlipMethod = this.payMethod === 'โอน' || this.payMethod === 'เช็ค';
+    if (isSlipMethod && !this.payBankRef.trim()) { this.actionError.set('ระบุเลขอ้างอิงโอน/เช็ค'); return; }
+    if (isSlipMethod && !this.paySlipFile) { this.actionError.set('แนบสลิป'); return; }
     await this._run(async () => {
-      const file = this.paySlipFile!;
-      const [slip_url, slip_hash] = await Promise.all([
-        this.paymentSvc.uploadSlip(this.jobId, file),
-        this.paymentSvc.hashFile(file),
-      ]);
+      let slip_url: string | null = null;
+      let slip_hash: string | null = null;
+      if (this.paySlipFile) {
+        const file = this.paySlipFile;
+        [slip_url, slip_hash] = await Promise.all([
+          this.paymentSvc.uploadSlip(this.jobId, file),
+          this.paymentSvc.hashFile(file),
+        ]);
+      }
       await this.paymentSvc.createPayment({
         method: this.payMethod,
         amount: amt,
@@ -468,19 +496,21 @@ export class WorksheetInfoComponent implements OnInit, OnDestroy {
     await this._run(() => this.jobsSvc.sendToProduction(this.jobId));
   }
 
-  async onClaimPrint() {
-    await this._run(() => this.jobsSvc.claimPrint(this.jobId));
+  // F13 — claim/upload "ต่อเครื่อง" (machine)
+  async onClaimTask(machine: string) {
+    await this._run(() => this.jobsSvc.claimPrint(this.jobId, machine));
   }
 
-  async onUploadPrint() {
-    if (this.printFiles.length === 0) {
+  async onUploadTask(machine: string) {
+    const files = this.printFilesByMachine[machine] ?? [];
+    if (files.length === 0) {
       this.actionError.set('กรุณาเลือกรูปงานพิมพ์อย่างน้อย 1 รูป');
       return;
     }
     await this._run(async () => {
-      const urls = await this.jobsSvc.uploadImages(this.jobId, 'print', this.printFiles);
-      await this.jobsSvc.uploadPrint(this.jobId, urls);
-      this.printFiles = [];
+      const urls = await this.jobsSvc.uploadImages(this.jobId, 'print', files);
+      await this.jobsSvc.uploadPrint(this.jobId, machine, urls);
+      this.printFilesByMachine[machine] = [];
     });
   }
 
@@ -500,10 +530,11 @@ export class WorksheetInfoComponent implements OnInit, OnDestroy {
 
   openAdjust() {
     const p = this.job()?.payment;
-    this.adjDeposit = p?.deposit ?? 0;
     this.adjDiscount = p?.discount ?? 0;
     this.adjShipping = p?.shipping_fee ?? 0;
     this.adjTransfer = p?.transfer_fee ?? 0;
+    this.adjOther = p?.other_fee ?? 0;
+    this.adjOtherNote = p?.other_fee_note ?? '';
     this.adjMethod = p?.payment_method ?? '';
     this.adjReason = '';
     this.actionError.set('');
@@ -519,13 +550,18 @@ export class WorksheetInfoComponent implements OnInit, OnDestroy {
       this.actionError.set('กรุณาระบุเหตุผลการปรับยอด');
       return;
     }
+    if ((this.adjOther ?? 0) > 0 && !this.adjOtherNote.trim()) {
+      this.actionError.set('กรุณาระบุหมายเหตุค่าใช้จ่ายอื่นๆ');
+      return;
+    }
     await this._run(async () => {
       await this.jobsSvc.adjustPayment(this.jobId, {
         reason: this.adjReason.trim(),
-        deposit: this.adjDeposit ?? undefined,
         discount: this.adjDiscount ?? undefined,
         shipping_fee: this.adjShipping ?? undefined,
         transfer_fee: this.adjTransfer ?? undefined,
+        other_fee: this.adjOther ?? undefined,
+        other_fee_note: this.adjOtherNote.trim() || undefined,
         payment_method: this.adjMethod || undefined,
       });
       this.showAdjust = false;
@@ -548,9 +584,12 @@ export class WorksheetInfoComponent implements OnInit, OnDestroy {
     this.designFiles = Array.from(input.files ?? []);
   }
 
-  onPrintFilesChange(event: Event) {
+  onPrintFilesChange(machine: string, event: Event) {
     const input = event.target as HTMLInputElement;
-    this.printFiles = Array.from(input.files ?? []);
+    this.printFilesByMachine[machine] = Array.from(input.files ?? []);
+  }
+  printFilesCount(machine: string): number {
+    return this.printFilesByMachine[machine]?.length ?? 0;
   }
 
   onSlipFilesChange(event: Event) {

@@ -92,6 +92,58 @@ export const UNIT_OPTIONS: CatalogUnit[] = [
   { value: 'เมตร', label: 'เมตร' },
 ];
 
+// ─── Production machine / group (soft filter ใน home — ดูง่ายว่าเป็นงานของเครื่องไหน) ──────
+// ประเภทงาน 1 ตัวอยู่ได้หลายเครื่อง (many-to-many) เช่น สติกเกอร์พิมพ์ ทำที่ FUJI หรือ
+// สติ๊กเกอร์เครื่องใหญ่ก็ได้ (แล้วแต่ขนาด). FUJI = graphic พิมพ์, ที่เหลือ = ฝ่ายผลิต.
+// ⚠️ soft filter เท่านั้น — ไม่บล็อกสิทธิ์ (firestore.rules/BE ไม่เกี่ยว). แก้ mapping ที่นี่ที่เดียว.
+
+export interface MachineGroup { value: string; label: string; }
+
+export const MACHINE_GROUPS: MachineGroup[] = [
+  { value: 'fuji',          label: 'FUJI' },
+  { value: 'vinyl',         label: 'ไวนิล' },
+  { value: 'large_sticker', label: 'สติ๊กเกอร์ใหญ่' },
+  { value: 'cut_sticker',   label: 'สติกเกอร์ตัด' },
+  { value: 'other',         label: 'อื่นๆ' },
+];
+
+/** ประเภทงาน (work_item.type value) → เครื่อง/กลุ่มผลิต. [] = ยังไม่ระบุ → จัดเป็น 'other'. */
+export const MACHINE_OF_TYPE: Record<string, string[]> = {
+  'ไวนิล':        ['vinyl'],
+  'สติกเกอร์':     ['fuji', 'large_sticker'], // value 'สติกเกอร์' = สติกเกอร์ พิมพ์
+  'สติกเกอร์ตัด':  ['cut_sticker'],
+  'ฉลาก':         ['fuji', 'large_sticker'],
+  'นามบัตร':       ['fuji'],
+  'ใบปลิว':        ['fuji'],
+  'โปสเตอร์':      ['fuji', 'large_sticker'],
+  'ตรายาง':        ['fuji'],
+  'โลอัพ':         ['large_sticker'],
+  'แบล็คลิส':      ['large_sticker'],
+  'กล่องไฟ':       ['large_sticker'],
+  'พลาสวูด':       [], // ยังไม่ระบุเครื่อง → 'other'
+};
+
+/** เครื่องทั้งหมดที่ใบงานเกี่ยวข้อง (union ของทุก work_item.type). type ที่ไม่ map = 'other'. */
+export function machinesForTypes(types: string[]): string[] {
+  const set = new Set<string>();
+  for (const t of types) {
+    const ms = MACHINE_OF_TYPE[t];
+    if (ms && ms.length) ms.forEach((m) => set.add(m));
+    else set.add('other');
+  }
+  return [...set];
+}
+
+/** role ผลิต/พิมพ์ใบงานที่มี machines ชุดนี้ได้ไหม (mirror BE lib/machines.ts canProduce).
+ *  FUJI = graphic เท่านั้น · non-FUJI = production เท่านั้น · admin = ได้หมด. */
+export function canProduceMachines(role: string | null | undefined, machines: string[] | undefined): boolean {
+  if (role === 'admin') return true;
+  const ms = machines ?? [];
+  if (role === 'graphic') return ms.includes('fuji');
+  if (role === 'production') return ms.some((m) => m !== 'fuji');
+  return false;
+}
+
 export function optionsForType(typeValue: string): CatalogOption[] {
   return WORK_ITEM_OPTIONS[typeValue] ?? [];
 }

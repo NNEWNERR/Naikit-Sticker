@@ -6,6 +6,7 @@ import { JobsService } from 'src/app/services/jobs.service';
 import { WorksheetInfoComponent } from '../worksheet-info/worksheet-info.component';
 import { Job } from 'src/app/core/models/job';
 import { Role } from 'src/app/core/models/session';
+import { MACHINE_GROUPS, machinesForTypes } from 'src/app/core/data/work-item-catalog';
 
 /**
  * Home / Dashboard — role-aware kanban.
@@ -39,17 +40,22 @@ const TEAM_STATUSES: Record<TeamKey, readonly Status[]> = {
   production: ['คอนเฟิร์มแล้ว', 'รอผลิต', 'กำลังผลิต', 'รอส่งมอบ'],
 };
 
+// ทุก role เห็นทุกคอลัมน์ — data query (watchMyJobs) + firestore.rules คุมว่า "งานไหน"
+// อยู่แล้ว, คอลัมน์ไม่ควรซ่อนสถานะ (ไม่งั้น seller ไม่เห็นงานตัวเองที่ยัง 'รอออกแบบ',
+// graphic ไม่เห็น 'คอนเฟิร์มแล้ว' → ส่งผลิตไม่ได้). คอลัมน์ที่ไม่มีงานจะว่างเฉยๆ.
 const ROLE_DEFAULT_COLUMNS: Record<Role, readonly Status[]> = {
   seller:     STATUS_ORDER,
-  graphic:    TEAM_STATUSES.graphic,
-  production: TEAM_STATUSES.production,
+  graphic:    STATUS_ORDER,
+  production: STATUS_ORDER,
   admin:      STATUS_ORDER,
-  finance:    STATUS_ORDER, // ผู้ตรวจเงิน เห็นทุกคอลัมน์ (read-only)
+  finance:    STATUS_ORDER,
 };
 
 const MOBILE_TABS: Record<Role, { key: 'all' | Status; label: string }[]> = {
   seller:     [
     { key: 'all',          label: 'ทั้งหมด' },
+    { key: 'รอออกแบบ',     label: 'รอแบบ' },
+    { key: 'กำลังออกแบบ',  label: 'ออกแบบ' },
     { key: 'รอคอนเฟิร์มแบบ', label: 'คอนเฟิร์ม' },
     { key: 'รอส่งมอบ',      label: 'ส่งมอบ' },
     { key: 'ส่งมอบแล้ว',    label: 'เสร็จ' },
@@ -59,6 +65,7 @@ const MOBILE_TABS: Record<Role, { key: 'all' | Status; label: string }[]> = {
     { key: 'รอออกแบบ',     label: 'รอแบบ' },
     { key: 'กำลังออกแบบ',  label: 'ออกแบบ' },
     { key: 'รอคอนเฟิร์มแบบ', label: 'รอ confirm' },
+    { key: 'คอนเฟิร์มแล้ว',  label: 'พร้อมผลิต' },
   ],
   production: [
     { key: 'all',          label: 'ทั้งหมด' },
@@ -94,9 +101,13 @@ export class HomeComponent implements OnInit, OnDestroy {
   /** Mobile single-status filter. */
   mobileTab: 'all' | Status = 'all';
 
+  /** Soft filter ตามเครื่อง/ประเภทผลิต (FUJI/ไวนิล/สติ๊กเกอร์ใหญ่/สติกเกอร์ตัด/อื่นๆ). */
+  machineFilter = 'all';
+
   search = '';
   todayLabel = '';
   isLoading = true;
+  loadError = '';
 
   readonly statusOrder = STATUS_ORDER;
 
@@ -119,6 +130,22 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   get mobileTabs() { return MOBILE_TABS[this.currentRole]; }
 
+  // ── Machine/type soft filter ────────────────────────────────────────────────
+  // โชว์ให้ฝ่ายผลิต/กราฟิก/แอดมิน (คนที่เกี่ยวกับเครื่องพิมพ์) — seller/finance ไม่ต้อง
+  get showMachineFilter(): boolean {
+    const r = this.currentRole;
+    return r === 'production' || r === 'graphic' || r === 'admin';
+  }
+  get machineOptions(): { key: string; label: string }[] {
+    return [{ key: 'all', label: 'ทุกเครื่อง' }, ...MACHINE_GROUPS.map((m) => ({ key: m.value, label: m.label }))];
+  }
+  setMachine(key: string) { this.machineFilter = key; }
+  /** ใบงานเกี่ยวกับเครื่องที่เลือกไหม (อิงประเภทของ work_items — ใบหลายประเภทเข้าได้หลายเครื่อง). */
+  private matchesMachine(j: Job): boolean {
+    if (this.machineFilter === 'all') return true;
+    return machinesForTypes((j.work_items ?? []).map((w) => w.type)).includes(this.machineFilter);
+  }
+
   // ── Lifecycle ─────────────────────────────────────────────────────────────
 
   ngOnInit() {
@@ -131,10 +158,21 @@ export class HomeComponent implements OnInit, OnDestroy {
     }
 
     this.isLoading = true;
-    this.detachJobs = this.jobsSvc.watchMyJobs(role, uid, (jobs) => {
-      this.jobs = this.sort(jobs);
-      this.isLoading = false;
-    });
+    this.loadError = '';
+    this.detachJobs = this.jobsSvc.watchMyJobs(
+      role,
+      uid,
+      (jobs) => {
+        this.jobs = this.sort(jobs);
+        this.isLoading = false;
+        this.loadError = '';
+      },
+      () => {
+        // Listener rejected — stop the skeleton and tell the user instead of spinning forever.
+        this.isLoading = false;
+        this.loadError = 'โหลดรายการใบงานไม่สำเร็จ กรุณารีเฟรชหน้าหรือเข้าสู่ระบบใหม่';
+      },
+    );
   }
 
   ngOnDestroy() {
@@ -145,8 +183,9 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   get filtered(): Job[] {
     const q = this.search.trim().toLowerCase();
-    if (!q) return this.jobs;
     return this.jobs.filter((j) => {
+      if (!this.matchesMachine(j)) return false;
+      if (!q) return true;
       const serial   = j.serial_number?.toLowerCase() ?? '';
       const customer = j.customer_name?.toLowerCase() ?? '';
       return serial.includes(q) || customer.includes(q);
