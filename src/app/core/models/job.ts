@@ -114,6 +114,8 @@ export interface ProductionTask {
   machine: string | null;       // เครื่องที่เลือกจริง (ตั้งตอน claim)
   status: 'รอผลิต' | 'กำลังผลิต' | 'เสร็จ';
   print_uid: string | null;
+  /** denormalized ชื่อผู้รับผลิต (ตั้งตอน claim) — non-admin เห็นชื่อจริงโดยไม่ต้องอ่าน users */
+  print_uid_name?: string | null;
   print_date: Timestamp | null;
   done_at: Timestamp | null;
   images: JobImageDoc[];

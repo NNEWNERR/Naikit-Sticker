@@ -127,7 +127,7 @@
                     [class.bg-status-printing-bg]="t.status === 'กำลังผลิต'"
                     [class.bg-status-delivered-bg]="t.status === 'เสร็จ'">{{ t.status }}</span>
             </div>
-            <span *ngIf="t.print_uid" class="text-[12px] text-ink-3">ผู้พิมพ์: {{ personName(t.print_uid) }}</span>
+            <span *ngIf="taskPrinter(t)" class="text-[12px] text-ink-3">ผู้พิมพ์: {{ taskPrinter(t) }}</span>
 
             <!-- รอผลิต: claim -->
             <button *ngIf="canClaimTask(t)" type="button"
@@ -543,10 +543,30 @@
           </header>
 
           <div class="p-4 text-body">
-            <div class="flex justify-between items-center py-1.5 border-b border-dashed border-line">
-              <span class="text-ink-3 font-semibold">ผู้พิมพ์งาน</span>
-              <span class="font-bold" [class.text-ink-4]="!j.print_uid">{{ personName(j.print_uid) || '—' }}</span>
-            </div>
+            <!-- F13 — ใครพิมพ์อะไร (ต่อเครื่อง). โชว์ทุก task ให้เห็นครบ ไม่ใช่ print_uid ตัวเดียว -->
+            <ng-container *ngIf="hasProductionTasks(); else legacyPrinter">
+              <div class="py-1.5 border-b border-dashed border-line">
+                <span class="text-ink-3 font-semibold">งานพิมพ์แต่ละเครื่อง</span>
+                <div class="mt-1.5 flex flex-col gap-1.5">
+                  <div *ngFor="let t of productionTasks()" class="flex items-center justify-between gap-2 text-body-sm">
+                    <span class="font-semibold">🖨️ {{ taskLabel(t) }}</span>
+                    <span class="flex items-center gap-1.5">
+                      <span class="font-bold" [class.text-ink-4]="!taskPrinter(t)">{{ taskPrinter(t) || 'ยังไม่รับ' }}</span>
+                      <span class="px-1.5 py-0.5 rounded text-[10px] font-bold border border-ink"
+                            [class.bg-status-printq-bg]="t.status === 'รอผลิต'"
+                            [class.bg-status-printing-bg]="t.status === 'กำลังผลิต'"
+                            [class.bg-status-delivered-bg]="t.status === 'เสร็จ'">{{ t.status }}</span>
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </ng-container>
+            <ng-template #legacyPrinter>
+              <div class="flex justify-between items-center py-1.5 border-b border-dashed border-line">
+                <span class="text-ink-3 font-semibold">ผู้พิมพ์งาน</span>
+                <span class="font-bold" [class.text-ink-4]="!j.print_uid">{{ personName(j.print_uid) || '—' }}</span>
+              </div>
+            </ng-template>
             <div class="flex justify-between items-center py-1.5 border-b border-dashed border-line">
               <span class="text-ink-3 font-semibold">วันที่พิมพ์</span>
               <span class="font-bold font-num">{{ formatTs(j.print_date, true) }}</span>

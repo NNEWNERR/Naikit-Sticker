@@ -216,6 +216,12 @@ export class WorksheetInfoComponent implements OnInit, OnDestroy {
     if (t.machine) return MACHINE_LABELS[t.machine] ?? t.machine;
     return (t.eligible_machines ?? []).map((m) => MACHINE_LABELS[m] ?? m).join(' / ');
   }
+  /** ชื่อผู้รับผลิต task นี้ — ใช้ denormalized print_uid_name ก่อน (non-admin เห็นชื่อจริง),
+   *  fallback personName (self/admin resolve ได้), ถ้ายังไม่ claim → null. */
+  taskPrinter(t: ProductionTask): string | null {
+    if (!t.print_uid) return null;
+    return t.print_uid_name || this.personName(t.print_uid);
+  }
 
   canMarkDelivered = computed(() => {
     const j = this.job(); const r = this.role(); const uid = this.uid();
