@@ -194,23 +194,28 @@ export class WorksheetInfoComponent implements OnInit, OnDestroy {
   productionTasks = computed<ProductionTask[]>(() => this.job()?.print_tasks ?? []);
   hasProductionTasks = computed(() => this.productionTasks().length > 0);
 
-  /** claim งานเครื่องนี้ได้ไหม (FUJI=graphic / non-FUJI=production) — task ยัง 'รอผลิต'. */
+  /** claim งานนี้ได้ไหม (FUJI=graphic / non-FUJI=production) — task ยัง 'รอผลิต'. ทีมใดทีมหนึ่งที่ทำเครื่องใน eligible ได้. */
   canClaimTask(t: ProductionTask): boolean {
     const j = this.job();
     return !!j && !j.is_deleted && (j.status === 'รอผลิต' || j.status === 'กำลังผลิต')
-      && t.status === 'รอผลิต' && canProduceMachines(this.role(), [t.machine]);
+      && t.status === 'รอผลิต' && canProduceMachines(this.role(), t.eligible_machines);
   }
-  /** แนบงานพิมพ์เครื่องนี้ได้ไหม — task 'กำลังผลิต' + ทีมที่ทำเครื่องนี้ได้ (ไม่ต้องเป็น print_uid เดิม). */
+  /** แนบงานพิมพ์ได้ไหม — task 'กำลังผลิต' + ทีมที่ทำเครื่องนี้ได้ (ไม่ต้องเป็น print_uid เดิม). */
   canUploadTask(t: ProductionTask): boolean {
     const j = this.job();
     return !!j && !j.is_deleted && j.status === 'กำลังผลิต'
-      && t.status === 'กำลังผลิต' && canProduceMachines(this.role(), [t.machine]);
+      && t.status === 'กำลังผลิต' && canProduceMachines(this.role(), t.eligible_machines);
   }
   /** มี action ผลิตที่ทำได้อย่างน้อย 1 task. */
   private hasProductionAction(): boolean {
     return this.productionTasks().some((t) => this.canClaimTask(t) || this.canUploadTask(t));
   }
   machineLabel(machine: string): string { return MACHINE_LABELS[machine] ?? machine; }
+  /** ป้ายชื่อ task: ถ้า claim แล้วโชว์เครื่องที่เลือก, ยังไม่ claim โชว์ตัวเลือก (เช่น "FUJI / สติ๊กเกอร์ใหญ่"). */
+  taskLabel(t: ProductionTask): string {
+    if (t.machine) return MACHINE_LABELS[t.machine] ?? t.machine;
+    return (t.eligible_machines ?? []).map((m) => MACHINE_LABELS[m] ?? m).join(' / ');
+  }
 
   canMarkDelivered = computed(() => {
     const j = this.job(); const r = this.role(); const uid = this.uid();
@@ -496,21 +501,21 @@ export class WorksheetInfoComponent implements OnInit, OnDestroy {
     await this._run(() => this.jobsSvc.sendToProduction(this.jobId));
   }
 
-  // F13 — claim/upload "ต่อเครื่อง" (machine)
-  async onClaimTask(machine: string) {
-    await this._run(() => this.jobsSvc.claimPrint(this.jobId, machine));
+  // F13 — claim/upload "ต่อ task" (เครื่องที่เลือกตั้งฝั่ง BE ตาม role)
+  async onClaimTask(taskKey: string) {
+    await this._run(() => this.jobsSvc.claimPrint(this.jobId, taskKey));
   }
 
-  async onUploadTask(machine: string) {
-    const files = this.printFilesByMachine[machine] ?? [];
+  async onUploadTask(taskKey: string) {
+    const files = this.printFilesByMachine[taskKey] ?? [];
     if (files.length === 0) {
       this.actionError.set('กรุณาเลือกรูปงานพิมพ์อย่างน้อย 1 รูป');
       return;
     }
     await this._run(async () => {
       const urls = await this.jobsSvc.uploadImages(this.jobId, 'print', files);
-      await this.jobsSvc.uploadPrint(this.jobId, machine, urls);
-      this.printFilesByMachine[machine] = [];
+      await this.jobsSvc.uploadPrint(this.jobId, taskKey, urls);
+      this.printFilesByMachine[taskKey] = [];
     });
   }
 
@@ -584,12 +589,12 @@ export class WorksheetInfoComponent implements OnInit, OnDestroy {
     this.designFiles = Array.from(input.files ?? []);
   }
 
-  onPrintFilesChange(machine: string, event: Event) {
+  onPrintFilesChange(taskKey: string, event: Event) {
     const input = event.target as HTMLInputElement;
-    this.printFilesByMachine[machine] = Array.from(input.files ?? []);
+    this.printFilesByMachine[taskKey] = Array.from(input.files ?? []);
   }
-  printFilesCount(machine: string): number {
-    return this.printFilesByMachine[machine]?.length ?? 0;
+  printFilesCount(taskKey: string): number {
+    return this.printFilesByMachine[taskKey]?.length ?? 0;
   }
 
   onSlipFilesChange(event: Event) {

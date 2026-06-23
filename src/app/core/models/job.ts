@@ -109,7 +109,9 @@ export interface JobImageDoc {
 
 /** F13 — งานผลิตต่อเครื่อง (sub-task). ดู docs/F13-PRODUCTION-TASKS-DESIGN.md */
 export interface ProductionTask {
-  machine: string;
+  key: string;                  // id เสถียร = eligible_machines เรียง+join
+  eligible_machines: string[];  // เครื่องที่ claim ได้ (ประเภทกำกวม = หลายตัว)
+  machine: string | null;       // เครื่องที่เลือกจริง (ตั้งตอน claim)
   status: 'รอผลิต' | 'กำลังผลิต' | 'เสร็จ';
   print_uid: string | null;
   print_date: Timestamp | null;

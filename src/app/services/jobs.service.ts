@@ -55,12 +55,12 @@ export class JobsService {
     await this._call('sendToProduction', { job_id: jobId });
   }
 
-  async claimPrint(jobId: string, machine: string): Promise<void> {
-    await this._call('claimPrint', { job_id: jobId, machine });
+  async claimPrint(jobId: string, taskKey: string): Promise<void> {
+    await this._call('claimPrint', { job_id: jobId, task_key: taskKey });
   }
 
-  async uploadPrint(jobId: string, machine: string, printImageUrls: string[]): Promise<void> {
-    await this._call('uploadPrint', { job_id: jobId, machine, print_images: printImageUrls });
+  async uploadPrint(jobId: string, taskKey: string, printImageUrls: string[]): Promise<void> {
+    await this._call('uploadPrint', { job_id: jobId, task_key: taskKey, print_images: printImageUrls });
   }
 
   async markDelivered(jobId: string, slipUrls: string[] = []): Promise<void> {
