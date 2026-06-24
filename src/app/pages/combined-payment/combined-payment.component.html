@@ -1,0 +1,114 @@
+<div class="nk-content bg-surface-2 flex flex-col min-h-full">
+  <app-page-header [title]="'บันทึกการจ่ายรวม'" [subtitle]="'ลูกค้าคนเดียว หลายใบงาน จ่ายสลิปเดียว'" [yellow]="true"></app-page-header>
+
+  <!-- loading -->
+  <div *ngIf="loading()" class="p-4 flex flex-col gap-3">
+    <app-skeleton height="48px"></app-skeleton>
+    <app-skeleton height="180px"></app-skeleton>
+  </div>
+
+  <div *ngIf="loadError()" class="mx-4 mt-4 p-3 bg-danger-bg border-2 border-danger rounded text-body-sm text-danger font-semibold">
+    โหลดข้อมูลไม่สำเร็จ: {{ loadError() }}
+  </div>
+
+  <ng-container *ngIf="!loading()">
+    <div class="p-4 md:p-5 grid grid-cols-1 lg:grid-cols-3 gap-4">
+
+      <!-- ── เลือกใบงานค้างชำระ ── -->
+      <section class="lg:col-span-2 bg-white border-2 border-ink rounded-lg shadow-brutal overflow-hidden">
+        <header class="bg-brand border-b-2 border-ink px-4 py-2.5 flex items-center gap-2.5">
+          <span class="text-[18px]" aria-hidden="true">🧾</span>
+          <div class="text-h3 flex-1">ใบงานค้างชำระ</div>
+        </header>
+
+        <div class="p-4">
+          <input type="text" [(ngModel)]="search" placeholder="ค้นหาด้วยเบอร์โทร หรือ ชื่อลูกค้า…"
+            class="input-base focus-ring w-full mb-3" />
+
+          <app-empty-state *ngIf="groups().length === 0" size="sm" icon="✅"
+            title="ไม่มีใบงานค้างชำระ" helper="ทุกงานที่เห็นจ่ายครบแล้ว หรือไม่ตรงคำค้น"></app-empty-state>
+
+          <div *ngFor="let g of groups()" class="mb-3 border-2 border-ink rounded-md overflow-hidden">
+            <!-- customer header -->
+            <div class="flex items-center gap-2 px-3 py-2 bg-brand-50 border-b border-ink">
+              <input type="checkbox" [checked]="isGroupAll(g)" (change)="selectGroup(g)" class="w-4 h-4" />
+              <div class="flex-1 min-w-0">
+                <div class="font-bold text-body truncate">{{ g.customer_name }}
+                  <span *ngIf="g.jobs.length > 1" class="ml-1 text-[11px] bg-ink text-brand px-1.5 py-0.5 rounded-full font-num">{{ g.jobs.length }} ใบ</span>
+                </div>
+                <div class="text-[12px] text-ink-3 font-num">{{ g.phone || 'ไม่มีเบอร์' }}</div>
+              </div>
+              <div class="text-right">
+                <div class="text-[10px] text-ink-3">ค้างรวม</div>
+                <div class="font-bold font-num">฿{{ g.outstanding | number }}</div>
+              </div>
+            </div>
+            <!-- jobs -->
+            <div *ngFor="let j of g.jobs" class="flex items-center gap-2.5 px-3 py-2 border-b border-dashed border-line last:border-0"
+                 [class.bg-amber-50]="selected[j.id]">
+              <input type="checkbox" [checked]="!!selected[j.id]" (change)="toggle(j)" class="w-4 h-4" />
+              <div class="flex-1 min-w-0">
+                <span class="font-bold font-num">{{ j.serial_number }}</span>
+                <span class="text-[12px] text-ink-3 ml-1">· {{ j.status }}</span>
+              </div>
+              <div class="text-right text-body-sm">
+                <span class="text-ink-3">ค้าง </span><span class="font-bold font-num">฿{{ outstandingOf(j) | number }}</span>
+              </div>
+              <div *ngIf="selected[j.id]" class="flex items-center gap-1">
+                <span class="text-[12px] text-ink-3">จ่าย ฿</span>
+                <input type="number" [(ngModel)]="alloc[j.id]" (ngModelChange)="onAllocInput()"
+                  class="input-base focus-ring font-num w-24 text-right py-1" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── สลิป + สรุป ── -->
+      <section class="bg-white border-2 border-ink rounded-lg shadow-brutal overflow-hidden h-fit lg:sticky lg:top-4">
+        <header class="bg-ink text-brand px-4 py-2.5 flex items-center gap-2.5">
+          <span class="text-[18px]" aria-hidden="true">💳</span>
+          <div class="text-h3 flex-1 text-brand">สลิป / การจ่าย</div>
+        </header>
+
+        <div class="p-4 flex flex-col gap-2.5">
+          <div class="flex justify-between text-body-sm">
+            <span class="text-ink-3">เลือกแล้ว</span>
+            <span class="font-bold font-num">{{ selectedJobs().length }} ใบงาน</span>
+          </div>
+          <div class="flex justify-between text-body-sm pb-2 border-b border-dashed border-line">
+            <span class="text-ink-3">ยอดจัดสรรรวม</span>
+            <span class="font-bold font-num">฿{{ allocTotal | number }}</span>
+          </div>
+
+          <label class="flex flex-col gap-1 text-body-sm">วิธีจ่าย
+            <select [(ngModel)]="method" class="input-base focus-ring font-semibold">
+              <option value="เงินสด">เงินสด</option><option value="โอน">โอน</option><option value="เช็ค">เช็ค</option>
+            </select>
+          </label>
+          <label class="flex flex-col gap-1 text-body-sm">ยอดสลิป (฿)
+            <input type="number" [(ngModel)]="amount" (ngModelChange)="onAmountInput()" class="input-base focus-ring font-num" placeholder="ยอดบนสลิป" />
+          </label>
+          <label *ngIf="isSlipMethod" class="flex flex-col gap-1 text-body-sm">เลขอ้างอิงโอน/เช็ค
+            <input type="text" [(ngModel)]="bankRef" class="input-base focus-ring font-num" placeholder="เช่น 4 ตัวท้าย+เวลา" />
+          </label>
+          <label *ngIf="isSlipMethod" class="flex flex-col gap-1 text-body-sm">สลิป (รูป/PDF)
+            <input type="file" accept="image/*,application/pdf" (change)="onSlipFile($event)" class="text-body-sm" />
+          </label>
+          <label class="flex flex-col gap-1 text-body-sm">วันที่จ่าย
+            <input type="date" [(ngModel)]="payDate" class="input-base focus-ring font-num" />
+          </label>
+
+          <div *ngIf="error()" class="p-2 bg-danger-bg border border-danger rounded text-body-sm text-danger font-semibold">{{ error() }}</div>
+          <div *ngIf="successMsg()" class="p-2 bg-green-100 border border-ink rounded text-body-sm font-semibold">✅ {{ successMsg() }}</div>
+
+          <button type="button" (click)="submit()" [disabled]="submitting() || selectedJobs().length === 0"
+            class="mt-1 px-3 py-2.5 bg-brand border-2 border-ink rounded font-bold cursor-pointer disabled:opacity-50 shadow-brutal-sm">
+            {{ submitting() ? '⏳ กำลังบันทึก…' : '💾 บันทึกการจ่าย (1 สลิป)' }}
+          </button>
+          <p class="text-[12px] text-ink-3 m-0">บันทึกเป็น <b>payment เดียว</b> ผูกหลายใบงาน — ไม่โดนธง "เลขอ้างอิงซ้ำ"</p>
+        </div>
+      </section>
+    </div>
+  </ng-container>
+</div>

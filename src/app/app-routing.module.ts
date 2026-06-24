@@ -11,6 +11,7 @@ import { ReportComponent } from './pages/report/report.component';
 import { DiarySummaryComponent } from './pages/diary-summary/diary-summary.component';
 import { CreateWorkSheetComponent } from './pages/create-work-sheet/create-work-sheet.component';
 import { FinanceComponent } from './pages/finance/finance.component';
+import { CombinedPaymentComponent } from './pages/combined-payment/combined-payment.component';
 
 // RBAC per SCHEMA.md — home is open to every authenticated role
 // (component renders the queue relevant to that role).
@@ -55,6 +56,11 @@ export const routes: Routes = [
         path: 'finance',
         component: FinanceComponent,
         canActivate: [roleGuard(['admin', 'finance'])],
+      },
+      {
+        path: 'combined-payment',
+        component: CombinedPaymentComponent,
+        canActivate: [roleGuard(['seller', 'finance', 'admin'])],
       },
     ],
   },

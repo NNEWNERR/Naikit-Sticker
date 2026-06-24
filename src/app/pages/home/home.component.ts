@@ -236,6 +236,13 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.router.navigate(['/naikit-sticker/create-work-sheet']);
   }
 
+  get canRecordPayment(): boolean {
+    return this.currentRole === 'seller' || this.currentRole === 'finance' || this.currentRole === 'admin';
+  }
+  goCombinedPayment() {
+    this.router.navigate(['/naikit-sticker/combined-payment']);
+  }
+
   async openWorksheet(ws: Job | any) {
     if (!ws) return;
     const jobId: string = (ws as Job).id ?? (ws as any).key ?? '';

@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { Timestamp } from 'firebase/firestore';
 
 import { AppStateService } from 'src/app/services/app-state.service';
@@ -65,7 +66,7 @@ const CASH = 'เงินสด';
   selector: 'app-finance',
   templateUrl: './finance.component.html',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
 })
 export class FinanceComponent implements OnInit, OnDestroy {
 

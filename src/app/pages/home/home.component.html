@@ -23,6 +23,9 @@
           (valueChange)="search = $event">
         </app-search>
       </div>
+      <app-button *ngIf="canRecordPayment" variant="ghost" size="md" (clicked)="goCombinedPayment()">
+        💳 <span class="hidden md:inline">จ่ายรวม</span>
+      </app-button>
       <app-button *ngIf="canCreate" variant="dark" size="md" (clicked)="createWorkSheet()">
         ➕ <span class="hidden md:inline">สร้างใบงาน</span>
       </app-button>
