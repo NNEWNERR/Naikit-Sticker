@@ -652,9 +652,13 @@
             [class.border-line]="!isLast"
             [class.mb-2.5]="!isLast"
           >
-            <div class="w-[26px] h-[26px] rounded-full border-[1.5px] border-ink flex items-center justify-center text-[11px] font-extrabold flex-shrink-0 bg-brand-50">
-              {{ (c.user_display_name || '?').charAt(0).toUpperCase() }}
-            </div>
+            <img *ngIf="c.user_avatar_url; else cInitial" [src]="c.user_avatar_url" alt=""
+              class="w-[26px] h-[26px] rounded-full border-[1.5px] border-ink object-cover flex-shrink-0" />
+            <ng-template #cInitial>
+              <div class="w-[26px] h-[26px] rounded-full border-[1.5px] border-ink flex items-center justify-center text-[11px] font-extrabold flex-shrink-0 bg-brand-50">
+                {{ (c.user_display_name || '?').charAt(0).toUpperCase() }}
+              </div>
+            </ng-template>
             <div class="flex-1 min-w-0">
               <div class="flex justify-between items-baseline gap-2">
                 <span class="text-body font-bold truncate">{{ c.user_display_name }}</span>

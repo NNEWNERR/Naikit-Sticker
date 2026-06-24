@@ -44,6 +44,7 @@ import { BottomNavComponent } from './bottom-nav.component';
         [items]="navItems"
         [userName]="userName"
         [userRole]="userRole"
+        [userAvatar]="userAvatar"
         [open]="drawerOpen"
         (closeRequested)="drawerOpen = false"
         (logoutRequested)="logoutRequested.emit()"
@@ -105,6 +106,7 @@ export class ShellComponent {
   @Input() bottomNavItems: NavItem[] = [];
   @Input() userName = '';
   @Input() userRole = '';
+  @Input() userAvatar: string | null = null;
   /**
    * Set to true when the page is projecting content into the `[topbar]`
    * slot. Drives whether the hamburger renders inline with the topbar

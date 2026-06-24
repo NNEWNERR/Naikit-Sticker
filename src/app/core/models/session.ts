@@ -29,6 +29,7 @@ export interface SessionUser {
   uid: string;
   username: string;
   display_name: string;
+  avatar_url: string | null;
   role: Role;
   is_active: boolean;
 }

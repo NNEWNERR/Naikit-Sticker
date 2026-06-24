@@ -1,0 +1,89 @@
+<div class="nk-content bg-surface-2 flex flex-col min-h-full">
+  <app-page-header [title]="'โปรไฟล์ของฉัน'" [yellow]="true"></app-page-header>
+
+  <div class="p-4 md:p-5 flex flex-col gap-4 max-w-[640px] w-full mx-auto">
+
+    <!-- ── ข้อมูลโปรไฟล์ ── -->
+    <section class="bg-white border-2 border-ink rounded-lg shadow-brutal overflow-hidden">
+      <header class="bg-brand border-b-2 border-ink px-4 py-2.5 flex items-center gap-2.5">
+        <span class="text-[18px]" aria-hidden="true">👤</span>
+        <div class="text-h3">ข้อมูลโปรไฟล์</div>
+      </header>
+
+      <div class="p-4 flex flex-col gap-4">
+        <!-- avatar -->
+        <div class="flex items-center gap-4">
+          <img *ngIf="shownAvatar(); else initialBig" [src]="shownAvatar()" alt=""
+            class="w-20 h-20 rounded-full border-2 border-ink object-cover shadow-brutal-sm" />
+          <ng-template #initialBig>
+            <div class="w-20 h-20 rounded-full border-2 border-ink bg-brand flex items-center justify-center text-h2 font-black shadow-brutal-sm">
+              {{ initial() }}
+            </div>
+          </ng-template>
+          <div class="flex flex-col gap-1.5">
+            <label class="px-3 py-1.5 bg-white border-2 border-ink rounded font-bold text-body-sm cursor-pointer self-start">
+              📷 เปลี่ยนรูป
+              <input type="file" accept="image/*" class="hidden" (change)="onAvatarFile($event)" />
+            </label>
+            <button *ngIf="shownAvatar()" type="button" (click)="onRemoveAvatar()"
+              class="text-body-sm text-danger underline bg-transparent border-0 cursor-pointer self-start p-0">ลบรูป</button>
+            <span class="text-[11px] text-ink-3">jpg/png ≤ 2MB · ย่อเป็น 256px อัตโนมัติ</span>
+          </div>
+        </div>
+
+        <!-- display_name -->
+        <label class="flex flex-col gap-1 text-body-sm">ชื่อแสดงผล
+          <input type="text" [(ngModel)]="displayName" class="input-base focus-ring" placeholder="ชื่อที่แสดงในระบบ" />
+        </label>
+
+        <!-- read-only -->
+        <div class="grid grid-cols-2 gap-3">
+          <label class="flex flex-col gap-1 text-body-sm text-ink-3">ชื่อผู้ใช้ (ล็อกอิน)
+            <input type="text" [value]="username()" disabled class="input-base bg-surface-3 font-num" />
+          </label>
+          <div class="flex flex-col gap-1 text-body-sm text-ink-3">บทบาท
+            <span class="px-2 py-1.5 bg-surface-3 border border-line rounded font-bold text-ink-2">{{ roleLabel() }}</span>
+          </div>
+        </div>
+
+        <div *ngIf="profileError()" class="p-2 bg-danger-bg border border-danger rounded text-body-sm text-danger font-semibold">{{ profileError() }}</div>
+        <div *ngIf="profileOk()" class="p-2 bg-green-100 border border-ink rounded text-body-sm font-semibold">✅ {{ profileOk() }}</div>
+
+        <button type="button" (click)="saveProfile()" [disabled]="savingProfile()"
+          class="self-start px-4 py-2 bg-brand border-2 border-ink rounded font-bold cursor-pointer disabled:opacity-50 shadow-brutal-sm">
+          {{ savingProfile() ? '⏳ กำลังบันทึก…' : '💾 บันทึกโปรไฟล์' }}
+        </button>
+      </div>
+    </section>
+
+    <!-- ── เปลี่ยนรหัสผ่าน ── -->
+    <section class="bg-white border-2 border-ink rounded-lg shadow-brutal overflow-hidden">
+      <header class="bg-ink text-brand px-4 py-2.5 flex items-center gap-2.5">
+        <span class="text-[18px]" aria-hidden="true">🔑</span>
+        <div class="text-h3 text-brand">เปลี่ยนรหัสผ่าน</div>
+      </header>
+
+      <div class="p-4 flex flex-col gap-3">
+        <label class="flex flex-col gap-1 text-body-sm">รหัสผ่านปัจจุบัน
+          <input type="password" [(ngModel)]="curPw" autocomplete="current-password" class="input-base focus-ring" />
+        </label>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <label class="flex flex-col gap-1 text-body-sm">รหัสผ่านใหม่ (≥ 8 ตัว)
+            <input type="password" [(ngModel)]="newPw" autocomplete="new-password" class="input-base focus-ring" />
+          </label>
+          <label class="flex flex-col gap-1 text-body-sm">ยืนยันรหัสผ่านใหม่
+            <input type="password" [(ngModel)]="confirmPw" autocomplete="new-password" class="input-base focus-ring" />
+          </label>
+        </div>
+
+        <div *ngIf="pwError()" class="p-2 bg-danger-bg border border-danger rounded text-body-sm text-danger font-semibold">{{ pwError() }}</div>
+        <div *ngIf="pwOk()" class="p-2 bg-green-100 border border-ink rounded text-body-sm font-semibold">✅ {{ pwOk() }}</div>
+
+        <button type="button" (click)="changePassword()" [disabled]="savingPw()"
+          class="self-start px-4 py-2 bg-white border-2 border-ink rounded font-bold cursor-pointer disabled:opacity-50">
+          {{ savingPw() ? '⏳ กำลังเปลี่ยน…' : '🔑 เปลี่ยนรหัสผ่าน' }}
+        </button>
+      </div>
+    </section>
+  </div>
+</div>

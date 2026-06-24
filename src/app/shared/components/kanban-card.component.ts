@@ -17,6 +17,8 @@ export interface KanbanCardData {
   /** v1 schema field — v2 uses seller_uid. */
   seller_name?: string;
   seller_uid?: string;
+  /** denormalized avatar ของ seller (snapshot) — โชว์แทน initials ถ้ามี */
+  seller_avatar_url?: string | null;
   /** v1 schema total flat field — v2 nests it under payment.total. */
   total?: number;
   payment?: { total?: number };
@@ -69,12 +71,17 @@ export interface KanbanCardData {
 
       <div class="flex items-center justify-between pt-2 border-t border-dashed border-line-2">
         <div class="flex items-center gap-1.5 min-w-0">
-          <div
-            class="w-[22px] h-[22px] rounded-full bg-brand border-[1.5px] border-ink
-                   flex items-center justify-center text-[10px] font-extrabold flex-shrink-0"
-          >
-            {{ sellerInitial }}
-          </div>
+          <img *ngIf="ws?.seller_avatar_url; else sellerInitialTpl"
+            [src]="ws!.seller_avatar_url" alt=""
+            class="w-[22px] h-[22px] rounded-full border-[1.5px] border-ink object-cover flex-shrink-0" />
+          <ng-template #sellerInitialTpl>
+            <div
+              class="w-[22px] h-[22px] rounded-full bg-brand border-[1.5px] border-ink
+                     flex items-center justify-center text-[10px] font-extrabold flex-shrink-0"
+            >
+              {{ sellerInitial }}
+            </div>
+          </ng-template>
           <span class="text-[11px] font-semibold text-ink-2 truncate">{{ sellerDisplay }}</span>
         </div>
         <span class="text-[11px] font-bold font-num flex-shrink-0 ml-2">

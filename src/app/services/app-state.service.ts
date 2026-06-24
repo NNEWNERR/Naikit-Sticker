@@ -32,6 +32,7 @@ export class AppStateService {
   readonly uid = computed(() => this._session()?.uid ?? null);
   readonly role = computed<Role | null>(() => this._session()?.role ?? null);
   readonly displayName = computed(() => this._session()?.display_name ?? '');
+  readonly avatarUrl = computed(() => this._session()?.avatar_url ?? null);
   readonly isLoggedIn = computed(() => this._session() !== null);
   readonly isAdmin = computed(() => this.role() === 'admin');
 
@@ -130,6 +131,7 @@ export class AppStateService {
       username: typeof data['username'] === 'string' ? data['username'] : '',
       display_name:
         typeof data['display_name'] === 'string' ? data['display_name'] : '',
+      avatar_url: typeof data['avatar_url'] === 'string' ? data['avatar_url'] : null,
       role: claimRole,
       is_active: true,
     };

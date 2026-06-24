@@ -132,6 +132,8 @@ export interface Job {
   is_urgent: boolean;
   status: JobStatus;
   seller_uid: string;
+  /** denormalized avatar ของ seller (snapshot ตอนสร้าง) — โชว์บน kanban card */
+  seller_avatar_url?: string | null;
   design_uid: string | null;
   print_uid: string | null;
   work_items: WorkItem[];
@@ -198,6 +200,7 @@ export interface JobComment {
   job_id: string;
   user_uid: string;
   user_display_name: string;
+  user_avatar_url?: string | null;
   text: string;
   likes: number;
   replies: CommentReply[];

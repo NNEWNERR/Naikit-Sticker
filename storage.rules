@@ -53,6 +53,18 @@ service firebase.storage {
       allow delete: if false;
     }
 
+    // Avatar รูปโปรไฟล์ (self-service) — เขียนได้เฉพาะของตัวเอง, อ่านได้ทุก staff
+    // (avatar โชว์บน topbar/cards/comments). resize เป็น 256px ฝั่ง client แล้ว → cap เล็ก.
+    match /users/{uid}/avatar/{filename} {
+      allow read: if isSignedIn();
+      allow create, update: if
+        isSignedIn() &&
+        request.auth.uid == uid &&
+        request.resource.contentType.matches('image/.*') &&
+        isUnderSizeCap(2);
+      allow delete: if isSignedIn() && request.auth.uid == uid;
+    }
+
     // Default: deny everything else.
     match /{allPaths=**} {
       allow read, write: if false;

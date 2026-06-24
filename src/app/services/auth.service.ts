@@ -1,5 +1,7 @@
 import { Injectable } from '@angular/core';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import {
+  EmailAuthProvider, reauthenticateWithCredential, signInWithEmailAndPassword, updatePassword,
+} from 'firebase/auth';
 import { auth } from './firebase-config';
 import { AppStateService } from './app-state.service';
 
@@ -60,6 +62,32 @@ export class AuthService {
 
   logout(): Promise<void> {
     return this.appState.logout();
+  }
+
+  /**
+   * เปลี่ยนรหัสผ่านตัวเอง — reauthenticate ด้วยรหัสเดิม (ต้องรู้รหัสปัจจุบัน)
+   * แล้ว updatePassword. ทำฝั่ง client ทั้งหมด (ไม่มี BE callable).
+   */
+  async changePassword(currentPassword: string, newPassword: string): Promise<void> {
+    const user = auth.currentUser;
+    if (!user?.email) throw new AuthError('unknown', 'ยังไม่ได้เข้าสู่ระบบ');
+    if (!newPassword || newPassword.length < 8) {
+      throw new AuthError('invalid_credentials', 'รหัสผ่านใหม่ต้องยาวอย่างน้อย 8 ตัว');
+    }
+    try {
+      const cred = EmailAuthProvider.credential(user.email, currentPassword);
+      await reauthenticateWithCredential(user, cred);
+      await updatePassword(user, newPassword);
+    } catch (e: unknown) {
+      const code = (e as { code?: string } | null)?.code ?? '';
+      if (code === 'auth/invalid-credential' || code === 'auth/wrong-password') {
+        throw new AuthError('invalid_credentials', 'รหัสผ่านปัจจุบันไม่ถูกต้อง');
+      }
+      if (code === 'auth/weak-password') {
+        throw new AuthError('invalid_credentials', 'รหัสผ่านใหม่อ่อนเกินไป');
+      }
+      throw this.mapFirebaseError(e);
+    }
   }
 
   private mapFirebaseError(e: unknown): AuthError {

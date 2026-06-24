@@ -130,14 +130,26 @@ import { NavItem, isEmojiIcon } from './nav-item.interface';
         class="flex items-center gap-2.5 border-t-2 border-ink"
         style="padding: 12px 6px 4px;"
       >
-        <div
-          class="flex items-center justify-center flex-shrink-0 rounded-full font-extrabold"
-          style="width: 32px; height: 32px; font-size: 12px; background: var(--ink); color: var(--brand);"
-        >{{ userInitial }}</div>
-        <div class="flex-1 min-w-0">
-          <div class="text-body font-bold leading-tight truncate">{{ userName }}</div>
-          <div class="text-body-sm text-ink-3 truncate">{{ userRole }}</div>
-        </div>
+        <a
+          routerLink="/naikit-sticker/profile"
+          (click)="closeRequested.emit()"
+          class="flex items-center gap-2.5 flex-1 min-w-0 no-underline text-ink rounded hover:bg-surface-3 -m-1 p-1"
+          title="โปรไฟล์ของฉัน"
+        >
+          <img *ngIf="userAvatar; else userInitialTpl" [src]="userAvatar" alt=""
+            class="flex-shrink-0 rounded-full border border-ink object-cover"
+            style="width: 32px; height: 32px;" />
+          <ng-template #userInitialTpl>
+            <div
+              class="flex items-center justify-center flex-shrink-0 rounded-full font-extrabold"
+              style="width: 32px; height: 32px; font-size: 12px; background: var(--ink); color: var(--brand);"
+            >{{ userInitial }}</div>
+          </ng-template>
+          <div class="flex-1 min-w-0">
+            <div class="text-body font-bold leading-tight truncate">{{ userName }}</div>
+            <div class="text-body-sm text-ink-3 truncate">{{ userRole }}</div>
+          </div>
+        </a>
         <button
           type="button"
           (click)="logoutRequested.emit()"
@@ -167,6 +179,7 @@ export class SidebarComponent {
   @Input() brandSub = 'STICKER OPS';
   @Input() userName = '';
   @Input() userRole = '';
+  @Input() userAvatar: string | null = null;
   /** Mobile drawer state — ignored on desktop (md+). */
   @Input() open = false;
 

@@ -12,6 +12,7 @@ import { DiarySummaryComponent } from './pages/diary-summary/diary-summary.compo
 import { CreateWorkSheetComponent } from './pages/create-work-sheet/create-work-sheet.component';
 import { FinanceComponent } from './pages/finance/finance.component';
 import { CombinedPaymentComponent } from './pages/combined-payment/combined-payment.component';
+import { ProfileComponent } from './pages/profile/profile.component';
 
 // RBAC per SCHEMA.md — home is open to every authenticated role
 // (component renders the queue relevant to that role).
@@ -61,6 +62,11 @@ export const routes: Routes = [
         path: 'combined-payment',
         component: CombinedPaymentComponent,
         canActivate: [roleGuard(['seller', 'finance', 'admin'])],
+      },
+      {
+        path: 'profile',
+        component: ProfileComponent,
+        // ทุก role ที่ล็อกอิน (authGuard จาก parent) — โปรไฟล์ตัวเอง ไม่ต้อง roleGuard
       },
     ],
   },

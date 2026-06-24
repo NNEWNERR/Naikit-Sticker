@@ -24,6 +24,7 @@ export class MainLayoutComponent {
     { key: 'all', label: 'งานทั้งหมด', icon: '📊', routerLink: '/naikit-sticker/all', section: 'WORKFLOW', roles: ['admin', 'seller', 'finance'] },
     { key: 'diary', label: 'สรุปงานรายวัน', icon: '✅', routerLink: '/naikit-sticker/diary-summary', section: 'WORKFLOW', roles: ['admin', 'seller', 'finance'] },
     { key: 'finance', label: 'ตรวจเงิน', icon: '💰', routerLink: '/naikit-sticker/finance', section: 'SYSTEM', roles: ['admin', 'finance'] },
+    { key: 'profile', label: 'โปรไฟล์', icon: '👤', routerLink: '/naikit-sticker/profile', section: 'SYSTEM' },
     { key: 'setting', label: 'ตั้งค่า', icon: '⚙️', routerLink: '/naikit-sticker/setting', section: 'SYSTEM', roles: ['admin'] },
   ];
 
@@ -50,6 +51,7 @@ export class MainLayoutComponent {
     () => this.appState.session()?.display_name || this.appState.session()?.username || '',
   );
   userRole = computed(() => this.appState.session()?.role ?? '');
+  userAvatar = computed(() => this.appState.avatarUrl());
 
   logout() {
     const { header, message } = signOut();
