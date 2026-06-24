@@ -737,16 +737,21 @@
             helper=""
           ></app-empty-state>
           <div *ngFor="let e of events()" class="flex items-start gap-3 px-4 py-3">
-            <div class="w-8 h-8 rounded-full bg-brand-50 border-[1.5px] border-ink flex items-center justify-center text-[13px] flex-shrink-0 mt-0.5">
-              {{ roleLabel(e.actor_role).charAt(0) }}
-            </div>
+            <img *ngIf="e.actor_avatar_url; else evInitial" [src]="e.actor_avatar_url" alt=""
+              class="w-8 h-8 rounded-full border-[1.5px] border-ink object-cover flex-shrink-0 mt-0.5" />
+            <ng-template #evInitial>
+              <div class="w-8 h-8 rounded-full bg-brand-50 border-[1.5px] border-ink flex items-center justify-center text-[13px] flex-shrink-0 mt-0.5">
+                {{ (e.actor_display_name || roleLabel(e.actor_role) || '?').charAt(0) }}
+              </div>
+            </ng-template>
             <div class="flex-1 min-w-0">
               <div class="flex flex-wrap justify-between items-baseline gap-x-2">
                 <span class="text-body font-bold">{{ actionLabel(e.action) }}</span>
                 <span class="text-[11px] text-ink-4 flex-shrink-0">{{ formatRelative(e.at) }}</span>
               </div>
               <div class="text-body-sm text-ink-3 mt-0.5">
-                {{ roleLabel(e.actor_role) }}
+                <span class="font-semibold text-ink-2">{{ e.actor_display_name || roleLabel(e.actor_role) }}</span>
+                <span *ngIf="e.actor_display_name" class="text-ink-4"> · {{ roleLabel(e.actor_role) }}</span>
                 <span *ngIf="e.to_status" class="ml-1">→ <span class="font-semibold text-ink-2">{{ e.to_status }}</span></span>
               </div>
             </div>

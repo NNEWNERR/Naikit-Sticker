@@ -132,7 +132,8 @@ export interface Job {
   is_urgent: boolean;
   status: JobStatus;
   seller_uid: string;
-  /** denormalized avatar ของ seller (snapshot ตอนสร้าง) — โชว์บน kanban card */
+  /** denormalized ชื่อ+avatar ของ seller (snapshot ตอนสร้าง) — โชว์บน kanban card */
+  seller_name?: string;
   seller_avatar_url?: string | null;
   design_uid: string | null;
   print_uid: string | null;
@@ -180,6 +181,9 @@ export interface JobEvent {
   job_id: string;
   actor_uid: string;
   actor_role: Role;
+  /** snapshot ชื่อ+รูป ผู้ทำรายการ (denormalized) — fallback role ถ้าไม่มี (event เก่า) */
+  actor_display_name?: string;
+  actor_avatar_url?: string | null;
   action: JobAction;
   from_status: JobStatus | null;
   to_status: JobStatus | null;
