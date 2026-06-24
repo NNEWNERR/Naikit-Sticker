@@ -19,6 +19,10 @@ export interface KanbanCardData {
   seller_uid?: string;
   /** denormalized avatar ของ seller (snapshot) — โชว์แทน initials ถ้ามี */
   seller_avatar_url?: string | null;
+  /** กราฟิกที่รับงาน (denormalized) — โชว์แถวที่สองถ้ามี */
+  design_uid?: string | null;
+  design_name?: string;
+  design_avatar_url?: string | null;
   /** v1 schema total flat field — v2 nests it under payment.total. */
   total?: number;
   payment?: { total?: number };
@@ -69,25 +73,43 @@ export interface KanbanCardData {
         <span *ngIf="extraItems > 0" class="text-ink-4"> +{{ extraItems }}</span>
       </div>
 
-      <div class="flex items-center justify-between pt-2 border-t border-dashed border-line-2">
-        <div class="flex items-center gap-1.5 min-w-0">
-          <img *ngIf="ws?.seller_avatar_url; else sellerInitialTpl"
-            [src]="ws!.seller_avatar_url" alt=""
+      <div class="pt-2 border-t border-dashed border-line-2 flex flex-col gap-1">
+        <!-- แถว 1: ฝ่ายขาย + ราคา -->
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-1.5 min-w-0">
+            <img *ngIf="ws?.seller_avatar_url; else sellerInitialTpl"
+              [src]="ws!.seller_avatar_url" alt=""
+              class="w-[22px] h-[22px] rounded-full border-[1.5px] border-ink object-cover flex-shrink-0" />
+            <ng-template #sellerInitialTpl>
+              <div
+                class="w-[22px] h-[22px] rounded-full bg-brand border-[1.5px] border-ink
+                       flex items-center justify-center text-[10px] font-extrabold flex-shrink-0"
+              >
+                {{ sellerInitial }}
+              </div>
+            </ng-template>
+            <span class="text-[11px] font-semibold text-ink-2 truncate">💼 {{ sellerDisplay }}</span>
+          </div>
+          <span class="text-[11px] font-bold font-num flex-shrink-0 ml-2">
+            ฿<ng-container *ngIf="displayTotal != null; else dash">{{ displayTotal | number }}</ng-container>
+            <ng-template #dash>—</ng-template>
+          </span>
+        </div>
+        <!-- แถว 2: กราฟิกที่รับงาน (เฉพาะเมื่อรับแล้ว) -->
+        <div *ngIf="ws?.design_uid || ws?.design_name" class="flex items-center gap-1.5 min-w-0">
+          <img *ngIf="ws?.design_avatar_url; else designInitialTpl"
+            [src]="ws!.design_avatar_url" alt=""
             class="w-[22px] h-[22px] rounded-full border-[1.5px] border-ink object-cover flex-shrink-0" />
-          <ng-template #sellerInitialTpl>
+          <ng-template #designInitialTpl>
             <div
-              class="w-[22px] h-[22px] rounded-full bg-brand border-[1.5px] border-ink
+              class="w-[22px] h-[22px] rounded-full bg-status-designing-bg border-[1.5px] border-ink
                      flex items-center justify-center text-[10px] font-extrabold flex-shrink-0"
             >
-              {{ sellerInitial }}
+              {{ designInitial }}
             </div>
           </ng-template>
-          <span class="text-[11px] font-semibold text-ink-2 truncate">{{ sellerDisplay }}</span>
+          <span class="text-[11px] font-semibold text-ink-2 truncate">🎨 {{ designDisplay }}</span>
         </div>
-        <span class="text-[11px] font-bold font-num flex-shrink-0 ml-2">
-          ฿<ng-container *ngIf="displayTotal != null; else dash">{{ displayTotal | number }}</ng-container>
-          <ng-template #dash>—</ng-template>
-        </span>
       </div>
     </div>
   `,
@@ -119,5 +141,12 @@ export class KanbanCardComponent {
 
   get sellerInitial(): string {
     return this.sellerDisplay.charAt(0).toUpperCase();
+  }
+
+  get designDisplay(): string {
+    return this.ws?.design_name || this.ws?.design_uid?.substring(0, 6) || '—';
+  }
+  get designInitial(): string {
+    return this.designDisplay.charAt(0).toUpperCase();
   }
 }

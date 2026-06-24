@@ -136,6 +136,9 @@ export interface Job {
   seller_name?: string;
   seller_avatar_url?: string | null;
   design_uid: string | null;
+  /** denormalized ชื่อ+avatar ของกราฟิกที่รับงาน (snapshot ตอน claim) — โชว์บน card */
+  design_name?: string;
+  design_avatar_url?: string | null;
   print_uid: string | null;
   work_items: WorkItem[];
   /** denormalized เครื่อง/กลุ่มผลิต (fuji/vinyl/large_sticker/cut_sticker/other); optional ใน read (งานเก่า) */
