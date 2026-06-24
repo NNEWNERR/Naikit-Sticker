@@ -3,11 +3,12 @@
  * ใช้โดย worksheet-info (บันทึกการจ่าย/ขอคืนเงิน) + Finance Dashboard.
  * ดู docs/F8-SLIP-PAYMENT-DESIGN.md
  */
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { collection, onSnapshot, orderBy, query, where } from 'firebase/firestore';
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { FunctionsError, httpsCallable } from 'firebase/functions';
 import { db, functions, storage } from './firebase-config';
+import { AppStateService } from './app-state.service';
 import {
   CreatePaymentPayload,
   PaymentRecord,
@@ -23,6 +24,12 @@ export class PaymentError extends Error {
 
 @Injectable({ providedIn: 'root' })
 export class PaymentService {
+
+  private appState = inject(AppStateService);
+  private get canReadAll(): boolean {
+    const r = this.appState.role();
+    return r === 'admin' || r === 'finance';
+  }
 
   // ── Mutations ─────────────────────────────────────────────────────────────
 
@@ -65,11 +72,31 @@ export class PaymentService {
 
   // ── Live queries ───────────────────────────────────────────────────────────
 
-  /** payment ทั้งหมดของใบงานหนึ่ง (worksheet-info). */
+  /**
+   * payment ทั้งหมดของใบงานหนึ่ง (worksheet-info).
+   * ⚠️ firestore.rules: seller อ่าน payment ได้เฉพาะที่ `uid in seller_uids` → query ด้วย
+   * `job_ids array-contains` ตรงๆ จะโดน permission-denied (query ไม่ได้กรอง seller_uids).
+   * seller จึง query ด้วย `seller_uids array-contains uid` แล้วกรอง job + sort ฝั่ง client
+   * (เลี่ยง 2 array-contains ที่ Firestore ห้าม). finance/admin = canReadAll ใช้ job_ids ได้.
+   */
   watchPaymentsForJob(jobId: string, cb: (p: PaymentRecord[]) => void): () => void {
+    const uid = this.appState.uid();
+    const all = this.canReadAll;
+    if (!all && !uid) { cb([]); return () => undefined; }
+    const q = all
+      ? query(collection(db, 'payments'), where('job_ids', 'array-contains', jobId), orderBy('created_at', 'desc'))
+      : query(collection(db, 'payments'), where('seller_uids', 'array-contains', uid!));
     return onSnapshot(
-      query(collection(db, 'payments'), where('job_ids', 'array-contains', jobId), orderBy('created_at', 'desc')),
-      (snap) => cb(snap.docs.map((d) => ({ id: d.id, ...d.data() } as PaymentRecord))),
+      q,
+      (snap) => {
+        let recs = snap.docs.map((d) => ({ id: d.id, ...d.data() } as PaymentRecord));
+        if (!all) {
+          recs = recs.filter((p) => p.job_ids?.includes(jobId))
+            .sort((a, b) => (b.created_at?.toMillis?.() ?? 0) - (a.created_at?.toMillis?.() ?? 0));
+        }
+        cb(recs);
+      },
+      () => cb([]),
     );
   }
 
@@ -81,11 +108,25 @@ export class PaymentService {
     );
   }
 
-  /** refund ของใบงานหนึ่ง (sort client-side). */
+  /**
+   * refund ของใบงานหนึ่ง. เช่นเดียวกับ payments — seller อ่าน refund ได้เฉพาะ `seller_uid==uid`
+   * → query ด้วย seller_uid แล้วกรอง job ฝั่ง client (query by job_id ตรงๆ โดน permission-denied).
+   */
   watchRefundsForJob(jobId: string, cb: (r: RefundRecord[]) => void): () => void {
+    const uid = this.appState.uid();
+    const all = this.canReadAll;
+    if (!all && !uid) { cb([]); return () => undefined; }
+    const q = all
+      ? query(collection(db, 'refunds'), where('job_id', '==', jobId))
+      : query(collection(db, 'refunds'), where('seller_uid', '==', uid!));
     return onSnapshot(
-      query(collection(db, 'refunds'), where('job_id', '==', jobId)),
-      (snap) => cb(snap.docs.map((d) => ({ id: d.id, ...d.data() } as RefundRecord))),
+      q,
+      (snap) => {
+        let recs = snap.docs.map((d) => ({ id: d.id, ...d.data() } as RefundRecord));
+        if (!all) recs = recs.filter((r) => r.job_id === jobId);
+        cb(recs);
+      },
+      () => cb([]),
     );
   }
 
