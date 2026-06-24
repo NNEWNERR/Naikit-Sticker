@@ -371,9 +371,12 @@
                     <option value="เงินสด">เงินสด</option><option value="โอน">โอน</option><option value="เช็ค">เช็ค</option>
                   </select>
                 </label>
-                <label class="flex flex-col gap-1 text-body-sm">จำนวนเงิน
-                  <span *ngIf="outstanding > 0" class="text-[11px] text-ink-3 font-normal">ค้างชำระ ฿{{ outstanding | number }}
-                    <button type="button" (click)="payAmount = outstanding" class="ml-1 underline text-blue-700 bg-transparent border-0 cursor-pointer p-0">จ่ายเต็ม</button>
+                <label class="flex flex-col gap-1 text-body-sm">
+                  <span class="flex items-center justify-between gap-2 flex-wrap">
+                    <span>จำนวนเงิน</span>
+                    <span *ngIf="outstanding > 0" class="text-[11px] text-ink-3 font-normal">ค้างชำระ ฿{{ outstanding | number }}
+                      <button type="button" (click)="payAmount = outstanding" class="ml-1 underline text-blue-700 bg-transparent border-0 cursor-pointer p-0">จ่ายเต็ม</button>
+                    </span>
                   </span>
                   <input type="number" [(ngModel)]="payAmount" class="input-base focus-ring font-num" [placeholder]="outstanding || ''" />
                 </label>
