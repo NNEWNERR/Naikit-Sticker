@@ -5,12 +5,14 @@ name: Deploy Hosting
 # FIREBASE_SERVICE_ACCOUNT) — its roles/firebase.admin covers Hosting deploys.
 
 on:
-  push:
-    branches: [main]
-    paths-ignore:
-      - 'docs/**'
-      - '**/*.md'
-      - 'redesign/**'
+  # Auto-deploy on push ถูกปิดไว้ชั่วคราว — prod sync ผ่าน direct deploy แล้ว
+  # สั่ง deploy ผ่าน workflow_dispatch ได้ หรือ uncomment block push เพื่อเปิดคืน
+  # push:
+  #   branches: [main]
+  #   paths-ignore:
+  #     - 'docs/**'
+  #     - '**/*.md'
+  #     - 'redesign/**'
   workflow_dispatch: {}
 
 concurrency:
