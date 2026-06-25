@@ -16,6 +16,7 @@ import { CashSession } from 'src/app/core/models/cash';
 import { PaymentRecord, RefundRecord } from 'src/app/core/models/payment';
 import { PriceAudit } from 'src/app/core/models/price-audit';
 import { WorksheetInfoComponent } from '../worksheet-info/worksheet-info.component';
+import { MaterialReconcileComponent } from './material-reconcile/material-reconcile.component';
 
 interface SellerRow {
   uid: string;
@@ -66,7 +67,7 @@ const CASH = 'เงินสด';
   selector: 'app-finance',
   templateUrl: './finance.component.html',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, MaterialReconcileComponent],
 })
 export class FinanceComponent implements OnInit, OnDestroy {
 

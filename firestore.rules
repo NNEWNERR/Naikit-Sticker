@@ -136,6 +136,13 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // ---- material_reconciles (F14 ชั้น B — reconcile วัสดุรายเดือน, advisory) ----
+    // อ่าน canReadAll (finance/admin); เขียนผ่าน CF เท่านั้น.
+    match /material_reconciles/{period} {
+      allow read: if canReadAll();
+      allow write: if false;
+    }
+
     // ---- default deny ------------------------------------------------------
     // Legacy v1 collections (groups/sites/schedules/slots/broadcasts/services,
     // job_drafts) are intentionally NOT matched → denied. Delete them from the
