@@ -1,7 +1,7 @@
 ---
-version: design v1 (ยังไม่ implement — รอ review + lock §14)
+version: v1 — DEPLOYED 2026-06-25 (ชั้น A + ชั้น B + integration test)
 project: naikit-sticker
-status: DRAFT — decisions หลักเคาะแล้ว (QR ออกทุกงาน), เหลือ confirm รายละเอียด §14
+status: DEPLOYED — ชั้น A (ใบเสร็จ QR) + ชั้น B (reconcile วัสดุ) live บน prod + test (suite 144). F14b payment-via-QR = future/optional
 related: F8-SLIP-PAYMENT-DESIGN.md (§16 ข้อจำกัด control นอกระบบ), FINANCE-CONTROLS.md, SCHEMA.md
 audience: ทั้ง FE (Naikit-Sticker) + BE (Naikit-Sticker-BE)
 ---
@@ -203,25 +203,24 @@ seller ที่รับงาน ทำงาน เก็บเงินส�
 - ⚠️ `createJob` เปลี่ยน = ต้อง redeploy (เป็น money-path function) — deploy ทีละตัว กัน
   gen2 quota (ดู deploy gotcha ใน memory)
 
-## 14. Decisions
-1. **[D1] ออก `receipt_code` ทุกงาน** — ✅ เคาะแล้ว (นิว 2026-06-25)
-2. **[D2] เฟส 1 = read-only receipt** (ดูใบเสร็จ/สถานะ) — payment-via-QR แยกเฟส
-3. **[D3] payment portal (ลูกค้ากดจ่าย/ยืนยันผ่าน QR)** = future F14b (optional) — แรงกว่ามาก
-   เพราะลูกค้ายืนยันยอดเอง แต่ใหญ่กว่า + ต้องคิด anti-abuse → ไว้เฟสหลัง
-4. **[D4] รูปแบบ endpoint** — onRequest (`/r/<code>` GET) vs onCall + FE public route. *รอเคาะ*
-5. **[D5] เบอร์โทรใน receipt** — ไม่โชว์ (ลด PII) เป็น default. *confirm*
-6. **[D6] ชั้น B วัสดุ** — ทำหลังชั้น A live + ประเมินภาระจริงก่อน (อาจข้าม). *รอเคาะ*
-7. **[D7] backfill** — งานเก่าที่อยากออก QR ย้อนหลังต้องมี `receipt_code` → script backfill
-   (สุ่ม code ให้ทุก job ที่ยังไม่มี, idempotent)
+## 14. Decisions (ปิดแล้วทั้งหมด — ยกเว้น F14b)
+1. **[D1] ออก `receipt_code` ทุกงาน** — ✅ DONE (createJob ตั้งทุกงาน)
+2. **[D2] เฟส 1 = read-only receipt** — ✅ DONE
+3. **[D3] payment portal (ลูกค้ากดจ่าย/ยืนยันผ่าน QR)** — future F14b (optional), ยังไม่ทำ
+4. **[D4] รูปแบบ endpoint** — ✅ เลือก **onCall + FE public route `/r/:code`** (สอดคล้อง callable infra + คุม projection ง่าย)
+5. **[D5] เบอร์โทรใน receipt** — ✅ ไม่โชว์ (projection ไม่มี phone)
+6. **[D6] ชั้น B วัสดุ** — ✅ ทำแล้ว (deployed; advisory ตัดทิ้งได้ภายหลังถ้าภาระเกินประโยชน์)
+7. **[D7] backfill** — ✅ DONE (`scripts/backfill-receipt-code.ts` --apply 35 งาน)
 
 ## 15. Phased rollout
-| งวด | scope |
-|---|---|
-| F14.1 | BE: `receipt_code` ใน createJob + `getReceipt` public callable + projection + rate-limit |
-| F14.2 | FE: route public `/r/:code` + การ์ดใบเสร็จ + ปุ่ม QR/แชร์/ปริ้นในใบงาน |
-| F14.3 | backfill `receipt_code` งานเก่า (script, idempotent) + regenerateReceiptCode |
-| F14.4 | (optional) ชั้น B: computeMaterialSummary + saveMaterialReconcile + หน้า reconcile ใน Finance Dashboard |
-| F14b | (future) payment-via-QR portal [D3] |
+| งวด | scope | สถานะ |
+|---|---|---|
+| F14.1 | BE: `receipt_code` ใน createJob + `getReceipt` public callable + projection + rate-limit | ✅ DEPLOYED |
+| F14.2 | FE: route public `/r/:code` + การ์ดใบเสร็จ + ปุ่ม QR/แชร์/ปริ้นในใบงาน | ✅ DEPLOYED |
+| F14.3 | backfill `receipt_code` งานเก่า (script, idempotent) + regenerateReceiptCode | ✅ DEPLOYED (35 งาน) |
+| F14.4 | ชั้น B: computeMaterialSummary + saveMaterialReconcile + หน้า reconcile ใน Finance Dashboard | ✅ DEPLOYED |
+| test | integration suite section P (ใบเสร็จ) + Q (วัสดุ) — rbac 144 เคส 0 ตก | ✅ DONE |
+| F14b | payment-via-QR portal [D3] | ⬜ future/optional |
 
 ## 16. ข้อจำกัด (ซอฟต์แวร์ยังจบไม่หมด)
 - ชั้น A กัน off-book **ก็ต่อเมื่อร้านยื่น QR ให้ลูกค้าจริง** — เป็นวินัยกระบวนการ ไม่ใช่โค้ด
