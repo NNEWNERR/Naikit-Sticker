@@ -172,7 +172,7 @@ export interface Job {
 }
 
 export type JobAction =
-  | 'create' | 'edit' | 'claim_design' | 'claim_print' | 'submit_design'
+  | 'create' | 'edit' | 'claim_design' | 'assign_design' | 'transfer_design' | 'claim_print' | 'submit_design'
   | 'confirm_design' | 'request_revision' | 'start_print' | 'upload_print'
   | 'mark_delivered' | 'payment_adjust'
   | 'payment_record' | 'payment_void' | 'refund_request' | 'refund_approve' | 'refund_reject'

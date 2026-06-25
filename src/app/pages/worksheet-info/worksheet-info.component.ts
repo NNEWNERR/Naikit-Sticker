@@ -26,6 +26,8 @@ const ACTION_LABELS: Record<JobAction, string> = {
   create:           'สร้างใบงาน',
   edit:             'แก้ไขข้อมูล',
   claim_design:     'รับงานออกแบบ',
+  assign_design:    'มอบหมายงานออกแบบ',
+  transfer_design:  'ส่งต่องานออกแบบ',
   claim_print:      'รับงานผลิต',
   submit_design:    'ส่งแบบ',
   confirm_design:   'คอนเฟิร์มแบบ',
@@ -170,6 +172,20 @@ export class WorksheetInfoComponent implements OnInit, OnDestroy {
       && j.status === 'รอออกแบบ' && j.design_uid === null;
   });
 
+  /** seller เจ้าของ/admin มอบหมายงานให้กราฟิก — เฉพาะงานยังไม่มีคนรับ */
+  canAssignDesign = computed(() => {
+    const j = this.job(); const r = this.role(); const uid = this.uid();
+    return !!j && !j.is_deleted && j.status === 'รอออกแบบ' && j.design_uid === null
+      && (r === 'admin' || (r === 'seller' && j.seller_uid === uid));
+  });
+
+  /** กราฟิกที่ถืองาน/admin ส่งต่อให้กราฟิกคนอื่น — ระหว่างกำลังออกแบบ */
+  canTransferDesign = computed(() => {
+    const j = this.job(); const r = this.role(); const uid = this.uid();
+    return !!j && !j.is_deleted && j.status === 'กำลังออกแบบ'
+      && (r === 'admin' || (r === 'graphic' && j.design_uid === uid));
+  });
+
   canSubmitDesign = computed(() => {
     const j = this.job(); const r = this.role(); const uid = this.uid();
     return !!j && !j.is_deleted && j.status === 'กำลังออกแบบ'
@@ -254,10 +270,42 @@ export class WorksheetInfoComponent implements OnInit, OnDestroy {
   });
 
   hasAnyAction = computed(() =>
-    this.canClaimDesign() || this.canSubmitDesign() || this.canConfirmDesign() ||
+    this.canClaimDesign() || this.canAssignDesign() || this.canTransferDesign() ||
+    this.canSubmitDesign() || this.canConfirmDesign() ||
     this.canRequestRevision() || this.canSendToProduction() || this.hasProductionAction() ||
     this.canMarkDelivered() || this.canDelete() || this.canRestore()
   );
+
+  // ── มอบหมาย/ส่งต่องานออกแบบ (graphic picker) ─────────────────────────────
+  showGraphicPicker = false;
+  pickerMode: 'assign' | 'transfer' = 'assign';
+  graphics = signal<{ uid: string; display_name: string; avatar_url: string | null }[]>([]);
+  graphicsLoading = signal(false);
+
+  async openGraphicPicker(mode: 'assign' | 'transfer') {
+    this.pickerMode = mode;
+    this.showGraphicPicker = true;
+    this.actionError.set('');
+    this.graphicsLoading.set(true);
+    try {
+      const list = await this.jobsSvc.listGraphics();
+      // ส่งต่อ: ไม่โชว์ตัวเอง (กราฟิกที่ถืองานอยู่)
+      this.graphics.set(mode === 'transfer' ? list.filter((g) => g.uid !== this.uid()) : list);
+    } catch (e) {
+      this.actionError.set((e as Error).message || 'โหลดรายชื่อกราฟิกไม่สำเร็จ');
+    } finally {
+      this.graphicsLoading.set(false);
+    }
+  }
+  closeGraphicPicker() { this.showGraphicPicker = false; }
+
+  async onPickGraphic(uid: string) {
+    await this._run(async () => {
+      if (this.pickerMode === 'assign') await this.jobsSvc.assignDesign(this.jobId, uid);
+      else await this.jobsSvc.transferDesign(this.jobId, uid);
+      this.showGraphicPicker = false;
+    });
+  }
 
   // ── Display helpers ────────────────────────────────────────────────────
 
@@ -308,6 +356,13 @@ export class WorksheetInfoComponent implements OnInit, OnDestroy {
 
   actionLabel(action: JobAction): string {
     return ACTION_LABELS[action] ?? action;
+  }
+
+  /** เป้าหมายของ event มอบหมาย/ส่งต่อ (อ่านจาก payload — denormalized ไม่ติด rules) */
+  eventTarget(e: JobEvent): string {
+    if (e.action !== 'assign_design' && e.action !== 'transfer_design') return '';
+    const to = (e.payload?.['to_design_name'] as string) || '';
+    return to ? `→ ${to}` : '';
   }
 
   roleLabel(role: string): string {

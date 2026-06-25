@@ -63,6 +63,44 @@
           🎨 รับงานออกแบบ
         </button>
 
+        <!-- รอออกแบบ: Seller มอบหมายให้กราฟิก -->
+        <button *ngIf="canAssignDesign()" type="button"
+          class="px-3 py-1.5 bg-status-designing-bg border-2 border-ink rounded font-bold text-body-sm cursor-pointer disabled:opacity-50"
+          [disabled]="actionLoading()"
+          (click)="openGraphicPicker('assign')">
+          📨 ส่งให้กราฟิก
+        </button>
+
+        <!-- กำลังออกแบบ: กราฟิกส่งต่อให้คนอื่น -->
+        <button *ngIf="canTransferDesign()" type="button"
+          class="px-3 py-1.5 bg-warn-bg border-2 border-ink rounded font-bold text-body-sm cursor-pointer disabled:opacity-50"
+          [disabled]="actionLoading()"
+          (click)="openGraphicPicker('transfer')">
+          🔄 ส่งต่องาน
+        </button>
+
+        <!-- Graphic picker (assign/transfer) -->
+        <div *ngIf="showGraphicPicker" class="w-full p-3 bg-white border-2 border-ink rounded-md flex flex-col gap-2">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-body-sm">{{ pickerMode === 'assign' ? '📨 เลือกกราฟิกที่จะมอบหมาย' : '🔄 เลือกกราฟิกที่จะส่งต่อ' }}</span>
+            <button type="button" (click)="closeGraphicPicker()" class="text-body-sm font-bold bg-transparent border-0 cursor-pointer">✕</button>
+          </div>
+          <div *ngIf="graphicsLoading()" class="text-body-sm text-ink-3">กำลังโหลด…</div>
+          <div *ngIf="!graphicsLoading() && graphics().length === 0" class="text-body-sm text-ink-3">ไม่มีกราฟิกที่ใช้งานอยู่</div>
+          <button *ngFor="let g of graphics()" type="button"
+            class="flex items-center gap-2.5 p-2 border-2 border-ink rounded hover:bg-surface-3 cursor-pointer disabled:opacity-50 text-left"
+            [disabled]="actionLoading()" (click)="onPickGraphic(g.uid)">
+            <img *ngIf="g.avatar_url; else gPick" [src]="g.avatar_url" alt=""
+              class="w-8 h-8 rounded-full border-[1.5px] border-ink object-cover flex-shrink-0" />
+            <ng-template #gPick>
+              <div class="w-8 h-8 rounded-full bg-status-designing-bg border-[1.5px] border-ink flex items-center justify-center text-[13px] font-extrabold flex-shrink-0">
+                {{ (g.display_name || '?').charAt(0).toUpperCase() }}
+              </div>
+            </ng-template>
+            <span class="font-semibold text-body-sm">{{ g.display_name }}</span>
+          </button>
+        </div>
+
         <!-- กำลังออกแบบ: Submit design -->
         <div *ngIf="canSubmitDesign()" class="flex flex-col gap-1.5 w-full">
           <label class="text-body-sm font-semibold">แนบรูปแบบงาน (บังคับ)</label>
@@ -746,7 +784,7 @@
             </ng-template>
             <div class="flex-1 min-w-0">
               <div class="flex flex-wrap justify-between items-baseline gap-x-2">
-                <span class="text-body font-bold">{{ actionLabel(e.action) }}</span>
+                <span class="text-body font-bold">{{ actionLabel(e.action) }}<span *ngIf="eventTarget(e)" class="text-ink-2 font-semibold"> {{ eventTarget(e) }}</span></span>
                 <span class="text-[11px] text-ink-4 flex-shrink-0">{{ formatRelative(e.at) }}</span>
               </div>
               <div class="text-body-sm text-ink-3 mt-0.5">

@@ -39,6 +39,22 @@ export class JobsService {
     await this._call('claimDesign', { job_id: jobId });
   }
 
+  /** seller มอบหมายงานให้กราฟิก (รอออกแบบ → กำลังออกแบบ) */
+  async assignDesign(jobId: string, designUid: string): Promise<void> {
+    await this._call('assignDesign', { job_id: jobId, design_uid: designUid });
+  }
+
+  /** กราฟิกส่งต่องานให้กราฟิกคนอื่น (คงสถานะกำลังออกแบบ) */
+  async transferDesign(jobId: string, designUid: string): Promise<void> {
+    await this._call('transferDesign', { job_id: jobId, design_uid: designUid });
+  }
+
+  /** รายชื่อกราฟิก active สำหรับ picker (seller อ่าน users ตรงไม่ได้ → ผ่าน callable) */
+  async listGraphics(): Promise<{ uid: string; display_name: string; avatar_url: string | null }[]> {
+    const res = await this._call<unknown, { graphics: { uid: string; display_name: string; avatar_url: string | null }[] }>('listGraphics', {});
+    return res.graphics ?? [];
+  }
+
   async submitDesign(jobId: string, designImageUrls: string[]): Promise<void> {
     await this._call('submitDesign', { job_id: jobId, design_images: designImageUrls });
   }
