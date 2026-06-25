@@ -21,6 +21,7 @@ import { Job, JobAction, JobComment, JobEvent, ProductionTask } from 'src/app/co
 import { PaymentRecord, RefundRecord } from 'src/app/core/models/payment';
 import { PaymentService } from 'src/app/services/payment.service';
 import { canProduceMachines } from 'src/app/core/data/work-item-catalog';
+import { ReceiptQrModalComponent } from 'src/app/components/modals/receipt-qr/receipt-qr.modal';
 
 const ACTION_LABELS: Record<JobAction, string> = {
   create:           'สร้างใบงาน',
@@ -268,6 +269,34 @@ export class WorksheetInfoComponent implements OnInit, OnDestroy {
     const j = this.job(); const r = this.role();
     return !!j && !j.is_deleted && (r === 'finance' || r === 'admin');
   });
+
+  /** F14 — เปิด QR ใบเสร็จให้ลูกค้า: ฝ่ายขาย(เจ้าของ)/แอดมิน/การเงิน */
+  canShowReceipt = computed(() => {
+    const j = this.job(); const r = this.role(); const uid = this.uid();
+    return !!j && !j.is_deleted &&
+      (r === 'admin' || r === 'finance' || (r === 'seller' && j.seller_uid === uid));
+  });
+
+  /** F14 — สร้าง code ใหม่ (ตรงกับ BE regenerateReceiptCode): admin หรือ seller เจ้าของ */
+  canRegenerateReceipt = computed(() => {
+    const j = this.job(); const r = this.role(); const uid = this.uid();
+    return !!j && !j.is_deleted && (r === 'admin' || (r === 'seller' && j.seller_uid === uid));
+  });
+
+  async openReceiptQr() {
+    const j = this.job();
+    if (!j) return;
+    const modal = await this.modalCtrl.create({
+      component: ReceiptQrModalComponent,
+      componentProps: {
+        jobId: this.jobId,
+        receiptCode: j.receipt_code ?? '',
+        serialNumber: j.serial_number,
+        canRegenerate: this.canRegenerateReceipt(),
+      },
+    });
+    await modal.present();
+  }
 
   hasAnyAction = computed(() =>
     this.canClaimDesign() || this.canAssignDesign() || this.canTransferDesign() ||

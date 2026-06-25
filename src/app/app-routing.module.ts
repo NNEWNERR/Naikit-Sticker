@@ -13,6 +13,7 @@ import { CreateWorkSheetComponent } from './pages/create-work-sheet/create-work-
 import { FinanceComponent } from './pages/finance/finance.component';
 import { CombinedPaymentComponent } from './pages/combined-payment/combined-payment.component';
 import { ProfileComponent } from './pages/profile/profile.component';
+import { ReceiptComponent } from './pages/receipt/receipt.component';
 
 // RBAC per SCHEMA.md — home is open to every authenticated role
 // (component renders the queue relevant to that role).
@@ -74,6 +75,11 @@ export const routes: Routes = [
     path: 'login',
     component: LoginComponent,
     canActivate: [loggedInGuard],
+  },
+  // F14 — ใบเสร็จ QR สาธารณะ (no-auth, นอก app shell)
+  {
+    path: 'r/:code',
+    component: ReceiptComponent,
   },
 ];
 

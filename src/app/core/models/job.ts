@@ -125,6 +125,8 @@ export interface ProductionTask {
 export interface Job {
   id: string;
   serial_number: string;
+  /** F14 — code ใบเสร็จ QR (public `/r/<code>`); optional ใน read (งานเก่าก่อน F14) */
+  receipt_code?: string;
   customer_name: string;
   contact: Contact;
   phone?: string;
