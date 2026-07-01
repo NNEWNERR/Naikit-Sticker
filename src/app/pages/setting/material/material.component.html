@@ -1,0 +1,88 @@
+<div class="flex flex-col gap-4">
+
+  <!-- header -->
+  <div class="flex items-center justify-between flex-wrap gap-2">
+    <div>
+      <h3 class="text-h3 m-0">วัสดุ · Materials</h3>
+      <p class="text-body-sm text-ink-3 m-0">ยี่ห้อ × ชนิด + หน้ากว้างม้วน + ต้นทุน — ใช้ในฟอร์มบันทึกการพิมพ์ + คิดเศษ/ต้นทุน (F15)</p>
+    </div>
+    <button type="button" (click)="startNew()" [disabled]="!!editing"
+            class="px-3 py-2 bg-brand border-2 border-ink rounded font-bold cursor-pointer disabled:opacity-50">
+      + เพิ่มวัสดุ
+    </button>
+  </div>
+
+  <p *ngIf="error" class="text-body-sm text-red-700 font-semibold m-0">{{ error }}</p>
+  <p *ngIf="loading" class="text-body-sm text-ink-3 m-0">กำลังโหลด…</p>
+  <p *ngIf="saveErr" class="text-body-sm text-red-700 font-semibold m-0">{{ saveErr }}</p>
+
+  <!-- edit / create panel -->
+  <div *ngIf="editing" class="border-2 border-ink rounded-lg p-4 bg-amber-50 shadow-brutal flex flex-col gap-3">
+    <h4 class="text-h4 m-0">{{ editing.isNew ? 'เพิ่มวัสดุใหม่' : 'แก้ไข: ' + editing.label }}</h4>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <label class="flex flex-col gap-1 text-body-sm">ชนิด
+        <select [(ngModel)]="editing.category" [disabled]="!editing.isNew"
+                class="input-base focus-ring w-full font-semibold disabled:opacity-60">
+          <option value="vinyl">ไวนิล</option>
+          <option value="sticker">สติกเกอร์</option>
+        </select>
+      </label>
+      <label class="flex flex-col gap-1 text-body-sm">ยี่ห้อ
+        <input type="text" [(ngModel)]="editing.brand" [disabled]="!editing.isNew"
+               class="input-base focus-ring w-full font-semibold disabled:opacity-60" placeholder="ดีรุยเซ่น / HP" />
+      </label>
+      <label class="flex flex-col gap-1 text-body-sm md:col-span-2">ชื่อแสดงผล
+        <input type="text" [(ngModel)]="editing.label" class="input-base focus-ring w-full" placeholder="ดีรุยเซ่น (ไวนิล)" />
+      </label>
+      <label class="flex flex-col gap-1 text-body-sm md:col-span-2">หน้ากว้างม้วน (ม.) — คั่นด้วย ,
+        <input type="text" [(ngModel)]="editing.rollWidthsText" class="input-base focus-ring w-full font-num"
+               placeholder="1.12, 1.62, 2.22" />
+      </label>
+      <label class="flex flex-col gap-1 text-body-sm">ต้นทุน/ตร.ม. (ถ้ามี — ปลดล็อก margin)
+        <input type="number" min="0" step="0.01" [(ngModel)]="editing.cost_per_sqm"
+               class="input-base focus-ring w-full font-num" placeholder="ยังไม่กรอก" />
+      </label>
+      <label class="flex items-end gap-2 text-body-sm">
+        <input type="checkbox" [(ngModel)]="editing.is_active" class="w-5 h-5" />
+        ใช้งาน (active)
+      </label>
+    </div>
+
+    <div class="flex gap-2 justify-end">
+      <button type="button" (click)="cancel()" [disabled]="saving"
+              class="px-3 py-2 bg-surface-2 border-2 border-ink rounded font-bold cursor-pointer disabled:opacity-50">ยกเลิก</button>
+      <button type="button" (click)="save()" [disabled]="saving"
+              class="px-3 py-2 bg-brand border-2 border-ink rounded font-bold cursor-pointer disabled:opacity-50">
+        {{ saving ? 'กำลังบันทึก…' : 'บันทึก' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- list by category -->
+  <div *ngFor="let g of groups" class="flex flex-col gap-2">
+    <h4 class="text-h4 m-0">{{ g.label }} <span class="text-body-sm text-ink-3 font-normal">({{ g.items.length }})</span></h4>
+    <div class="flex flex-col gap-1.5">
+      <div *ngFor="let m of g.items; trackBy: trackById"
+           class="flex items-center justify-between gap-2 p-2.5 border-2 border-ink rounded bg-surface-2"
+           [class.opacity-50]="!m.is_active">
+        <div class="flex flex-col min-w-0">
+          <span class="font-bold text-body-sm">{{ m.brand }}</span>
+          <span class="text-[12px] text-ink-3">ม้วน {{ m.roll_widths_m.join(' / ') }} ม.
+            · ต้นทุน {{ m.cost_per_sqm != null ? '฿' + m.cost_per_sqm + '/ตร.ม.' : 'ยังไม่กรอก' }}</span>
+        </div>
+        <div class="flex items-center gap-2 shrink-0">
+          <button type="button" (click)="toggleActive(m)" [disabled]="saving"
+                  class="px-2 py-1 text-[12px] border-2 border-ink rounded font-bold cursor-pointer disabled:opacity-50"
+                  [class.bg-status-delivered-bg]="m.is_active" [class.bg-surface-3]="!m.is_active">
+            {{ m.is_active ? 'ใช้งาน' : 'ปิด' }}
+          </button>
+          <button type="button" (click)="startEdit(m)" [disabled]="!!editing"
+                  class="px-2 py-1 text-[12px] border-2 border-ink rounded font-bold cursor-pointer disabled:opacity-50">แก้</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p *ngIf="!loading && materials.length === 0" class="text-body-sm text-ink-3 m-0">ยังไม่มีวัสดุ — กด "เพิ่มวัสดุ" หรือรัน seed-materials</p>
+</div>

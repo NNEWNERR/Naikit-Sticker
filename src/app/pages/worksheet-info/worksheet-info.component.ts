@@ -17,11 +17,16 @@ import {
   TimelineComponent,
   TimelineStep,
 } from 'src/app/shared/components';
-import { Job, JobAction, JobComment, JobEvent, ProductionTask } from 'src/app/core/models/job';
+import { Job, JobAction, JobComment, JobEvent, Material, ProductionInput, ProductionTask, WorkItem } from 'src/app/core/models/job';
 import { PaymentRecord, RefundRecord } from 'src/app/core/models/payment';
 import { PaymentService } from 'src/app/services/payment.service';
+import { MaterialCatalogService } from 'src/app/services/material-catalog.service';
 import { canProduceMachines } from 'src/app/core/data/work-item-catalog';
 import { ReceiptQrModalComponent } from 'src/app/components/modals/receipt-qr/receipt-qr.modal';
+import { PrintLogFormComponent } from './print-log-form/print-log-form.component';
+import { DefectFormComponent } from './defect-form/defect-form.component';
+import { DefectService } from 'src/app/services/defect.service';
+import { Defect } from 'src/app/core/models/job';
 
 const ACTION_LABELS: Record<JobAction, string> = {
   create:           'สร้างใบงาน',
@@ -78,6 +83,8 @@ const ROLE_LABELS: Record<string, string> = {
     BadgeComponent,
     EmptyStateComponent,
     SkeletonComponent,
+    PrintLogFormComponent,
+    DefectFormComponent,
   ],
 })
 export class WorksheetInfoComponent implements OnInit, OnDestroy {
@@ -89,6 +96,8 @@ export class WorksheetInfoComponent implements OnInit, OnDestroy {
   private appState = inject(AppStateService);
   private usersSvc = inject(UsersService);
   private paymentSvc = inject(PaymentService);
+  private materialSvc = inject(MaterialCatalogService);
+  private defectSvc = inject(DefectService);
   private router = inject(Router);
 
   job = signal<Job | null>(null);
@@ -112,6 +121,22 @@ export class WorksheetInfoComponent implements OnInit, OnDestroy {
   designFiles: File[] = [];
   /** Files staged for print upload, keyed by machine (F13 — per-task). */
   printFilesByMachine: Record<string, File[]> = {};
+  /** F15 — production inputs (วัสดุ/เศษ) ที่คนพิมพ์กรอก keyed by task key. */
+  productionByTask: Record<string, ProductionInput[]> = {};
+  /** F15 — materials master (dropdown ฟอร์มบันทึกการพิมพ์). */
+  materials = signal<Material[]>([]);
+  /** F15 — งานเสียของใบงานนี้ (finance/admin เห็นทั้งหมด; ผู้บันทึกเห็นของตัวเอง). */
+  defects = signal<Defect[]>([]);
+  workItems(): WorkItem[] { return this.job()?.work_items ?? []; }
+  /** F15 — ใครเห็นปุ่มบันทึกงานเสีย: ทีมผลิต/กราฟิก/admin + seller เจ้าของงาน */
+  canRecordDefect(): boolean {
+    const role = this.appState.role();
+    const j = this.job();
+    if (!j) return false;
+    if (role === 'admin' || role === 'production' || role === 'graphic') return true;
+    return role === 'seller' && j.seller_uid === this.appState.uid();
+  }
+  onDefectSaved(): void { this.actionError.set(''); }
   /** Optional payment slips staged for markDelivered. */
   slipFiles: File[] = [];
 
@@ -132,6 +157,7 @@ export class WorksheetInfoComponent implements OnInit, OnDestroy {
   private detachUsers?: () => void;
   private detachPayments?: () => void;
   private detachRefunds?: () => void;
+  private detachDefects?: () => void;
 
   // F8/F12 — record payment form (รองรับเงินสดด้วย — F12 D3)
   showPayForm = false;
@@ -445,6 +471,10 @@ export class WorksheetInfoComponent implements OnInit, OnDestroy {
       this.detachUsers = this.usersSvc.attachListener();
     }
     this.detachPayments = this.paymentSvc.watchPaymentsForJob(this.jobId, (p) => this.payments.set(p));
+    // F15 — โหลด materials สำหรับ dropdown ฟอร์มบันทึกการพิมพ์ (best-effort; ไม่ block หน้า)
+    this.materialSvc.list().then((m) => this.materials.set(m)).catch(() => undefined);
+    // F15 — งานเสียของใบงานนี้ (live)
+    this.detachDefects = this.defectSvc.watchForJob(this.jobId, (d) => this.defects.set(d));
     this.detachRefunds = this.paymentSvc.watchRefundsForJob(this.jobId, (r) => this.refunds.set(r));
   }
 
@@ -455,6 +485,16 @@ export class WorksheetInfoComponent implements OnInit, OnDestroy {
     this.detachUsers?.();
     this.detachPayments?.();
     this.detachRefunds?.();
+    this.detachDefects?.();
+  }
+
+  // ── F15 — งานเสีย ──────────────────────────────────────────────────────
+  get isAdmin(): boolean { return this.appState.role() === 'admin'; }
+
+  async onVoidDefect(d: Defect): Promise<void> {
+    const reason = prompt('เหตุผลที่ยกเลิกงานเสียนี้ (เช่น บันทึกผิด/ซ้ำ):')?.trim();
+    if (!reason) return;
+    await this._run(() => this.defectSvc.void(d.id, reason));
   }
 
   // ── F8 — Payment / Refund ──────────────────────────────────────────────
@@ -604,8 +644,9 @@ export class WorksheetInfoComponent implements OnInit, OnDestroy {
     }
     await this._run(async () => {
       const urls = await this.jobsSvc.uploadImages(this.jobId, 'print', files);
-      await this.jobsSvc.uploadPrint(this.jobId, taskKey, urls);
+      await this.jobsSvc.uploadPrint(this.jobId, taskKey, urls, this.productionByTask[taskKey]);
       this.printFilesByMachine[taskKey] = [];
+      delete this.productionByTask[taskKey];
     });
   }
 

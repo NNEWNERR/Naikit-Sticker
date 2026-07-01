@@ -21,5 +21,10 @@
     <div *ngIf="isAdmin" class="bg-white border-2 border-ink rounded-lg p-5 md:p-[22px] shadow-brutal min-w-0">
       <app-rate-card></app-rate-card>
     </div>
+
+    <!-- F15 — วัสดุ (admin เท่านั้น) -->
+    <div *ngIf="isAdmin" class="bg-white border-2 border-ink rounded-lg p-5 md:p-[22px] shadow-brutal min-w-0">
+      <app-material></app-material>
+    </div>
   </div>
 </div>

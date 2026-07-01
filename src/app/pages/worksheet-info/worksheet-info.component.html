@@ -179,6 +179,9 @@
               <label class="text-body-sm font-semibold">แนบรูปงานพิมพ์ (บังคับ)</label>
               <input type="file" accept="image/*" multiple class="text-body-sm" (change)="onPrintFilesChange(t.key, $event)">
               <span *ngIf="printFilesCount(t.key)" class="text-body-sm text-ink-3">เลือก {{ printFilesCount(t.key) }} ไฟล์</span>
+              <!-- F15 — ฟอร์มบันทึกการพิมพ์ (วัสดุ/เศษ) — scope เฉพาะ work_item ของ task นี้ -->
+              <app-print-log-form [workItems]="workItems()" [materials]="materials()" [taskKey]="t.key"
+                (inputsChange)="productionByTask[t.key] = $event"></app-print-log-form>
               <button type="button"
                 class="self-start px-3 py-1.5 bg-status-deliverq-bg border-2 border-ink rounded font-bold text-body-sm cursor-pointer disabled:opacity-50"
                 [disabled]="actionLoading() || printFilesCount(t.key) === 0"
@@ -186,6 +189,33 @@
             </div>
           </div>
           <p class="text-[12px] text-ink-3 m-0">ทุกเครื่องเสร็จ → ใบงานเข้าสถานะ "รอส่งมอบ" อัตโนมัติ</p>
+        </div>
+
+        <!-- F15 — บันทึกงานเสีย (ทีมผลิต/กราฟิก/admin + seller เจ้าของงาน) -->
+        <div *ngIf="canRecordDefect()" class="w-full">
+          <app-defect-form [jobId]="jobId" [workItems]="workItems()" [materials]="materials()"
+            (saved)="onDefectSaved()"></app-defect-form>
+        </div>
+
+        <!-- F15 — รายการงานเสียของใบงานนี้ -->
+        <div *ngIf="defects().length" class="w-full flex flex-col gap-1.5">
+          <span class="text-body-sm font-semibold">งานเสียที่บันทึกไว้ ({{ defects().length }})</span>
+          <div *ngFor="let d of defects()"
+               class="p-2 border border-ink rounded bg-surface-2 flex items-start justify-between gap-2 text-[12px]"
+               [class.opacity-50]="d.status === 'voided'">
+            <div class="flex flex-col min-w-0">
+              <span class="font-bold">{{ d.reason }}
+                <span *ngIf="d.status === 'voided'" class="text-ink-3 font-normal">(ยกเลิกแล้ว)</span></span>
+              <span class="text-ink-3">{{ d.material_label }} · {{ d.qty_spoiled }} ชิ้น · ♻️ {{ d.area_wasted_sqm }} ตร.ม.</span>
+              <span *ngIf="d.detail" class="text-ink-3">“{{ d.detail }}”</span>
+              <span class="text-ink-3">โดย {{ d.recorded_by_name || d.recorded_by_uid }}</span>
+            </div>
+            <button *ngIf="isAdmin && d.status === 'active'" type="button" (click)="onVoidDefect(d)"
+                    [disabled]="actionLoading()"
+                    class="px-2 py-1 border-2 border-ink rounded font-bold bg-danger-bg text-danger cursor-pointer disabled:opacity-50 shrink-0">
+              ยกเลิก
+            </button>
+          </div>
         </div>
 
         <!-- รอส่งมอบ: Mark delivered (+ optional payment slip) -->
