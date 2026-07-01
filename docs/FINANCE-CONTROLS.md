@@ -151,10 +151,16 @@ collection `cash_sessions/{seller_uid}_{YYYYMMDD}` (วันตาม ICT/UTC+7
 
 ปิดช่องว่างภาษี + การปิดงานที่ถูกหัก ณ ที่จ่าย + มัดจำ/บาลานซ์. เพิ่ม `tax` block (vat_mode นอก/ใน, wht_rate) → `net_receivable = grand_total − wht`; **settlement เปลี่ยนเป็น `paid_amount ≥ net_receivable`** (กัน WHT job ค้างตลอดกาล); **revise D5** — markDelivered เลิก hard-gate → รับบาลานซ์ตอนส่ง/ส่งแบบ AR. ระบบไม่ออกใบกำกับ (แค่คำนวณ). รายละเอียด: [`docs/F9-TAX-PAYMENT-DESIGN.md`](./F9-TAX-PAYMENT-DESIGN.md)
 
+## Phase F15 — บันทึกการพิมพ์ + ตรวจสอบวัสดุ/เศษ — DESIGN (ดู F15-PRODUCTION-MATERIAL.md)
+
+ปิดฝั่งที่ F1–F9/F7 ยังไม่แตะ: **ต้นทุนวัสดุ/การผลิตมองไม่เห็น** (คนพิมพ์เบิกเกิน/ตัดเสีย/วัสดุหาย). เพิ่ม `WorkItem.production` (วัสดุ/หน้ากว้างม้วน/ความยาว/จำนวนพิมพ์จริง) กรอกโดย role=production ตอน `upload_print` → **server คำนวณ `area_used` vs `area_billed` = เศษ%** + materials master (dropdown กันข้อมูลเลอะ) → Finance Dashboard เห็นเศษแยกคนพิมพ์/ยี่ห้อ. **F7 = audit ราคา(รายรับ) · F15 = audit วัสดุ(ต้นทุน) คู่กัน.** สติกเกอร์ชิ้นเล็กใช้ `roll_run` เฉลี่ยเศษระดับม้วน (กันตัวเลขเกินจริง). margin (area_used × cost) = F15.1 รอ `cost_per_sqm`. derived จาก print log จริง พ.ค.69. รายละเอียด: [`docs/F15-PRODUCTION-MATERIAL.md`](./F15-PRODUCTION-MATERIAL.md)
+
 ## Action enum เพิ่ม
 
 ```
 payment_adjust   // finance/admin แก้เงินหลังสร้าง (before/after + reason)
+material_upsert  // F15 — admin เพิ่ม/แก้ materials master
+edit_production  // F15 — production/admin แก้บันทึกการพิมพ์ที่กรอกผิด (before/after)
 ```
 
 ## Payment shape (อัปเดต)

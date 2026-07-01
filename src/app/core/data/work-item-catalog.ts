@@ -123,6 +123,18 @@ export const MACHINE_OF_TYPE: Record<string, string[]> = {
   'พลาสวูด':       [], // ยังไม่ระบุเครื่อง → 'other'
 };
 
+/** F13 — เครื่องที่ "เลือกได้" ของ work_item 1 ชิ้น ([] → ['other']). mirror BE lib/machines.ts eligibleOf. */
+export function eligibleMachinesOf(type: string): string[] {
+  const ms = MACHINE_OF_TYPE[type];
+  return ms && ms.length ? ms : ['other'];
+}
+
+/** F15 — task key ของ work_item 1 ชิ้น = eligible เรียง+join (ตรง algorithm กับ BE productionTaskSpecs).
+ *  ใช้ scope ฟอร์มบันทึกการพิมพ์ให้โชว์เฉพาะ item ของ task นั้น. */
+export function taskKeyForType(type: string): string {
+  return [...eligibleMachinesOf(type)].sort().join('|');
+}
+
 /** เครื่องทั้งหมดที่ใบงานเกี่ยวข้อง (union ของทุก work_item.type). type ที่ไม่ map = 'other'. */
 export function machinesForTypes(types: string[]): string[] {
   const set = new Set<string>();

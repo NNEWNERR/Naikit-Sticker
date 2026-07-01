@@ -18,6 +18,7 @@ import {
   CreateJobResponse,
   Job,
   JobEvent,
+  ProductionInput,
 } from '../core/models/job';
 
 export class JobAdminError extends Error {
@@ -75,8 +76,19 @@ export class JobsService {
     await this._call('claimPrint', { job_id: jobId, task_key: taskKey });
   }
 
-  async uploadPrint(jobId: string, taskKey: string, printImageUrls: string[]): Promise<void> {
-    await this._call('uploadPrint', { job_id: jobId, task_key: taskKey, print_images: printImageUrls });
+  /** F15 — production[] optional: บันทึกวัสดุ/เศษต่อ work_item (server คำนวณ area/waste) */
+  async uploadPrint(
+    jobId: string,
+    taskKey: string,
+    printImageUrls: string[],
+    production?: ProductionInput[],
+  ): Promise<void> {
+    await this._call('uploadPrint', {
+      job_id: jobId,
+      task_key: taskKey,
+      print_images: printImageUrls,
+      ...(production && production.length ? { production } : {}),
+    });
   }
 
   async markDelivered(jobId: string, slipUrls: string[] = []): Promise<void> {

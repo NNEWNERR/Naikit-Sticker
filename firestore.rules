@@ -143,6 +143,23 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // ---- materials (F15 — วัสดุ master) -----------------------------------
+    // staff ทุก role อ่านได้ (ใช้ทำ dropdown ฟอร์มบันทึกการพิมพ์); เขียนผ่าน CF
+    // (upsertMaterial, admin) เท่านั้น. ดู docs/F15-PRODUCTION-MATERIAL.md
+    match /materials/{materialId} {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+
+    // ---- defects (F15 — งานเสีย) ------------------------------------------
+    // อ่าน: finance/admin ทั้งหมด + production เฉพาะที่ตัวเองบันทึก; เขียนผ่าน CF
+    // (recordDefect/voidDefect) เท่านั้น.
+    match /defects/{defectId} {
+      allow read: if canReadAll()
+        || (isSignedIn() && request.auth.uid == resource.data.recorded_by_uid);
+      allow write: if false;
+    }
+
     // ---- default deny ------------------------------------------------------
     // Legacy v1 collections (groups/sites/schedules/slots/broadcasts/services,
     // job_drafts) are intentionally NOT matched → denied. Delete them from the

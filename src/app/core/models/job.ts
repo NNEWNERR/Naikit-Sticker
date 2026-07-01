@@ -31,6 +31,118 @@ export interface WorkItem {
   quantity: number;
   unit_price: number;
   total: number;
+  /** F15 — บันทึกการพิมพ์ + audit วัสดุ (กรอกโดยคนพิมพ์ตอน upload_print). ดู docs/F15-PRODUCTION-MATERIAL.md */
+  production?: Production;
+}
+
+export type WasteSeverity = 'none' | 'soft' | 'hard';
+export type Backing = 'หลังขาว' | 'หลังดำ' | 'หลังเทา' | '';
+
+/** F15 — บันทึกการพิมพ์ต่อ work_item. server คำนวณ area/waste/printed_by_uid เอง (read-only) */
+export interface Production {
+  material_id: string;
+  material_label: string;
+  backing: Backing;
+  roll_width_m: number;
+  length_used_m: number;
+  qty_printed: number;
+  roll_run_id: string | null;
+  area_used_sqm: number;
+  area_billed_sqm: number;
+  waste_pct: number;
+  waste_severity: WasteSeverity;
+  paneled: boolean;
+  /** D5 — false = สติกเกอร์รายชิ้นยังไม่มี roll_run (เศษไม่แฟร์; ไม่ตั้งธง/ตัดออกจาก rollup) */
+  waste_reliable: boolean;
+  printed_by_uid: string;
+  printed_at: string | Timestamp;
+}
+
+/** F15 — payload ต่อ work_item ที่ส่งไป uploadPrint (ส่วนที่คนพิมพ์กรอก) */
+export interface ProductionInput {
+  work_item_index: number;
+  material_id: string;
+  backing: Backing;
+  roll_width_m: number;
+  length_used_m: number;
+  qty_printed: number;
+  roll_run_id?: string | null;
+}
+
+/** F15 — materials master (อ่านผ่าน listMaterials เพื่อทำ dropdown) */
+export interface Material {
+  id: string;
+  category: 'vinyl' | 'sticker';
+  brand: string;
+  label: string;
+  roll_widths_m: number[];
+  cost_per_sqm: number | null;
+  is_active: boolean;
+}
+
+/** F15 — payload ส่งไป upsertMaterial (admin) */
+export interface MaterialInput {
+  material_id?: string;
+  category: 'vinyl' | 'sticker';
+  brand: string;
+  label: string;
+  roll_widths_m: number[];
+  cost_per_sqm?: number | null;
+  is_active: boolean;
+}
+
+/** F15 — งานเสีย (defects) */
+export type DefectReason =
+  | 'เครื่องมีปัญหา' | 'ตัดเสีย' | 'สีเพี้ยน' | 'วัสดุมีตำหนิ' | 'ลูกค้าเปลี่ยนแบบ' | 'อื่นๆ';
+export const DEFECT_REASONS: DefectReason[] =
+  ['เครื่องมีปัญหา', 'ตัดเสีย', 'สีเพี้ยน', 'วัสดุมีตำหนิ', 'ลูกค้าเปลี่ยนแบบ', 'อื่นๆ'];
+
+/** F15 — payload ส่งไป recordDefect */
+export interface DefectInput {
+  job_id?: string | null;
+  work_item_index?: number | null;
+  reason: DefectReason;
+  detail: string;
+  material_id: string;
+  roll_width_m: number;
+  length_used_m: number;
+  qty_spoiled: number;
+  occurred_at?: string | null;
+}
+
+/** F15 — งานเสีย (อ่านจาก defects collection) */
+export interface Defect {
+  id: string;
+  job_id: string | null;
+  serial_number: string;
+  work_item_index: number | null;
+  reason: DefectReason;
+  detail: string;
+  material_id: string;
+  material_label: string;
+  roll_width_m: number;
+  length_used_m: number;
+  qty_spoiled: number;
+  area_wasted_sqm: number;
+  recorded_by_uid: string;
+  recorded_by_name: string;
+  occurred_at: Timestamp | null;
+  status: 'active' | 'voided';
+  voided_reason: string | null;
+}
+
+/** F15 — สรุปเศษวัสดุ/งานเสีย รายเดือน (computeWasteSummary) */
+export interface WasteSummary {
+  period: string;
+  totals: {
+    area_used: number; area_billed: number; waste_sqm: number; waste_pct: number;
+    job_count: number; defect_area: number; defect_count: number;
+  };
+  by_printer: { key: string; name: string; area_used: number; area_billed: number; waste_pct: number; count: number }[];
+  by_material: { key: string; name: string; area_used: number; area_billed: number; waste_pct: number; count: number }[];
+  defects_by_reason: { reason: string; area: number; qty: number; count: number }[];
+  defects_by_printer: { key: string; name: string; area: number; count: number }[];
+  top_waste: { serial_number: string; material_label: string; area_used: number; area_billed: number; waste_pct: number }[];
 }
 
 export type VatMode = 'none' | 'exclusive' | 'inclusive'; // ไม่มี / VAT นอก / VAT ใน

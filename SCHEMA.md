@@ -102,6 +102,24 @@ interface WorkItem {
   quantity: number;
   unit_price: number;
   total: number;         // = quantity * unit_price
+  production?: Production;// F15 — กรอกโดย role=production ตอน upload_print; optional จนกว่าจะพิมพ์
+}
+
+interface Production {   // F15 — บันทึกการพิมพ์ + audit วัสดุ/เศษ. ดู docs/F15-PRODUCTION-MATERIAL.md
+  material_id: string;   // ref materials/{id}
+  material_label: string;// snapshot ('ดีรุยเซ่น หลังขาว')
+  backing: 'หลังขาว' | 'หลังดำ' | 'หลังเทา' | '';  // เฉพาะไวนิล
+  roll_width_m: number;  // หน้ากว้างม้วน (dropdown ตาม material; F7 Q2b)
+  length_used_m: number; // ความยาวที่ใช้จริง — คนพิมพ์กรอก
+  qty_printed: number;   // จำนวนพิมพ์จริง (prefill = quantity)
+  roll_run_id: string | null;        // ผูกหลาย item พิมพ์รวมม้วน (null = เดี่ยว)
+  // ── SERVER-คำนวณ (read-only; ห้ามเชื่อ client) ──
+  area_used_sqm: number;             // = roll_width_m × length_used_m
+  area_billed_sqm: number;           // = (w × h) × qty_printed
+  waste_pct: number;                 // = (used − billed)/used × 100
+  waste_severity: 'none' | 'soft' | 'hard'; // ตาม config/finance (area_billed < floor → none)
+  printed_by_uid: string;            // auto = ผู้กด upload_print (server set)
+  printed_at: Timestamp;
 }
 
 interface Payment {
@@ -183,6 +201,10 @@ type ActionEnum =
   | 'start_print'         // production เริ่มพิมพ์
   | 'upload_print'        // อัปรูปงานพิมพ์
   | 'mark_delivered'      // ส่งมอบ
+  | 'material_upsert'     // F15 — admin เพิ่ม/แก้ materials master
+  | 'edit_production'     // F15 — production/admin แก้ค่าบันทึกการพิมพ์ที่กรอกผิด (before/after)
+  | 'defect_record'      // F15 — บันทึกงานเสีย (production/graphic/admin)
+  | 'defect_void'        // F15 — admin ยกเลิกงานเสียที่บันทึกผิด
   | 'payment_adjust'      // finance/admin แก้เงินหลังสร้าง (payload: before/after/reason)
   | 'comment_add'
   | 'comment_delete'
@@ -276,6 +298,48 @@ Index: `cash_sessions (seller_uid, date desc)` + `jobs (is_deleted, seller_uid, 
 > **F12:** รวมมัดจำด้วย (มัดจำ = ledger entry `source:'deposit'`) → `paid_amount` = source of truth ของ "จ่ายแล้ว" ทุกวิธี; `payment.deposit` กลายเป็น snapshot (ไม่ใช้คำนวณ outstanding). `outstanding = (net_receivable+ค่าส่ง+ค่าธรรมเนียม) − paid_amount`
 > Action enum เพิ่ม: `payment_record`, `payment_void`, `refund_request`, `refund_approve`, `refund_reject`
 
+### `materials/{material_id}` (F15)
+
+`material_id` = canonical (`vinyl__deruyzen` / `sticker__hp`). วัสดุ master สำหรับ dropdown ฝั่งคนพิมพ์ + คิดเศษ/ต้นทุน. เขียนผ่าน Cloud Function เท่านั้น (admin); อ่าน: staff ทุก role (ใช้ทำ dropdown). ดู docs/F15-PRODUCTION-MATERIAL.md
+
+| field | type | notes |
+|---|---|---|
+| `category` | `'vinyl' \| 'sticker'` | จับคู่ type_code (F7) |
+| `brand` | string | 'ดีรุยเซ่น'/'นก'/'BB'/'HP'/'JH'/'โปสเตอร์'/'ช้าง'/'กล่องไฟ'/'ซีทรู' |
+| `label` | string | ป้ายแสดง |
+| `roll_widths_m` | number[] | หน้ากว้างม้วนที่มี (F7 Q2b: ไวนิล 1.12/1.32/1.62/2.22/2.62/3.22 · สติกเกอร์ 1.27) |
+| `cost_per_sqm` | number \| null | ต้นทุน/ตรม. — F15.1 margin; null = ยังไม่กรอก |
+| `is_active` | boolean | inactive = ไม่โผล่ dropdown |
+| `created_at / updated_at / updated_by_uid` | | serverTimestamp / admin |
+| `is_deleted / deleted_at` | boolean / Timestamp\|null | soft delete |
+
+> `config/finance` (F15): เพิ่ม `waste_soft_pct` (30) · `waste_hard_pct` (50) · `waste_audit_floor_sqm` (0.5)
+
+### `defects/{defectId}` (F15 — งานเสีย)
+
+บันทึกงานพิมพ์เสีย/ตัดเสีย — วัสดุถูกใช้แต่ไม่มีรายได้ = แหล่งรั่ว/เศษที่ audit ตรง. เขียนผ่าน Cloud Function เท่านั้น (`recordDefect` — **seller เจ้าของงาน** + production/graphic/admin; seller บันทึกได้เฉพาะใบงานของตัวเอง); อ่าน: finance/admin ทั้งหมด + ผู้บันทึกเฉพาะของตัวเอง (recorded_by_uid). ดู docs/F15-PRODUCTION-MATERIAL.md §6.1
+
+| field | type | required | notes |
+|---|---|---|---|
+| `job_id` | string \| null | ✓ | ผูกใบงาน (null = เสียลอย ไม่ผูกงาน เช่น ทดสอบเครื่อง) |
+| `serial_number` | string | ✓ | snapshot ('' ถ้าไม่ผูก) |
+| `work_item_index` | number \| null | ✓ | รายการในใบงานที่เสีย (null = ทั้งงาน/ไม่ระบุ) |
+| `reason` | `'เครื่องมีปัญหา' \| 'ตัดเสีย' \| 'สีเพี้ยน' \| 'วัสดุมีตำหนิ' \| 'ลูกค้าเปลี่ยนแบบ' \| 'อื่นๆ'` | ✓ | |
+| `detail` | string | ✓ | รายละเอียดเพิ่ม — บังคับเมื่อ reason='อื่นๆ' |
+| `material_id` | string | ✓ | ref materials/{id} |
+| `material_label` | string | ✓ | snapshot |
+| `roll_width_m` | number | ✓ | หน้ากว้างม้วน |
+| `length_used_m` | number | ✓ | ความยาวที่เสีย |
+| `qty_spoiled` | number | ✓ | จำนวนที่เสีย |
+| `area_wasted_sqm` | number | ✓ | **SERVER** = roll_width_m × length_used_m |
+| `recorded_by_uid` | string | ✓ | auto = ผู้บันทึก (server) |
+| `recorded_by_name` | string | ✓ | snapshot display_name |
+| `occurred_at` | Timestamp | ✓ | วันที่เกิดงานเสีย (default now) |
+| `status` | `'active' \| 'voided'` | ✓ | voided = admin ยกเลิก (ไม่นับใน report) |
+| `voided_reason/by/at` | | — | เซ็ตเมื่อ void |
+| `created_at / updated_at` | Timestamp | ✓ | serverTimestamp |
+| `is_deleted / deleted_at` | boolean / Timestamp\|null | ✓ | soft delete |
+
 ### Collections ที่ **เลิกใช้**
 
 ลบทิ้งทั้งหมดจาก Firebase console ก่อนเริ่ม Phase 3:
@@ -318,7 +382,7 @@ Index: `cash_sessions (seller_uid, date desc)` + `jobs (is_deleted, seller_uid, 
 | `request_revision` | ✓ ถ้า `seller_uid=self` AND `status='รอคอนเฟิร์มแบบ'` | — | — | ✓ | `รอคอนเฟิร์มแบบ` → `กำลังออกแบบ` |
 | `send_to_production` | — | ✓ ถ้า `design_uid=self` AND `status='คอนเฟิร์มแล้ว'` | — | ✓ | `คอนเฟิร์มแล้ว` → `รอผลิต` |
 | `claim_print` (F13 ต่อ task) | — | ✓ ถ้า task `eligible` มี `fuji` (งาน FUJI) | ✓ ถ้า task `eligible` มี non-FUJI | ✓ | task `รอผลิต` → `กำลังผลิต`; job = derived (`deriveProductionStatus`) |
-| `upload_print` (F13 ต่อ task) | — | ✓ ตรงเครื่อง (FUJI) | ✓ ตรงเครื่อง (non-FUJI) | ✓ | **คนแนบ ≠ คนผลิตได้** (แค่อยู่ทีมที่ทำเครื่องนั้น). ทุก task เสร็จ → job `รอส่งมอบ` |
+| `upload_print` (F13 ต่อ task) | — | ✓ ตรงเครื่อง (FUJI) | ✓ ตรงเครื่อง (non-FUJI) | ✓ | **คนแนบ ≠ คนผลิตได้** (แค่อยู่ทีมที่ทำเครื่องนั้น). ทุก task เสร็จ → job `รอส่งมอบ`. **F15:** รับ payload `production[]` (วัสดุ/ม้วน/ความยาว/จำนวน) → server คำนวณ `area_used/billed/waste_pct` + set `printed_by_uid`. ดู docs/F15-PRODUCTION-MATERIAL.md |
 | `mark_delivered` | ✓ ถ้า `seller_uid=self` AND `status='รอส่งมอบ'` | — | — | ✓ | `รอส่งมอบ` → `ส่งมอบแล้ว`. **F9 (แทนที่ F4 เดิม):** ไม่ hard-gate การจ่ายแล้ว — ส่งมอบแบบค้างชำระได้ (เครดิต/ลูกหนี้/AR); settlement ปิดเมื่อ `paid_amount ≥ net_receivable`. `delivery_slips` = optional (แนบถ้ามี). ดู docs/F9-TAX-PAYMENT-DESIGN.md |
 | `adjust_payment` (F2) | — | — | — | ✓ ทุก status | **finance** ด้วย (role ที่ 5 — ดู F3). แก้ discount/deposit/method/date + บังคับ `reason` → event `payment_adjust` before/after. total ยังคิดจาก work_items |
 | `admin_reassign` | — | — | — | ✓ ทุก status | (เปลี่ยน design_uid หรือ print_uid; status ตามที่ admin เลือก) |
@@ -335,6 +399,8 @@ Index: `cash_sessions (seller_uid, date desc)` + `jobs (is_deleted, seller_uid, 
 | `setUserRole` | `{uid, role}` | เปลี่ยน custom claim + Firestore `role` + revoke refresh tokens (บังคับ relogin); แอดมินกดเปลี่ยน role ตัวเองออกจาก admin ไม่ได้ |
 | `setUserActive` | `{uid, active: boolean}` | toggle `is_active` + Firebase Auth `disabled` + revoke tokens เมื่อ deactivate; แอดมินปิดบัญชีตัวเองไม่ได้ |
 | `resetPassword` | `{uid, password}` | ตั้ง password ใหม่ + revoke tokens ทุก device |
+| `upsertMaterial` (F15) | `{material_id?, category, brand, label, roll_widths_m, cost_per_sqm?, is_active}` | เพิ่ม/แก้ materials master (admin) → event `material_upsert` |
+| `listMaterials` (F15) | `{}` | list materials (staff ทุก role — ใช้ทำ dropdown ฟอร์มพิมพ์) |
 
 ## Status state machine (visual)
 

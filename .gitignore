@@ -69,3 +69,6 @@ Thumbs.db
 
 # Firebase local cache (deploy artifacts, hosting cache)
 /.firebase/
+
+# ข้อมูลจริงจากร้าน (Excel log พิมพ์/ลูกหนี้/สถานะกราฟิก — มี PII, ห้าม commit)
+/ตัวอย่างข้อมูล/
