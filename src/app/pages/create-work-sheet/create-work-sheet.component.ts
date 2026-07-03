@@ -6,6 +6,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { WorkItemModalComponent } from './work-item-modal/work-item-modal.component';
 import { Router, ActivatedRoute } from '@angular/router';
 import { StorageService } from 'src/app/services/storage.service';
+import { PaymentService } from 'src/app/services/payment.service';
 import { JobAdminError, JobsService } from '../../services/jobs.service';
 import {
   CreateJobPayload,
@@ -105,9 +106,13 @@ export class CreateWorkSheetComponent implements OnInit {
   editMode = false;
   editJobId: string | null = null;
 
+  /** F16 — สลิปมัดจำ (บังคับเมื่อมัดจำ > 0 และวิธีจ่ายเป็น โอน/เช็ค) */
+  depositSlipFile: File | null = null;
+
   constructor(
     private jobsService: JobsService,
     private storageService: StorageService,
+    private paymentService: PaymentService,
     private modalController: ModalController,
     private toastController: ToastController,
     private fb: FormBuilder,
@@ -239,10 +244,10 @@ export class CreateWorkSheetComponent implements OnInit {
     return Math.max(0, this.workItemPriceTotal - this.paymentDiscount);
   }
 
-  /** คงเหลือ = total - deposit, used by Step 3 payment summary. */
+  /** คงเหลือ = (total + other_fee) - deposit, used by Step 3 payment summary. */
   get paymentRemaining(): number {
     const p = this.worksheetForm.get('payment')?.value || {};
-    return Math.max(0, this.paymentTotal - (Number(p.deposit) || 0));
+    return Math.max(0, this.paymentTotal + this.otherFee - (Number(p.deposit) || 0));
   }
 
   /** F10 — ค่าส่ง / ค่าธรรมเนียม (บวกเพิ่มเข้ายอดที่ลูกค้าจ่าย, นอกฐาน VAT/WHT). */
@@ -260,6 +265,29 @@ export class CreateWorkSheetComponent implements OnInit {
     return String(this.worksheetForm.get('payment')?.value?.other_fee_note ?? '');
   }
 
+  // ── F16 — หลักฐานมัดจำโอน/เช็ค (mirror BE createJob guard) ─────────────────
+  get depositValue(): number {
+    return Number(this.worksheetForm.get('payment')?.value?.deposit) || 0;
+  }
+  get depositBankRef(): string {
+    return String(this.worksheetForm.get('payment')?.value?.deposit_bank_ref ?? '');
+  }
+  /** มัดจำ > 0 + วิธีจ่ายโอน/เช็ค → ต้องมีเลขอ้างอิง + สลิป (เฉพาะตอนสร้าง — editMode ล็อกเงินอยู่แล้ว) */
+  get needsDepositEvidence(): boolean {
+    const method = String(this.worksheetForm.get('payment')?.value?.payment_method ?? '');
+    return !this.editMode && this.depositValue > 0 && (method === 'โอน' || method === 'เช็ค');
+  }
+
+  onDepositSlipSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] ?? null;
+    if (file && !this.isValidFile(file)) {
+      input.value = '';
+      this.depositSlipFile = null;
+      return;
+    }
+    this.depositSlipFile = file;
+  }
 
   private initNewForm() {
     // Fields that the BE owns (serial_number / seller_uid / status / created_*
@@ -281,6 +309,7 @@ export class CreateWorkSheetComponent implements OnInit {
         other_fee: [0],
         other_fee_note: [''],
         deposit: [0],
+        deposit_bank_ref: [''],  // F16 — เลขอ้างอิงมัดจำโอน/เช็ค
         date_of_payment: [new Date()],
         payment_method: [''],
         remaining: [0],
@@ -520,6 +549,17 @@ export class CreateWorkSheetComponent implements OnInit {
       return;
     }
 
+    // F16 — มัดจำโอน/เช็ค ต้องมีเลขอ้างอิง + สลิป (mirror BE)
+    if (this.needsDepositEvidence && (!this.depositBankRef.trim() || !this.depositSlipFile)) {
+      const t = await this.toastController.create({
+        message: 'มัดจำแบบโอน/เช็ค ต้องระบุเลขอ้างอิงและแนบสลิป',
+        duration: 3000, position: 'top', color: 'danger', cssClass: 'custom-toast', icon: 'alert-circle',
+      });
+      await t.present();
+      this.step = 3;
+      return;
+    }
+
     this.isSubmitting = true;
     try {
       // Upload images first — storage paths use a UUID instead of serial
@@ -531,6 +571,19 @@ export class CreateWorkSheetComponent implements OnInit {
         workSheetImages.length > 0 ? workSheetImages[0].url : null,
         referenceImages.map((i) => i.url),
       );
+
+      // F16 — อัปสลิปมัดจำใต้ bucket UUID เดียวกับรูปใบงาน (path jobs/{bucket}/slip
+      // เปิดใน storage.rules อยู่แล้ว — ยังไม่มี jobId จริงตอนนี้) + sha256 กันสลิปซ้ำ
+      if (this.needsDepositEvidence && this.depositSlipFile) {
+        if (!this.uploadBucketId) this.uploadBucketId = uuidv4();
+        const [slipUrl, slipHash] = await Promise.all([
+          this.paymentService.uploadSlip(this.uploadBucketId, this.depositSlipFile),
+          this.paymentService.hashFile(this.depositSlipFile),
+        ]);
+        payload.deposit_bank_ref = this.depositBankRef.trim();
+        payload.deposit_slip_url = slipUrl;
+        payload.deposit_slip_hash = slipHash;
+      }
 
       const res = await this.jobsService.createJob(payload);
 
@@ -664,7 +717,7 @@ export class CreateWorkSheetComponent implements OnInit {
     // ดู docs/FINANCE-CONTROLS.md
     const itemsTotal = work_items.reduce((sum, w) => sum + w.total, 0);
     const total = Math.max(0, itemsTotal - discount);
-    const remaining = Math.max(0, total - deposit);
+    const remaining = Math.max(0, total + other_fee - deposit);
 
     const payment: Payment = {
       total,
@@ -782,6 +835,7 @@ export class CreateWorkSheetComponent implements OnInit {
     this.referencePreviews = [];
     this.totalAmount = 0;
     this.uploadBucketId = null;
+    this.depositSlipFile = null;
     this.initNewForm();
   }
 

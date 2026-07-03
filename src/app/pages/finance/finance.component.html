@@ -425,6 +425,10 @@
     <div *ngIf="dupHashPayments.length" class="mb-2 p-2 bg-red-50 border-2 border-red-700 rounded text-body-sm">
       ⚠️ <b>ภาพสลิปซ้ำ/ตัดต่อ ({{ dupHashPayments.length }})</b> — hash เดียวกันแต่ ref ต่าง
     </div>
+    <div *ngIf="noEvidencePayments.length" class="mb-2 p-2 bg-red-50 border-2 border-red-700 rounded text-body-sm">
+      ⚠️ <b>โอน/เช็คไม่มีหลักฐาน ({{ noEvidencePayments.length }})</b> — ไม่มีเลขอ้างอิง/สลิป เทียบ statement ไม่ได้:
+      <span *ngFor="let p of noEvidencePayments; trackBy: trackById" class="font-num"> {{ serialFor(p.job_ids[0]) }}(฿{{ p.allocated_total | number }}{{ p.source === 'deposit' ? ' มัดจำ' : '' }})</span>
+    </div>
 
     <table class="w-full text-body-sm border-collapse">
       <thead>
@@ -439,7 +443,7 @@
       </thead>
       <tbody>
         <tr *ngFor="let p of transferPayments; trackBy: trackById" class="border-b border-line-2"
-            [class.bg-red-50]="dupRefPayments.includes(p) || dupHashPayments.includes(p)">
+            [class.bg-red-50]="dupRefPayments.includes(p) || dupHashPayments.includes(p) || noEvidencePayments.includes(p)">
           <td class="py-1.5 pr-3">{{ fmtDate(p.paid_at) }}</td>
           <td class="py-1.5 pr-3">{{ p.method }}</td>
           <td class="py-1.5 pr-3 font-num">{{ p.bank_ref }}</td>

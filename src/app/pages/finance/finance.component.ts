@@ -263,6 +263,15 @@ export class FinanceComponent implements OnInit, OnDestroy {
     return active.filter((p) => (byHash.get(p.slip_hash!)?.size ?? 0) > 1);
   }
 
+  /** F16 — โอน/เช็ค ที่ไม่มีเลขอ้างอิงหรือสลิป: เทียบ statement ไม่ได้ + หลุดธงซ้ำทุกตัว
+   *  (จับ entry มัดจำเก่าที่บันทึกก่อนบังคับหลักฐาน + ช่องทางอื่นที่หลุด guard). */
+  get noEvidencePayments(): PaymentRecord[] {
+    return this.payments.filter((p) =>
+      p.status === 'active' &&
+      (p.method === 'โอน' || p.method === 'เช็ค') &&
+      (!p.bank_ref?.trim() || !p.slip_url));
+  }
+
   get pendingRefunds(): RefundRecord[] { return this.refunds.filter((r) => r.status === 'pending'); }
   get refundLog(): RefundRecord[] { return this.refunds.filter((r) => r.status !== 'pending'); }
 

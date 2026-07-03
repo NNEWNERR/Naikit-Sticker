@@ -155,6 +155,14 @@ collection `cash_sessions/{seller_uid}_{YYYYMMDD}` (วันตาม ICT/UTC+7
 
 ปิดฝั่งที่ F1–F9/F7 ยังไม่แตะ: **ต้นทุนวัสดุ/การผลิตมองไม่เห็น** (คนพิมพ์เบิกเกิน/ตัดเสีย/วัสดุหาย). เพิ่ม `WorkItem.production` (วัสดุ/หน้ากว้างม้วน/ความยาว/จำนวนพิมพ์จริง) กรอกโดย role=production ตอน `upload_print` → **server คำนวณ `area_used` vs `area_billed` = เศษ%** + materials master (dropdown กันข้อมูลเลอะ) → Finance Dashboard เห็นเศษแยกคนพิมพ์/ยี่ห้อ. **F7 = audit ราคา(รายรับ) · F15 = audit วัสดุ(ต้นทุน) คู่กัน.** สติกเกอร์ชิ้นเล็กใช้ `roll_run` เฉลี่ยเศษระดับม้วน (กันตัวเลขเกินจริง). margin (area_used × cost) = F15.1 รอ `cost_per_sqm`. derived จาก print log จริง พ.ค.69. รายละเอียด: [`docs/F15-PRODUCTION-MATERIAL.md`](./F15-PRODUCTION-MATERIAL.md)
 
+## Phase F16 — หลักฐานมัดจำโอน/เช็ค — DONE (deployed 2026-07-02)
+
+ปิด asymmetry ที่ F12 D2 เปิดไว้: มัดจำตอน `createJob` ลง ledger โดย hardcode `bank_ref:'' / slip_url:null / slip_hash:null` ทุกวิธีจ่าย → seller "รับสดลงโอน" ได้ (เงินไม่เข้าฐาน F5 cash reconcile + ไม่มีสลิปให้เทียบ statement + หลุดธง dup ref/hash ทั้งหมด). แก้ 3 ชั้น:
+
+1. **BE `createJob`** — `deposit > 0` + method โอน/เช็ค → บังคับ `deposit_bank_ref` + `deposit_slip_url` (+`deposit_slip_hash`) กติกาเดียวกับ `createPayment`; ส่งเข้า ledger entry มัดจำ
+2. **FE create-work-sheet Step 3** — ช่องเลขอ้างอิง + แนบสลิป โผล่เมื่อมัดจำ>0 และเลือกโอน/เช็ค; อัปสลิปไป `jobs/{bucket-uuid}/slip/` (bucket UUID เดียวกับรูปใบงาน — ยังไม่มี jobId ตอนอัปโหลด, path เปิดใน storage.rules อยู่แล้ว) + sha256
+3. **Finance dashboard** — ธงแดง "โอน/เช็คไม่มีหลักฐาน" (active + method โอน/เช็ค + ไม่มี bank_ref หรือ slip_url) — จับ **entry มัดจำเก่า** ที่ลงก่อน F16 ด้วย ไม่ใช่แค่กันของใหม่
+
 ## Action enum เพิ่ม
 
 ```

@@ -250,6 +250,18 @@
               <option value="เครดิต">เครดิต</option>
             </select>
           </app-field>
+          <!-- F16 — มัดจำโอน/เช็ค ต้องมีหลักฐาน (mirror BE createJob guard) -->
+          <ng-container *ngIf="needsDepositEvidence">
+            <app-field label="เลขอ้างอิงโอน/เช็ค (บังคับ)">
+              <input type="text" formControlName="deposit_bank_ref"
+                class="input-base focus-ring w-full font-num" placeholder="เลขที่รายการโอน / เลขเช็ค" />
+            </app-field>
+            <app-field label="สลิปมัดจำ (บังคับ)">
+              <input type="file" accept="image/jpeg,image/png,application/pdf" (change)="onDepositSlipSelected($event)"
+                class="input-base focus-ring w-full text-body-sm" />
+              <span *ngIf="depositSlipFile" class="text-[11px] text-ink-3">📎 {{ depositSlipFile.name }}</span>
+            </app-field>
+          </ng-container>
         </div>
 
         <!-- F9 — VAT / หัก ณ ที่จ่าย -->
