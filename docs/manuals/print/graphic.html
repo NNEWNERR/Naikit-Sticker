@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>คู่มือฝ่ายกราฟิก — Naikit Sticker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root { --accent: #7c3aed; --accent-bg: #f5f3ff; }
+  * { box-sizing: border-box; }
+  @page { size: A4; margin: 16mm 14mm; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body {
+    font-family: 'Sarabun', 'Leelawadee UI', Tahoma, sans-serif;
+    font-size: 15px; line-height: 1.7; color: #1f2937;
+    max-width: 820px; margin: 0 auto; padding: 24px;
+  }
+  @media print { body { padding: 0; max-width: none; } }
+
+  .doc-header {
+    border-bottom: 4px solid var(--accent); padding-bottom: 12px; margin-bottom: 20px;
+    display: flex; justify-content: space-between; align-items: flex-end; gap: 12px;
+  }
+  .doc-header .brand { font-size: 13px; color: #6b7280; letter-spacing: .05em; }
+  .doc-header h1 { font-size: 26px; margin: 2px 0 0; color: var(--accent); line-height: 1.35; }
+  .doc-header .meta { text-align: right; font-size: 13px; color: #6b7280; white-space: nowrap; }
+  .role-badge {
+    display: inline-block; background: var(--accent); color: #fff; border-radius: 999px;
+    padding: 2px 14px; font-size: 13px; font-weight: 600; margin-bottom: 4px;
+  }
+
+  h2 {
+    font-size: 19px; color: var(--accent); margin: 26px 0 8px;
+    padding-bottom: 4px; border-bottom: 2px solid #e5e7eb;
+    break-after: avoid;
+  }
+  h2 .no { display: inline-block; background: var(--accent); color: #fff; border-radius: 6px;
+    width: 26px; height: 26px; text-align: center; line-height: 26px; font-size: 14px; margin-right: 8px; }
+  h3 { font-size: 16px; margin: 16px 0 4px; break-after: avoid; }
+  p { margin: 6px 0; }
+  ul, ol { margin: 6px 0; padding-left: 24px; }
+  li { margin: 3px 0; }
+
+  table { border-collapse: collapse; width: 100%; margin: 10px 0; break-inside: avoid; font-size: 14px; }
+  th, td { border: 1px solid #d1d5db; padding: 6px 10px; text-align: left; vertical-align: top; }
+  th { background: var(--accent-bg); font-weight: 600; }
+  tr:nth-child(even) td { background: #fafafa; }
+
+  .btn {
+    display: inline-block; border: 1px solid #9ca3af; border-radius: 6px; background: #f3f4f6;
+    padding: 0 8px; font-weight: 600; font-size: 13.5px; white-space: nowrap;
+  }
+  .warn {
+    background: #fffbeb; border: 1px solid #f59e0b; border-left-width: 5px; border-radius: 6px;
+    padding: 8px 14px; margin: 10px 0; break-inside: avoid;
+  }
+  .warn strong:first-child { color: #b45309; }
+  .tip {
+    background: var(--accent-bg); border: 1px solid var(--accent); border-left-width: 5px; border-radius: 6px;
+    padding: 8px 14px; margin: 10px 0; break-inside: avoid;
+  }
+  .flow {
+    background: #f9fafb; border: 1px dashed #9ca3af; border-radius: 8px; padding: 10px 14px;
+    text-align: center; font-weight: 600; font-size: 14px; margin: 10px 0; break-inside: avoid; line-height: 2;
+  }
+  .flow .arrow { color: var(--accent); padding: 0 4px; }
+  .basics { break-inside: avoid-page; }
+  .doc-footer {
+    margin-top: 28px; padding-top: 8px; border-top: 1px solid #e5e7eb;
+    font-size: 12.5px; color: #9ca3af; display: flex; justify-content: space-between;
+  }
+  .print-note { background:#f0fdf4; border:1px solid #22c55e; border-radius:8px; padding:10px 14px; margin-bottom:20px; font-size:13.5px; }
+  @media print { .print-note { display: none; } }
+</style>
+</head>
+<body>
+
+<div class="print-note">
+  🖨️ <strong>วิธีทำเป็น PDF:</strong> กด <strong>Ctrl+P</strong> → Destination: <strong>Save as PDF</strong> → Paper: <strong>A4</strong> → More settings เปิด <strong>Background graphics</strong> → Save (กล่องเขียวนี้จะไม่ถูกพิมพ์)
+</div>
+
+<header class="doc-header">
+  <div>
+    <div class="brand">NAIKIT STICKER — คู่มือการใช้งานระบบ</div>
+    <h1>คู่มือฝ่ายกราฟิก (Graphic)</h1>
+  </div>
+  <div class="meta">
+    <span class="role-badge">GRAPHIC</span><br>
+    ฉบับวันที่ 2 ก.ค. 2569<br>
+    naikit-sticker.web.app
+  </div>
+</header>
+
+<p><strong>หน้าที่ของฝ่ายกราฟิก:</strong> รับงานออกแบบ → ส่งแบบให้ฝ่ายขายคอนเฟิร์ม → ส่งเข้าคิวผลิต และ<strong>พิมพ์งานเครื่อง FUJI (ตรายาง)</strong> ด้วย</p>
+<p><strong>เมนูที่คุณใช้ได้:</strong> หน้าหลัก · โปรไฟล์ — หน้าหลักแสดง 2 กลุ่ม:
+<strong>คิวกลาง</strong> (งาน "รอออกแบบ" ที่ยังไม่มีใครรับ) และ <strong>งานของฉัน</strong> (งานที่คุณรับแล้ว)</p>
+
+<section class="basics">
+<h2>พื้นฐานที่ต้องรู้ก่อน</h2>
+<h3>การเข้าสู่ระบบ</h3>
+<ol>
+  <li>เปิด <strong>https://naikit-sticker.web.app</strong> (ใช้ได้ทั้งคอมและมือถือ)</li>
+  <li>กรอก<strong>ชื่อผู้ใช้</strong>และ<strong>รหัสผ่าน</strong>ที่ได้รับจากแอดมิน</li>
+  <li>เปลี่ยนรหัสผ่านเองได้ที่เมนู<strong>โปรไฟล์</strong> (ต้องกรอกรหัสปัจจุบัน) · ถ้า<strong>ลืม</strong>รหัส → แจ้งแอดมินตั้งใหม่ให้</li>
+</ol>
+<h3>สถานะของใบงาน</h3>
+<div class="flow">
+  รอออกแบบ <span class="arrow">→</span> กำลังออกแบบ <span class="arrow">→</span> รอคอนเฟิร์มแบบ <span class="arrow">→</span> คอนเฟิร์มแล้ว <span class="arrow">→</span><br>
+  รอผลิต <span class="arrow">→</span> กำลังผลิต <span class="arrow">→</span> รอส่งมอบ <span class="arrow">→</span> ส่งมอบแล้ว
+</div>
+<div class="warn"><strong>กติกากลาง:</strong> ทุกการกระทำถูกบันทึกในประวัติใบงาน · คุยข้ามฝ่ายผ่านช่องคอมเมนต์ในใบงาน · อย่าแชร์รหัสผ่าน</div>
+</section>
+
+<h2><span class="no">1</span>รับงานออกแบบ</h2>
+<ol>
+  <li>ดูคิวกลางในหน้าหลัก — งานป้าย <strong>ด่วน!</strong> รับก่อน และดูวันนัดรับงานประกอบ</li>
+  <li>เปิดใบงาน อ่านรายละเอียด (ประเภท ขนาด ตัวเลือก จำนวน) + รูปใบงาน + รูปอ้างอิงจากลูกค้า</li>
+  <li>กด <span class="btn">รับงานนี้</span> — งานเปลี่ยนเป็น "กำลังออกแบบ" และย้ายมาอยู่ในงานของฉัน</li>
+</ol>
+<div class="tip">รับแล้วงานเป็นของคุณ คนอื่นรับซ้ำไม่ได้ — ถ้ารับผิด งานล้นมือ หรือลาหยุด
+กดปุ่ม <span class="btn">🔄 ส่งต่องาน</span> ในใบงานเพื่อโอนให้กราฟิกคนอื่นได้เอง (ทำได้ขณะสถานะ "กำลังออกแบบ")<br>
+บางงานฝ่ายขายจะกด <span class="btn">📨 ส่งให้กราฟิก</span> มอบหมายมาถึงคุณโดยตรงโดยไม่ผ่านคิวกลาง — งานแบบนี้โผล่ใน "งานของฉัน" ทันที</div>
+
+<h2><span class="no">2</span>ออกแบบและส่งแบบ</h2>
+<ol>
+  <li>ทำแบบตามสเปคในใบงาน — สงสัยอะไรถามฝ่ายขายผ่าน<strong>คอมเมนต์</strong>ในใบงาน</li>
+  <li>เปิดใบงาน → <strong>แนบรูปแบบงาน (บังคับ)</strong> — อัปโหลดรูปแบบที่เสร็จแล้ว</li>
+  <li>กด <span class="btn">ส่งแบบ</span> — งานเปลี่ยนเป็น "รอคอนเฟิร์มแบบ" รอฝ่ายขายตรวจกับลูกค้า</li>
+</ol>
+
+<h2><span class="no">3</span>ถ้าโดนขอแก้</h2>
+<p>ฝ่ายขายกด "ขอแก้" งานกลับมาเป็น <strong>กำลังออกแบบ</strong> ในมือคุณ —
+อ่านคอมเมนต์ว่าแก้ตรงไหน → แก้ → แนบรูปใหม่ → <span class="btn">ส่งแบบ</span> อีกครั้ง (วนได้จนกว่าจะผ่าน)</p>
+
+<h2><span class="no">4</span>ส่งเข้าคิวผลิต</h2>
+<p>เมื่อฝ่ายขายคอนเฟิร์มแบบแล้ว (สถานะ <strong>คอนเฟิร์มแล้ว</strong>) หน้าที่สุดท้ายของคุณ:
+กด <span class="btn">📦 ส่งเข้าผลิต</span> — ระบบแตกงานเป็นงานย่อยตามเครื่องพิมพ์ที่ต้องใช้ แล้วเข้าคิวฝ่ายผลิต</p>
+<div class="warn"><strong>⚠️ อย่าลืมขั้นนี้</strong> — งานที่ค้างสถานะ "คอนเฟิร์มแล้ว" คือแบบผ่านแล้วแต่ยังไม่เข้าคิวผลิต ลูกค้ารอฟรี</div>
+
+<h2><span class="no">5</span>พิมพ์งานเครื่อง FUJI (งานตรายาง)</h2>
+<p>งานที่ใช้เครื่อง <strong>FUJI</strong> เป็นหน้าที่ทีมกราฟิก (ไม่ใช่ฝ่ายผลิต):</p>
+<ol>
+  <li>งาน FUJI ในคิวผลิตจะโผล่ให้ทีมกราฟิกเห็น — กด <span class="btn">รับงานนี้</span> ที่งานย่อยเครื่อง FUJI</li>
+  <li>พิมพ์งานจริง</li>
+  <li>เปิดใบงาน → <strong>แนบรูปงานพิมพ์ (บังคับ)</strong> + กรอก <span class="btn">บันทึกการพิมพ์</span>:
+      วัสดุที่ใช้ · หน้ากว้างม้วน · ความยาวที่ใช้จริง (เมตร) · จำนวนที่พิมพ์จริง</li>
+  <li>บันทึกแล้วงานย่อย FUJI เสร็จ — ทุกเครื่องเสร็จครบ ใบงานเป็น "รอส่งมอบ"</li>
+</ol>
+<p>คนแนบรูป/บันทึกไม่ต้องเป็นคนเดียวกับคนกดรับ — ขอแค่อยู่ทีมที่ดูแลเครื่องนั้น</p>
+<div class="warn"><strong>⚠️ กรอกความยาวที่ใช้จริงตามจริง</strong> — ระบบคำนวณเปอร์เซ็นต์เศษวัสดุอัตโนมัติ
+เศษสูงผิดปกติจะติดธงไปฝ่ายการเงิน กรอกผิดแก้ได้ที่ปุ่ม <span class="btn">✏️ แก้บันทึก</span>
+(ต้องใส่เหตุผล — ระบบเก็บค่าก่อน/หลังแก้ลงประวัติเสมอ)</div>
+
+<h2><span class="no">6</span>บันทึกงานเสีย</h2>
+<p>พิมพ์เสีย / เครื่องมีปัญหา / สีเพี้ยน → กด <span class="btn">งานเสีย</span> ในใบงาน
+บันทึกเหตุผล วัสดุ ปริมาณที่เสีย — <strong>บันทึกตรงตามจริง</strong> ข้อมูลนี้ใช้ตามวัสดุที่หายไป ไม่ได้ใช้ลงโทษคนพิมพ์</p>
+
+<h2>คำถามที่พบบ่อย</h2>
+<table>
+  <tr><th style="width:45%">ปัญหา</th><th>ทางแก้</th></tr>
+  <tr><td>รับงานผิด / ทำต่อไม่ได้</td><td>กดปุ่ม <span class="btn">🔄 ส่งต่องาน</span> โอนให้กราฟิกคนอื่นเอง (ขณะสถานะกำลังออกแบบ)</td></tr>
+  <tr><td>แบบผ่านแล้วแต่ลูกค้าเปลี่ยนใจ</td><td>ฝ่ายขายต้องแจ้งแอดมินย้อนสถานะ — คุณแก้เองไม่ได้</td></tr>
+  <tr><td>กรอกบันทึกการพิมพ์ผิด</td><td>กด <span class="btn">✏️ แก้บันทึก</span> ในหัวข้อ "บันทึกการพิมพ์ที่บันทึกแล้ว" — ใส่เหตุผล ระบบลงประวัติให้</td></tr>
+  <tr><td>ไม่เห็นเมนูสร้างใบงาน/รายงาน</td><td>ปกติ — เมนูเหล่านั้นเป็นของฝ่ายขาย/การเงิน</td></tr>
+</table>
+
+<footer class="doc-footer">
+  <span>Naikit Sticker — คู่มือฝ่ายกราฟิก</span>
+  <span>สงสัยเพิ่มเติม ติดต่อแอดมิน</span>
+</footer>
+
+</body>
+</html>

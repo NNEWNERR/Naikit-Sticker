@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>คู่มือฝ่ายการเงิน — Naikit Sticker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root { --accent: #047857; --accent-bg: #ecfdf5; }
+  * { box-sizing: border-box; }
+  @page { size: A4; margin: 16mm 14mm; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body {
+    font-family: 'Sarabun', 'Leelawadee UI', Tahoma, sans-serif;
+    font-size: 15px; line-height: 1.7; color: #1f2937;
+    max-width: 820px; margin: 0 auto; padding: 24px;
+  }
+  @media print { body { padding: 0; max-width: none; } }
+
+  .doc-header {
+    border-bottom: 4px solid var(--accent); padding-bottom: 12px; margin-bottom: 20px;
+    display: flex; justify-content: space-between; align-items: flex-end; gap: 12px;
+  }
+  .doc-header .brand { font-size: 13px; color: #6b7280; letter-spacing: .05em; }
+  .doc-header h1 { font-size: 26px; margin: 2px 0 0; color: var(--accent); line-height: 1.35; }
+  .doc-header .meta { text-align: right; font-size: 13px; color: #6b7280; white-space: nowrap; }
+  .role-badge {
+    display: inline-block; background: var(--accent); color: #fff; border-radius: 999px;
+    padding: 2px 14px; font-size: 13px; font-weight: 600; margin-bottom: 4px;
+  }
+
+  h2 {
+    font-size: 19px; color: var(--accent); margin: 26px 0 8px;
+    padding-bottom: 4px; border-bottom: 2px solid #e5e7eb;
+    break-after: avoid;
+  }
+  h2 .no { display: inline-block; background: var(--accent); color: #fff; border-radius: 6px;
+    width: 26px; height: 26px; text-align: center; line-height: 26px; font-size: 14px; margin-right: 8px; }
+  h3 { font-size: 16px; margin: 16px 0 4px; break-after: avoid; }
+  p { margin: 6px 0; }
+  ul, ol { margin: 6px 0; padding-left: 24px; }
+  li { margin: 3px 0; }
+
+  table { border-collapse: collapse; width: 100%; margin: 10px 0; break-inside: avoid; font-size: 14px; }
+  th, td { border: 1px solid #d1d5db; padding: 6px 10px; text-align: left; vertical-align: top; }
+  th { background: var(--accent-bg); font-weight: 600; }
+  tr:nth-child(even) td { background: #fafafa; }
+
+  .btn {
+    display: inline-block; border: 1px solid #9ca3af; border-radius: 6px; background: #f3f4f6;
+    padding: 0 8px; font-weight: 600; font-size: 13.5px; white-space: nowrap;
+  }
+  .warn {
+    background: #fffbeb; border: 1px solid #f59e0b; border-left-width: 5px; border-radius: 6px;
+    padding: 8px 14px; margin: 10px 0; break-inside: avoid;
+  }
+  .warn strong:first-child { color: #b45309; }
+  .tip {
+    background: var(--accent-bg); border: 1px solid var(--accent); border-left-width: 5px; border-radius: 6px;
+    padding: 8px 14px; margin: 10px 0; break-inside: avoid;
+  }
+  .flow {
+    background: #f9fafb; border: 1px dashed #9ca3af; border-radius: 8px; padding: 10px 14px;
+    text-align: center; font-weight: 600; font-size: 14px; margin: 10px 0; break-inside: avoid; line-height: 2;
+  }
+  .flow .arrow { color: var(--accent); padding: 0 4px; }
+  .basics { break-inside: avoid-page; }
+  .doc-footer {
+    margin-top: 28px; padding-top: 8px; border-top: 1px solid #e5e7eb;
+    font-size: 12.5px; color: #9ca3af; display: flex; justify-content: space-between;
+  }
+  .print-note { background:#f0fdf4; border:1px solid #22c55e; border-radius:8px; padding:10px 14px; margin-bottom:20px; font-size:13.5px; }
+  @media print { .print-note { display: none; } }
+</style>
+</head>
+<body>
+
+<div class="print-note">
+  🖨️ <strong>วิธีทำเป็น PDF:</strong> กด <strong>Ctrl+P</strong> → Destination: <strong>Save as PDF</strong> → Paper: <strong>A4</strong> → More settings เปิด <strong>Background graphics</strong> → Save (กล่องเขียวนี้จะไม่ถูกพิมพ์)
+</div>
+
+<header class="doc-header">
+  <div>
+    <div class="brand">NAIKIT STICKER — คู่มือการใช้งานระบบ</div>
+    <h1>คู่มือฝ่ายการเงิน (Finance)</h1>
+  </div>
+  <div class="meta">
+    <span class="role-badge">FINANCE</span><br>
+    ฉบับวันที่ 2 ก.ค. 2569<br>
+    naikit-sticker.web.app
+  </div>
+</header>
+
+<p><strong>หน้าที่ของฝ่ายการเงิน:</strong> ตรวจสอบเงินทุกทาง — กระทบยอด อนุมัติคืนเงิน ตามลูกหนี้ ตรวจธงแดง</p>
+<p>คุณ<strong>อ่านข้อมูลได้ทั้งหมด</strong> (ทุกใบงาน ทุกฝ่ายขาย) แต่ไม่ได้ทำงาน workflow
+(ไม่สร้างใบงาน ไม่คอนเฟิร์มแบบ ไม่พิมพ์) — สิ่งเดียวที่แก้ได้คือ<strong>ตัวเลขเงิน</strong> พร้อมเหตุผลกำกับ</p>
+<p><strong>เมนูที่คุณใช้ได้:</strong> หน้าหลัก · งานทั้งหมด · สรุปงานรายวัน · <strong>ตรวจเงิน</strong> · โปรไฟล์
+(<strong>จ่ายรวม</strong> ไม่อยู่ในเมนูข้าง — เข้าจากปุ่ม 💳 บนหน้าหลัก หรือลิงก์ "บันทึกจ่ายรวม" ในหน้าตรวจเงิน)</p>
+
+<section class="basics">
+<h2>พื้นฐานที่ต้องรู้ก่อน</h2>
+<h3>การเข้าสู่ระบบ</h3>
+<ol>
+  <li>เปิด <strong>https://naikit-sticker.web.app</strong> — กรอกชื่อผู้ใช้ + รหัสผ่านที่ได้รับจากแอดมิน</li>
+  <li>เปลี่ยนรหัสผ่านเองได้ที่เมนู<strong>โปรไฟล์</strong> (ต้องกรอกรหัสปัจจุบัน) · ถ้า<strong>ลืม</strong>รหัส → แจ้งแอดมินตั้งใหม่ให้</li>
+</ol>
+<h3>สถานะของใบงาน</h3>
+<div class="flow">
+  รอออกแบบ <span class="arrow">→</span> กำลังออกแบบ <span class="arrow">→</span> รอคอนเฟิร์มแบบ <span class="arrow">→</span> คอนเฟิร์มแล้ว <span class="arrow">→</span><br>
+  รอผลิต <span class="arrow">→</span> กำลังผลิต <span class="arrow">→</span> รอส่งมอบ <span class="arrow">→</span> ส่งมอบแล้ว
+</div>
+</section>
+
+<h2>หน้า "ตรวจเงิน" — งานหลักของคุณ</h2>
+<p><strong>ยอดรวมด้านบน:</strong> ยอดขาย (เฉพาะงานส่งมอบแล้ว) · ยอดเงินสด · สัดส่วนเงินสด · จำนวนครั้งที่เปลี่ยนยอดเงิน</p>
+
+<h3><span class="no" style="display:inline-block;background:var(--accent);color:#fff;border-radius:6px;width:24px;height:24px;text-align:center;line-height:24px;font-size:13px;margin-right:6px;">1</span>งานติดธงแดง (ขายต่ำกว่าราคากลาง)</h3>
+<p>ระบบเทียบราคาขายจริงกับราคากลางอัตโนมัติทุกใบงาน — ตารางแสดงใบงาน ผู้ขาย ราคากลาง ขายจริง ส่วนต่าง ระดับ<br>
+<strong>สิ่งที่ต้องทำ:</strong> ไล่ดูรายคน — ธงกระจุกที่ผู้ขายคนใดบ่อยผิดปกติ ให้สอบถามเหตุผลรายใบ</p>
+
+<h3><span style="display:inline-block;background:var(--accent);color:#fff;border-radius:6px;width:24px;height:24px;text-align:center;line-height:24px;font-size:13px;margin-right:6px;">2</span>กระทบยอดเงินสดรายวัน</h3>
+<ol>
+  <li>เลือกผู้ขาย + วันที่ — ระบบแสดง<strong>ยอดตามระบบ</strong> (งานเงินสดที่ส่งมอบวันนั้น)</li>
+  <li>กรอก<strong>ยอดที่นับได้จริง</strong> → ระบบคำนวณส่วนต่าง</li>
+  <li>ส่วนต่าง ≠ 0 = ธงแดง — สอบถามผู้ขายก่อนปิด ใส่คำอธิบายในหมายเหตุ</li>
+  <li>เรียบร้อยแล้วกด <span class="btn">ปิดรอบ</span> — <strong>ปิดแล้วแก้ไม่ได้</strong></li>
+</ol>
+
+<h3><span style="display:inline-block;background:var(--accent);color:#fff;border-radius:6px;width:24px;height:24px;text-align:center;line-height:24px;font-size:13px;margin-right:6px;">3</span>กระทบยอดโอน/เช็ค (เทียบ statement)</h3>
+<p>ตารางรวมรายการโอน/เช็คในระบบ (วันที่ วิธี เลขอ้างอิง ยอด งานที่ผูก) — ไล่เทียบกับ statement ธนาคารจริง<br>
+<strong>เลขอ้างอิงซ้ำระบบติดธงให้</strong> (สลิปใบเดียวใช้ซ้ำ)</p>
+
+<h3><span style="display:inline-block;background:var(--accent);color:#fff;border-radius:6px;width:24px;height:24px;text-align:center;line-height:24px;font-size:13px;margin-right:6px;">4</span>คำขอคืนเงิน — อนุมัติ/ปฏิเสธ</h3>
+<p>ฝ่ายขายขอคืนเงินได้แต่คืนเองไม่ได้ ทุกคำขอมารอที่นี่:
+ตรวจเหตุผล + ยอด (เกินยอดที่ลูกค้าจ่ายจริงไม่ได้) → <span class="btn">อนุมัติ</span> หรือ <span class="btn">ปฏิเสธ</span></p>
+
+<h3><span style="display:inline-block;background:var(--accent);color:#fff;border-radius:6px;width:24px;height:24px;text-align:center;line-height:24px;font-size:13px;margin-right:6px;">5</span>ลูกหนี้ค้างชำระ</h3>
+<p>งานส่งมอบแล้วแต่จ่ายไม่ครบ (ขายเครดิต) — ใช้ตามทวงถาม
+งานปิดเมื่อยอดจ่ายจริง ≥ ยอดรับสุทธิ (งานที่โดนหัก ณ ที่จ่ายจะปิดได้ ไม่ค้างตลอดกาล)</p>
+
+<h3><span style="display:inline-block;background:var(--accent);color:#fff;border-radius:6px;width:24px;height:24px;text-align:center;line-height:24px;font-size:13px;margin-right:6px;">6</span>ประวัติการเปลี่ยนยอดเงิน (audit)</h3>
+<p>ทุกการปรับยอดโดยใครก็ตาม แสดง ก่อน→หลัง + คนทำ + เหตุผล — ไล่ดูความผิดปกติได้ที่นี่</p>
+
+<h3><span style="display:inline-block;background:var(--accent);color:#fff;border-radius:6px;width:24px;height:24px;text-align:center;line-height:24px;font-size:13px;margin-right:6px;">7</span>รายงานเศษวัสดุ + กระทบยอดวัสดุ</h3>
+<ul>
+  <li><strong>รายงานเศษ (waste report)</strong> — งานที่เศษวัสดุเกินเกณฑ์ (เตือน ~30% / ธงแดง ~50%) และงานเสียทั้งหมด</li>
+  <li><strong>กระทบยอดวัสดุ (material reconcile)</strong> — เทียบวัสดุที่ระบบบันทึกว่าใช้ กับม้วนจริงในสต็อก</li>
+  <li>เศษสูงกระจุกที่คนพิมพ์คนเดียว/วัสดุตัวเดียว = จุดที่ควรเข้าไปดู</li>
+</ul>
+
+<h2>การปรับยอดเงิน (adjust payment)</h2>
+<p>ฝ่ายขายกรอกส่วนลด/มัดจำ/วิธีจ่ายผิด → คุณปรับให้ได้ในใบงาน (ปุ่ม <span class="btn">ปรับยอดเงิน</span>):</p>
+<table>
+  <tr><th style="width:30%">แก้ได้</th><td>ส่วนลด · มัดจำ · วิธีจ่าย · วันจ่าย · ค่าส่ง · ค่าธรรมเนียม · ค่าใช้จ่ายอื่นๆ · VAT/หัก ณ ที่จ่าย</td></tr>
+  <tr><th>แก้ไม่ได้</th><td><strong>ยอดรวม</strong> — ระบบคำนวณจากรายการงานเสมอ (ต้องแก้รายการงาน = งานของแอดมิน)</td></tr>
+  <tr><th>บังคับ</th><td><strong>ต้องใส่เหตุผลทุกครั้ง</strong> และลง audit อัตโนมัติ</td></tr>
+</table>
+
+<h2>หลักที่ควรยึด</h2>
+<ul>
+  <li>ตัวเลขที่ระบบคำนวณ (ยอดรวม เศษวัสดุ ส่วนต่างเงินสด) เชื่อได้ — คำนวณฝั่งเซิร์ฟเวอร์ พนักงานพิมพ์ทับไม่ได้</li>
+  <li>ธงแดงคือ "จุดที่ควรถาม" ไม่ใช่ "หลักฐานความผิด" — ถามก่อนสรุปเสมอ</li>
+  <li>ทุกอย่างที่คุณทำ (อนุมัติ ปรับยอด ปิดรอบ) ก็ลง audit เช่นกัน</li>
+</ul>
+
+<footer class="doc-footer">
+  <span>Naikit Sticker — คู่มือฝ่ายการเงิน</span>
+  <span>สงสัยเพิ่มเติม ติดต่อแอดมิน</span>
+</footer>
+
+</body>
+</html>

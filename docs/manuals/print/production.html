@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>คู่มือฝ่ายผลิต — Naikit Sticker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root { --accent: #ea580c; --accent-bg: #fff7ed; }
+  * { box-sizing: border-box; }
+  @page { size: A4; margin: 16mm 14mm; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body {
+    font-family: 'Sarabun', 'Leelawadee UI', Tahoma, sans-serif;
+    font-size: 15px; line-height: 1.7; color: #1f2937;
+    max-width: 820px; margin: 0 auto; padding: 24px;
+  }
+  @media print { body { padding: 0; max-width: none; } }
+
+  .doc-header {
+    border-bottom: 4px solid var(--accent); padding-bottom: 12px; margin-bottom: 20px;
+    display: flex; justify-content: space-between; align-items: flex-end; gap: 12px;
+  }
+  .doc-header .brand { font-size: 13px; color: #6b7280; letter-spacing: .05em; }
+  .doc-header h1 { font-size: 26px; margin: 2px 0 0; color: var(--accent); line-height: 1.35; }
+  .doc-header .meta { text-align: right; font-size: 13px; color: #6b7280; white-space: nowrap; }
+  .role-badge {
+    display: inline-block; background: var(--accent); color: #fff; border-radius: 999px;
+    padding: 2px 14px; font-size: 13px; font-weight: 600; margin-bottom: 4px;
+  }
+
+  h2 {
+    font-size: 19px; color: var(--accent); margin: 26px 0 8px;
+    padding-bottom: 4px; border-bottom: 2px solid #e5e7eb;
+    break-after: avoid;
+  }
+  h2 .no { display: inline-block; background: var(--accent); color: #fff; border-radius: 6px;
+    width: 26px; height: 26px; text-align: center; line-height: 26px; font-size: 14px; margin-right: 8px; }
+  h3 { font-size: 16px; margin: 16px 0 4px; break-after: avoid; }
+  p { margin: 6px 0; }
+  ul, ol { margin: 6px 0; padding-left: 24px; }
+  li { margin: 3px 0; }
+
+  table { border-collapse: collapse; width: 100%; margin: 10px 0; break-inside: avoid; font-size: 14px; }
+  th, td { border: 1px solid #d1d5db; padding: 6px 10px; text-align: left; vertical-align: top; }
+  th { background: var(--accent-bg); font-weight: 600; }
+  tr:nth-child(even) td { background: #fafafa; }
+
+  .btn {
+    display: inline-block; border: 1px solid #9ca3af; border-radius: 6px; background: #f3f4f6;
+    padding: 0 8px; font-weight: 600; font-size: 13.5px; white-space: nowrap;
+  }
+  .warn {
+    background: #fffbeb; border: 1px solid #f59e0b; border-left-width: 5px; border-radius: 6px;
+    padding: 8px 14px; margin: 10px 0; break-inside: avoid;
+  }
+  .warn strong:first-child { color: #b45309; }
+  .tip {
+    background: var(--accent-bg); border: 1px solid var(--accent); border-left-width: 5px; border-radius: 6px;
+    padding: 8px 14px; margin: 10px 0; break-inside: avoid;
+  }
+  .flow {
+    background: #f9fafb; border: 1px dashed #9ca3af; border-radius: 8px; padding: 10px 14px;
+    text-align: center; font-weight: 600; font-size: 14px; margin: 10px 0; break-inside: avoid; line-height: 2;
+  }
+  .flow .arrow { color: var(--accent); padding: 0 4px; }
+  .basics { break-inside: avoid-page; }
+  .doc-footer {
+    margin-top: 28px; padding-top: 8px; border-top: 1px solid #e5e7eb;
+    font-size: 12.5px; color: #9ca3af; display: flex; justify-content: space-between;
+  }
+  .print-note { background:#f0fdf4; border:1px solid #22c55e; border-radius:8px; padding:10px 14px; margin-bottom:20px; font-size:13.5px; }
+  @media print { .print-note { display: none; } }
+</style>
+</head>
+<body>
+
+<div class="print-note">
+  🖨️ <strong>วิธีทำเป็น PDF:</strong> กด <strong>Ctrl+P</strong> → Destination: <strong>Save as PDF</strong> → Paper: <strong>A4</strong> → More settings เปิด <strong>Background graphics</strong> → Save (กล่องเขียวนี้จะไม่ถูกพิมพ์)
+</div>
+
+<header class="doc-header">
+  <div>
+    <div class="brand">NAIKIT STICKER — คู่มือการใช้งานระบบ</div>
+    <h1>คู่มือฝ่ายผลิต (Production)</h1>
+  </div>
+  <div class="meta">
+    <span class="role-badge">PRODUCTION</span><br>
+    ฉบับวันที่ 2 ก.ค. 2569<br>
+    naikit-sticker.web.app
+  </div>
+</header>
+
+<p><strong>หน้าที่ของฝ่ายผลิต:</strong> รับงานพิมพ์ → พิมพ์ → แนบรูปงาน + บันทึกการพิมพ์และวัสดุ</p>
+<p><strong>เมนูที่คุณใช้ได้:</strong> หน้าหลัก · โปรไฟล์ — หน้าหลักแสดง 2 กลุ่ม:
+<strong>คิวกลาง</strong> (งาน "คอนเฟิร์มแล้ว / รอผลิต" ที่ยังไม่มีใครรับ) และ <strong>งานของฉัน</strong></p>
+
+<section class="basics">
+<h2>พื้นฐานที่ต้องรู้ก่อน</h2>
+<h3>การเข้าสู่ระบบ</h3>
+<ol>
+  <li>เปิด <strong>https://naikit-sticker.web.app</strong> (ใช้ได้ทั้งคอมและมือถือ)</li>
+  <li>กรอก<strong>ชื่อผู้ใช้</strong>และ<strong>รหัสผ่าน</strong>ที่ได้รับจากแอดมิน</li>
+  <li>เปลี่ยนรหัสผ่านเองได้ที่เมนู<strong>โปรไฟล์</strong> (ต้องกรอกรหัสปัจจุบัน) · ถ้า<strong>ลืม</strong>รหัส → แจ้งแอดมินตั้งใหม่ให้</li>
+</ol>
+<h3>สถานะของใบงาน</h3>
+<div class="flow">
+  รอออกแบบ <span class="arrow">→</span> กำลังออกแบบ <span class="arrow">→</span> รอคอนเฟิร์มแบบ <span class="arrow">→</span> คอนเฟิร์มแล้ว <span class="arrow">→</span><br>
+  รอผลิต <span class="arrow">→</span> กำลังผลิต <span class="arrow">→</span> รอส่งมอบ <span class="arrow">→</span> ส่งมอบแล้ว
+</div>
+<h3>เครื่องที่ทีมผลิตดูแล</h3>
+<p>ใบงานหนึ่งใบอาจมีงานหลายเครื่อง ระบบแตกเป็น<strong>งานย่อยต่อเครื่อง</strong>ให้อัตโนมัติ:</p>
+<table>
+  <tr><th>เครื่อง</th><th>ทีมที่ทำ</th></tr>
+  <tr><td>ไวนิล / สติกเกอร์ใหญ่ / สติกเกอร์ตัด / อื่นๆ</td><td><strong>ฝ่ายผลิต (คุณ)</strong></td></tr>
+  <tr><td>FUJI (ตรายาง)</td><td>ทีมกราฟิก</td></tr>
+</table>
+<p>แต่ละเครื่องรับงาน/ทำเสร็จแยกกันอิสระ — แต่ใบงานจะเป็น "รอส่งมอบ" ก็ต่อเมื่อ<strong>ทุกเครื่องเสร็จครบ</strong></p>
+<div class="warn"><strong>กติกากลาง:</strong> ทุกการกระทำถูกบันทึกในประวัติใบงาน · คุยข้ามฝ่ายผ่านช่องคอมเมนต์ในใบงาน · อย่าแชร์รหัสผ่าน</div>
+</section>
+
+<h2><span class="no">1</span>รับงานพิมพ์</h2>
+<ol>
+  <li>ดูคิวกลาง — งานป้าย <strong>ด่วน!</strong> ทำก่อน และดู<strong>วันนัดรับงาน</strong>ประกอบการจัดคิว</li>
+  <li>เปิดใบงาน ดูรายละเอียด: ประเภท ขนาด ตัวเลือก (ตาไก่/พับขอบ) จำนวน + <strong>รูปแบบที่คอนเฟิร์มแล้ว</strong>
+      (หัวข้อ "ฝ่ายกราฟิก › รูปที่ออกแบบ" — พิมพ์ตามแบบนี้เท่านั้น)</li>
+  <li>ที่หัวข้อ <strong>งานพิมพ์แต่ละเครื่อง</strong> กด <span class="btn">รับงานนี้</span> ตรงเครื่องที่คุณจะทำ</li>
+</ol>
+
+<h2><span class="no">2</span>พิมพ์และบันทึกการพิมพ์</h2>
+<p>พิมพ์เสร็จแล้ว เปิดใบงานทำ 2 อย่าง (บังคับทั้งคู่):</p>
+<h3>2.1 แนบรูปงานพิมพ์ (บังคับ)</h3>
+<p>ถ่ายรูปงานที่พิมพ์จริง อัปโหลดเข้าใบงาน</p>
+<h3>2.2 กรอกบันทึกการพิมพ์ ต่อรายการงาน</h3>
+<table>
+  <tr><th style="width:32%">ช่อง</th><th>กรอกอะไร</th></tr>
+  <tr><td>วัสดุ</td><td>เลือกจากรายการ (เช่น ดีรุยเซ่น หลังขาว, HP)</td></tr>
+  <tr><td>หลังขาว/ดำ/เทา</td><td>เฉพาะงานไวนิล</td></tr>
+  <tr><td>หน้ากว้างม้วน</td><td>เลือกตามม้วนที่ใช้จริง (เช่น 1.32 / 1.62 / 3.22 ม.)</td></tr>
+  <tr><td>ความยาวที่ใช้ (เมตร)</td><td><strong>วัดจากม้วนจริง รวมส่วนที่เผื่อ/เล็ม</strong> — ไม่ใช่ขนาดชิ้นงาน</td></tr>
+  <tr><td>จำนวนพิมพ์จริง</td><td>ระบบใส่ให้เท่าจำนวนสั่ง แก้ได้ถ้าพิมพ์เผื่อ</td></tr>
+  <tr><td>พิมพ์รวมม้วน</td><td>จัดวางหลายรายการบนม้วนเดียวกัน ให้ผูกเป็นชุดเดียวกัน — ระบบจะเฉลี่ยวัสดุให้ถูก</td></tr>
+</table>
+<p>บันทึกครบแล้วงานย่อยเครื่องนั้น = เสร็จ</p>
+<div class="warn"><strong>⚠️ กรอกตามจริงเสมอ</strong> — ระบบคำนวณพื้นที่ที่ใช้เทียบกับพื้นที่ที่ขาย
+ออกมาเป็นเปอร์เซ็นต์เศษวัสดุอัตโนมัติ ถ้าเกินเกณฑ์ (ประมาณ 30% เตือน / 50% ธงแดง) จะขึ้นรายงานที่ฝ่ายการเงิน —
+เศษเยอะเพราะงานชิ้นเล็กจัดวางไม่ลงตัวเป็นเรื่องปกติ อธิบายได้ แต่ตัวเลขที่กรอกมั่วจะตรวจเจอตอนกระทบยอดม้วนวัสดุ</div>
+
+<h2><span class="no">3</span>กรอกผิด แก้ยังไง</h2>
+<p>แก้ได้เองในใบงาน:</p>
+<ol>
+  <li>เปิดใบงาน → หัวข้อ <strong>บันทึกการพิมพ์ที่บันทึกแล้ว</strong></li>
+  <li>กด <span class="btn">✏️ แก้บันทึก</span> ที่รายการที่ผิด → แก้วัสดุ/ม้วน/ความยาว/จำนวนให้ถูก</li>
+  <li>ใส่<strong>เหตุผลที่แก้</strong> (บังคับ เช่น "กรอกความยาวผิด วัดใหม่ได้ 4.2 ม.") → กด <span class="btn">💾 บันทึกการแก้</span></li>
+</ol>
+<ul>
+  <li>แก้ได้เฉพาะรายการของทีมเครื่องตัวเอง (งาน FUJI ทีมกราฟิกแก้ / เครื่องอื่นทีมผลิตแก้)</li>
+  <li>ระบบเก็บค่าก่อน/หลังแก้ + เหตุผล ลงประวัติใบงานเสมอ — ชื่อผู้พิมพ์เดิมไม่เปลี่ยน</li>
+  <li>เศษวัสดุคำนวณใหม่อัตโนมัติจากค่าที่แก้</li>
+</ul>
+
+<h2><span class="no">4</span>บันทึกงานเสีย</h2>
+<p>พิมพ์เสีย ตัดเสีย เครื่องมีปัญหา สีเพี้ยน วัสดุมีตำหนิ → กด <span class="btn">งานเสีย</span> ในใบงาน:</p>
+<ol>
+  <li>เลือกเหตุผล (เลือก "อื่นๆ" ต้องพิมพ์รายละเอียด)</li>
+  <li>เลือกวัสดุ หน้ากว้างม้วน ความยาวที่เสีย จำนวนที่เสีย</li>
+  <li>บันทึก — แล้วพิมพ์ใหม่ + บันทึกการพิมพ์รอบใหม่ตามปกติ</li>
+</ol>
+<p>การบันทึกงานเสียทำจาก<strong>ในใบงาน</strong>เท่านั้น — วัสดุที่เสียโดยไม่เกี่ยวกับใบงานไหนเลย
+(เช่น ทดสอบเครื่อง เศษเปิดม้วน) ยังบันทึกในระบบไม่ได้ ให้จดแล้วแจ้งแอดมิน</p>
+<div class="tip">บันทึกงานเสียคือการบอกว่า "วัสดุหายไปไหน" — บันทึกตรงตามจริงช่วยคุณ
+เพราะถ้าไม่บันทึก วัสดุที่หายจะดูเหมือนเศษเกินของงานอื่นแทน</div>
+
+<h2>คำถามที่พบบ่อย</h2>
+<table>
+  <tr><th style="width:50%">ปัญหา</th><th>ทางแก้</th></tr>
+  <tr><td>รับงานผิดเครื่อง / ทำต่อไม่ได้</td><td>แจ้งแอดมินย้ายงาน</td></tr>
+  <tr><td>วัสดุที่ใช้ไม่มีในรายการ</td><td>แจ้งแอดมินเพิ่มวัสดุในระบบ</td></tr>
+  <tr><td>งานเสร็จแล้วแต่ใบงานยังไม่เป็น "รอส่งมอบ"</td><td>เครื่องอื่นยังไม่เสร็จ — ดูที่ "งานพิมพ์แต่ละเครื่อง"</td></tr>
+  <tr><td>บันทึกงานเสียผิด</td><td>แจ้งแอดมินยกเลิกรายการให้ แล้วบันทึกใหม่</td></tr>
+</table>
+
+<footer class="doc-footer">
+  <span>Naikit Sticker — คู่มือฝ่ายผลิต</span>
+  <span>สงสัยเพิ่มเติม ติดต่อแอดมิน</span>
+</footer>
+
+</body>
+</html>

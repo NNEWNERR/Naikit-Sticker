@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>คู่มือผู้ดูแลระบบ — Naikit Sticker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root { --accent: #b91c1c; --accent-bg: #fef2f2; }
+  * { box-sizing: border-box; }
+  @page { size: A4; margin: 16mm 14mm; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body {
+    font-family: 'Sarabun', 'Leelawadee UI', Tahoma, sans-serif;
+    font-size: 15px; line-height: 1.7; color: #1f2937;
+    max-width: 820px; margin: 0 auto; padding: 24px;
+  }
+  @media print { body { padding: 0; max-width: none; } }
+
+  .doc-header {
+    border-bottom: 4px solid var(--accent); padding-bottom: 12px; margin-bottom: 20px;
+    display: flex; justify-content: space-between; align-items: flex-end; gap: 12px;
+  }
+  .doc-header .brand { font-size: 13px; color: #6b7280; letter-spacing: .05em; }
+  .doc-header h1 { font-size: 26px; margin: 2px 0 0; color: var(--accent); line-height: 1.35; }
+  .doc-header .meta { text-align: right; font-size: 13px; color: #6b7280; white-space: nowrap; }
+  .role-badge {
+    display: inline-block; background: var(--accent); color: #fff; border-radius: 999px;
+    padding: 2px 14px; font-size: 13px; font-weight: 600; margin-bottom: 4px;
+  }
+
+  h2 {
+    font-size: 19px; color: var(--accent); margin: 26px 0 8px;
+    padding-bottom: 4px; border-bottom: 2px solid #e5e7eb;
+    break-after: avoid;
+  }
+  h2 .no { display: inline-block; background: var(--accent); color: #fff; border-radius: 6px;
+    width: 26px; height: 26px; text-align: center; line-height: 26px; font-size: 14px; margin-right: 8px; }
+  h3 { font-size: 16px; margin: 16px 0 4px; break-after: avoid; }
+  p { margin: 6px 0; }
+  ul, ol { margin: 6px 0; padding-left: 24px; }
+  li { margin: 3px 0; }
+
+  table { border-collapse: collapse; width: 100%; margin: 10px 0; break-inside: avoid; font-size: 14px; }
+  th, td { border: 1px solid #d1d5db; padding: 6px 10px; text-align: left; vertical-align: top; }
+  th { background: var(--accent-bg); font-weight: 600; }
+  tr:nth-child(even) td { background: #fafafa; }
+
+  .btn {
+    display: inline-block; border: 1px solid #9ca3af; border-radius: 6px; background: #f3f4f6;
+    padding: 0 8px; font-weight: 600; font-size: 13.5px; white-space: nowrap;
+  }
+  .warn {
+    background: #fffbeb; border: 1px solid #f59e0b; border-left-width: 5px; border-radius: 6px;
+    padding: 8px 14px; margin: 10px 0; break-inside: avoid;
+  }
+  .warn strong:first-child { color: #b45309; }
+  .tip {
+    background: var(--accent-bg); border: 1px solid var(--accent); border-left-width: 5px; border-radius: 6px;
+    padding: 8px 14px; margin: 10px 0; break-inside: avoid;
+  }
+  .doc-footer {
+    margin-top: 28px; padding-top: 8px; border-top: 1px solid #e5e7eb;
+    font-size: 12.5px; color: #9ca3af; display: flex; justify-content: space-between;
+  }
+  .print-note { background:#f0fdf4; border:1px solid #22c55e; border-radius:8px; padding:10px 14px; margin-bottom:20px; font-size:13.5px; }
+  @media print { .print-note { display: none; } }
+</style>
+</head>
+<body>
+
+<div class="print-note">
+  🖨️ <strong>วิธีทำเป็น PDF:</strong> กด <strong>Ctrl+P</strong> → Destination: <strong>Save as PDF</strong> → Paper: <strong>A4</strong> → More settings เปิด <strong>Background graphics</strong> → Save (กล่องเขียวนี้จะไม่ถูกพิมพ์)
+</div>
+
+<header class="doc-header">
+  <div>
+    <div class="brand">NAIKIT STICKER — คู่มือการใช้งานระบบ</div>
+    <h1>คู่มือผู้ดูแลระบบ (Admin)</h1>
+  </div>
+  <div class="meta">
+    <span class="role-badge">ADMIN</span><br>
+    ฉบับวันที่ 2 ก.ค. 2569<br>
+    naikit-sticker.web.app
+  </div>
+</header>
+
+<p>แอดมิน<strong>ทำได้ทุกอย่างแทนทุกตำแหน่ง</strong> + งานเฉพาะ: จัดการผู้ใช้ จัดการวัสดุ
+ย้ายงาน ลบ/กู้คืนใบงาน และแก้กรณีที่พนักงานทำเองไม่ได้</p>
+<p><strong>เมนูที่คุณใช้ได้:</strong> ทุกเมนู — หน้าหลัก · สร้างใบงาน · งานทั้งหมด · สรุปงานรายวัน · ตรวจเงิน · โปรไฟล์ · <strong>ตั้งค่า</strong>
+(<strong>จ่ายรวม</strong> ไม่อยู่ในเมนูข้าง — เข้าจากปุ่ม 💳 บนหน้าหลัก หรือลิงก์ในหน้าตรวจเงิน)</p>
+
+<h2><span class="no">1</span>จัดการผู้ใช้ (ตั้งค่า › ผู้ใช้)</h2>
+<table>
+  <tr><th style="width:28%">งาน</th><th style="width:34%">วิธีทำ</th><th>หมายเหตุ</th></tr>
+  <tr>
+    <td>สร้างพนักงานใหม่</td>
+    <td>กรอก username (ตัวพิมพ์เล็ก a-z 0-9 _), รหัสผ่าน, ชื่อที่แสดง, ตำแหน่ง</td>
+    <td>บอก username + รหัสให้พนักงานโดยตรง</td>
+  </tr>
+  <tr>
+    <td>เปลี่ยนตำแหน่ง</td>
+    <td>เลือกตำแหน่งใหม่</td>
+    <td>พนักงานถูกบังคับ login ใหม่ทันที · <strong>เปลี่ยนตำแหน่งตัวเองออกจาก admin ไม่ได้</strong></td>
+  </tr>
+  <tr>
+    <td>ปิดบัญชี (ลาออก)</td>
+    <td>ปิดสวิตช์ "ใช้งาน"</td>
+    <td>ถูกดีดออกทันทีทุกเครื่อง · <strong>ปิดบัญชีตัวเองไม่ได้</strong> · อย่าลบ ให้ปิดแทน — ประวัติงานยังอยู่</td>
+  </tr>
+  <tr>
+    <td>ตั้งรหัสผ่านใหม่ (ลืมรหัส)</td>
+    <td>Reset password</td>
+    <td>หลุดจากระบบทุกเครื่อง ต้อง login ใหม่ · ใช้เฉพาะกรณี<strong>ลืมรหัส</strong> — ถ้าแค่อยากเปลี่ยน พนักงานเปลี่ยนเองได้ที่หน้า<strong>โปรไฟล์</strong> (ต้องรู้รหัสปัจจุบัน)</td>
+  </tr>
+</table>
+<p><strong>ตำแหน่งที่มี:</strong> seller (ฝ่ายขาย) · graphic (กราฟิก — รวมพิมพ์ FUJI) · production (ฝ่ายผลิต) ·
+finance (การเงิน — อ่านได้หมด แก้ได้เฉพาะเงิน) · admin</p>
+<div class="warn"><strong>⚠️ ให้ตำแหน่งตามหน้าที่จริงเท่านั้น</strong> — โดยเฉพาะ admin กับ finance ให้เท่าที่จำเป็น</div>
+
+<h2><span class="no">2</span>จัดการราคากลาง (ตั้งค่า › ราคากลาง)</h2>
+<p>ราคากลางต่อประเภทงาน + ตัวเลือก (เช่น ไวนิล+ตาไก่) — ระบบใช้เทียบกับราคาขายจริง
+ของฝ่ายขายอัตโนมัติ ถ้าขายต่ำกว่าเกณฑ์จะติดธงแดงที่หน้าตรวจเงิน</p>
+<ul>
+  <li>เพิ่ม/แก้ด้วยปุ่ม <span class="btn">+ เพิ่มราคากลาง</span> ในหน้าตั้งค่า</li>
+  <li><strong>อัปเดตทุกครั้งที่ต้นทุนหรือนโยบายราคาเปลี่ยน</strong> — ราคากลางที่ล้าสมัยทำให้ธงแดงมั่ว
+      (งานปกติโดนธง / งานกดราคาหลุดรอด) แล้วฝ่ายการเงินจะตรวจเพี้ยนทั้งระบบ</li>
+  <li>ถ้ายังไม่เคยตั้งเลย มี seed script ให้ (<code>scripts/seed-rate-cards.ts</code> — งานฝั่งเทคนิค)</li>
+</ul>
+
+<h2><span class="no">3</span>จัดการวัสดุ (ตั้งค่า › วัสดุ)</h2>
+<p>รายการวัสดุที่คนพิมพ์เลือกตอนบันทึกการพิมพ์:</p>
+<ul>
+  <li>เพิ่ม/แก้: หมวด (ไวนิล/สติกเกอร์), ยี่ห้อ, ป้ายชื่อ, <strong>หน้ากว้างม้วนที่มีจริง</strong>, ต้นทุนต่อตารางเมตร (ถ้ารู้)</li>
+  <li>วัสดุเลิกใช้ → ปิด active (หายจาก dropdown แต่ประวัติเก่ายังอยู่) — <strong>อย่าลบ</strong></li>
+  <li>หน้ากว้างม้วนต้องตรงกับม้วนที่ซื้อจริง ไม่งั้นคนพิมพ์เลือกไม่ได้/เลือกผิด แล้วตัวเลขเศษจะเพี้ยนทั้งระบบ</li>
+</ul>
+
+<h2><span class="no">4</span>แก้งานแทนพนักงาน (กรณีที่พบบ่อย)</h2>
+<table>
+  <tr><th style="width:45%">พนักงานแจ้งว่า</th><th>สิ่งที่ต้องทำ</th></tr>
+  <tr><td>กราฟิก/คนพิมพ์รับงานผิดคน หรือลาป่วยงานค้าง</td><td>เปิดใบงาน → ย้ายงาน (reassign) ให้คนใหม่ · งานออกแบบที่ยัง "กำลังออกแบบ" กราฟิกใช้ปุ่ม <span class="btn">🔄 ส่งต่องาน</span> กันเองได้ ไม่ต้องผ่านคุณ</td></tr>
+  <tr><td>คนพิมพ์กรอกบันทึกการพิมพ์ผิด (วัสดุ/ความยาว)</td><td>ทีมเครื่องนั้นแก้เองได้ที่ปุ่ม <span class="btn">✏️ แก้บันทึก</span> ในใบงาน (แอดมินแก้ได้ทุกรายการ) — บังคับใส่เหตุผล ทุกการแก้ลง audit ก่อน/หลัง</td></tr>
+  <tr><td>ฝ่ายขายคอนเฟิร์มผิด / ลูกค้าเปลี่ยนใจหลังคอนเฟิร์ม</td><td>เปิดใบงาน → ปุ่ม <span class="btn">🔀 ปรับสถานะ (admin)</span> เลือกสถานะใหม่ + ใส่เหตุผล (บังคับ ลงประวัติเสมอ) — ข้ามขั้นได้ทุกสถานะ ใช้เท่าที่จำเป็น</td></tr>
+  <tr><td>ต้องแก้ใบงานหลังคอนเฟิร์ม (ขนาด/รายการ)</td><td>แอดมินแก้ได้ทุกสถานะ — แก้รายการงานแล้วยอดเงินคำนวณใหม่อัตโนมัติ</td></tr>
+  <tr><td>เปิดใบงานผิด ต้องลบ</td><td>ลบใบงาน (soft delete — กู้คืนได้ทีหลัง)</td></tr>
+  <tr><td>บันทึกงานเสียผิดรายการ</td><td>ยกเลิก (void) รายการงานเสียนั้น แล้วให้บันทึกใหม่</td></tr>
+  <tr><td>กรอกยอดเงินผิด</td><td>ปรับยอดเงินในใบงาน (ใส่เหตุผล — ลง audit เสมอ)</td></tr>
+  <tr><td>วัสดุไม่มีใน dropdown</td><td>เพิ่มที่ ตั้งค่า › วัสดุ</td></tr>
+</table>
+
+<h2><span class="no">5</span>สิ่งที่ควรรู้เกี่ยวกับระบบ</h2>
+<ul>
+  <li><strong>ทุก action ลง audit</strong> — รวมของแอดมินเอง ดูได้ท้ายใบงาน + หน้าตรวจเงิน</li>
+  <li><strong>ยอดรวมเงินเป็นของระบบ</strong> — คำนวณจากรายการงานฝั่งเซิร์ฟเวอร์เสมอ ไม่มีใครพิมพ์ทับได้ (รวมแอดมิน)
+      ต้องการเปลี่ยนยอด = แก้รายการงานหรือส่วนลด</li>
+  <li><strong>ลบ = ซ่อน</strong> — ใบงานที่ลบกู้คืนได้ ไม่มีอะไรหายถาวรจากหน้าจอ</li>
+  <li>ใบเสร็จลูกค้าเปิดผ่านลิงก์ QR ได้โดยไม่ต้อง login — เป็นหน้าสาธารณะที่ตั้งใจให้เป็นแบบนั้น</li>
+  <li>เรื่องเชิงเทคนิค (deploy, schema, Cloud Functions) ดู <code>SCHEMA.md</code> และ <code>docs/</code> ในโปรเจกต์ — คู่มือชุดนี้สำหรับผู้ใช้งานเท่านั้น</li>
+</ul>
+
+<footer class="doc-footer">
+  <span>Naikit Sticker — คู่มือผู้ดูแลระบบ</span>
+  <span>ฉบับวันที่ 2 ก.ค. 2569</span>
+</footer>
+
+</body>
+</html>

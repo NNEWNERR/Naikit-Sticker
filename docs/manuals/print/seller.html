@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>คู่มือฝ่ายขาย — Naikit Sticker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root { --accent: #1d4ed8; --accent-bg: #eff6ff; }
+  * { box-sizing: border-box; }
+  @page { size: A4; margin: 16mm 14mm; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body {
+    font-family: 'Sarabun', 'Leelawadee UI', Tahoma, sans-serif;
+    font-size: 15px; line-height: 1.7; color: #1f2937;
+    max-width: 820px; margin: 0 auto; padding: 24px;
+  }
+  @media print { body { padding: 0; max-width: none; } }
+
+  .doc-header {
+    border-bottom: 4px solid var(--accent); padding-bottom: 12px; margin-bottom: 20px;
+    display: flex; justify-content: space-between; align-items: flex-end; gap: 12px;
+  }
+  .doc-header .brand { font-size: 13px; color: #6b7280; letter-spacing: .05em; }
+  .doc-header h1 { font-size: 26px; margin: 2px 0 0; color: var(--accent); line-height: 1.35; }
+  .doc-header .meta { text-align: right; font-size: 13px; color: #6b7280; white-space: nowrap; }
+  .role-badge {
+    display: inline-block; background: var(--accent); color: #fff; border-radius: 999px;
+    padding: 2px 14px; font-size: 13px; font-weight: 600; margin-bottom: 4px;
+  }
+
+  h2 {
+    font-size: 19px; color: var(--accent); margin: 26px 0 8px;
+    padding-bottom: 4px; border-bottom: 2px solid #e5e7eb;
+    break-after: avoid;
+  }
+  h2 .no { display: inline-block; background: var(--accent); color: #fff; border-radius: 6px;
+    width: 26px; height: 26px; text-align: center; line-height: 26px; font-size: 14px; margin-right: 8px; }
+  h3 { font-size: 16px; margin: 16px 0 4px; break-after: avoid; }
+  p { margin: 6px 0; }
+  ul, ol { margin: 6px 0; padding-left: 24px; }
+  li { margin: 3px 0; }
+
+  table { border-collapse: collapse; width: 100%; margin: 10px 0; break-inside: avoid; font-size: 14px; }
+  th, td { border: 1px solid #d1d5db; padding: 6px 10px; text-align: left; vertical-align: top; }
+  th { background: var(--accent-bg); font-weight: 600; }
+  tr:nth-child(even) td { background: #fafafa; }
+
+  .btn {
+    display: inline-block; border: 1px solid #9ca3af; border-radius: 6px; background: #f3f4f6;
+    padding: 0 8px; font-weight: 600; font-size: 13.5px; white-space: nowrap;
+  }
+  .warn {
+    background: #fffbeb; border: 1px solid #f59e0b; border-left-width: 5px; border-radius: 6px;
+    padding: 8px 14px; margin: 10px 0; break-inside: avoid;
+  }
+  .warn strong:first-child { color: #b45309; }
+  .tip {
+    background: var(--accent-bg); border: 1px solid var(--accent); border-left-width: 5px; border-radius: 6px;
+    padding: 8px 14px; margin: 10px 0; break-inside: avoid;
+  }
+  .flow {
+    background: #f9fafb; border: 1px dashed #9ca3af; border-radius: 8px; padding: 10px 14px;
+    text-align: center; font-weight: 600; font-size: 14px; margin: 10px 0; break-inside: avoid; line-height: 2;
+  }
+  .flow .arrow { color: var(--accent); padding: 0 4px; }
+  .basics { break-inside: avoid-page; }
+  .page-break { break-before: page; }
+  .doc-footer {
+    margin-top: 28px; padding-top: 8px; border-top: 1px solid #e5e7eb;
+    font-size: 12.5px; color: #9ca3af; display: flex; justify-content: space-between;
+  }
+  .print-note { background:#f0fdf4; border:1px solid #22c55e; border-radius:8px; padding:10px 14px; margin-bottom:20px; font-size:13.5px; }
+  @media print { .print-note { display: none; } }
+</style>
+</head>
+<body>
+
+<div class="print-note">
+  🖨️ <strong>วิธีทำเป็น PDF:</strong> กด <strong>Ctrl+P</strong> → Destination: <strong>Save as PDF</strong> → Paper: <strong>A4</strong> → More settings เปิด <strong>Background graphics</strong> → Save (กล่องเขียวนี้จะไม่ถูกพิมพ์)
+</div>
+
+<header class="doc-header">
+  <div>
+    <div class="brand">NAIKIT STICKER — คู่มือการใช้งานระบบ</div>
+    <h1>คู่มือฝ่ายขาย (Seller)</h1>
+  </div>
+  <div class="meta">
+    <span class="role-badge">SELLER</span><br>
+    ฉบับวันที่ 2 ก.ค. 2569<br>
+    naikit-sticker.web.app
+  </div>
+</header>
+
+<p><strong>หน้าที่ของฝ่ายขาย:</strong> เปิดใบงาน → คอนเฟิร์มแบบกับลูกค้า → รับเงิน → ส่งมอบงาน</p>
+<p><strong>เมนูที่คุณใช้ได้:</strong> หน้าหลัก · สร้างใบงาน · งานทั้งหมด · สรุปงานรายวัน · โปรไฟล์
+(<strong>จ่ายรวม</strong> ไม่อยู่ในเมนูข้าง — เป็นปุ่ม 💳 บนหน้าหลัก)<br>
+คุณเห็นเฉพาะ<strong>ใบงานที่คุณเป็นคนเปิด</strong>เท่านั้น (ใบงานของฝ่ายขายคนอื่นมองไม่เห็น)</p>
+
+<section class="basics">
+<h2>พื้นฐานที่ต้องรู้ก่อน</h2>
+<h3>การเข้าสู่ระบบ</h3>
+<ol>
+  <li>เปิด <strong>https://naikit-sticker.web.app</strong> (ใช้ได้ทั้งคอมและมือถือ)</li>
+  <li>กรอก<strong>ชื่อผู้ใช้</strong>และ<strong>รหัสผ่าน</strong>ที่ได้รับจากแอดมิน</li>
+  <li>เปลี่ยนรหัสผ่านเองได้ที่เมนู<strong>โปรไฟล์</strong> (ต้องกรอกรหัสปัจจุบัน) · ถ้า<strong>ลืม</strong>รหัส → แจ้งแอดมินตั้งใหม่ให้</li>
+</ol>
+<h3>สถานะของใบงาน</h3>
+<div class="flow">
+  รอออกแบบ <span class="arrow">→</span> กำลังออกแบบ <span class="arrow">→</span> รอคอนเฟิร์มแบบ <span class="arrow">→</span> คอนเฟิร์มแล้ว <span class="arrow">→</span><br>
+  รอผลิต <span class="arrow">→</span> กำลังผลิต <span class="arrow">→</span> รอส่งมอบ <span class="arrow">→</span> ส่งมอบแล้ว
+</div>
+<div class="warn"><strong>กติกากลาง:</strong> ทุกการกระทำถูกบันทึกในประวัติใบงาน · ตัวเลขเงินแก้เองไม่ได้หลังเปิดใบงาน (ต้องให้การเงิน/แอดมินปรับพร้อมเหตุผล) · อย่าแชร์รหัสผ่าน</div>
+</section>
+
+<h2><span class="no">1</span>เปิดใบงานใหม่</h2>
+<p>เมนู <span class="btn">➕ สร้างใบงาน</span> แล้วกรอก:</p>
+<ol>
+  <li><strong>ข้อมูลลูกค้า</strong> — ชื่อ, ช่องทางติดต่อ (หน้าร้าน/เฟสบุ๊ค/ไลน์/อีเมล/โทรศัพท์), เบอร์โทร/ชื่อไลน์</li>
+  <li><strong>วันนัดรับงาน</strong> — วันที่ลูกค้าจะมารับ (ฝ่ายผลิตใช้จัดคิว)</li>
+  <li><strong>งานด่วน</strong> — ติ๊กเมื่อเป็นงานเร่ง จะขึ้นป้าย "ด่วน!" ให้ทุกฝ่ายเห็น</li>
+  <li><strong>รายการงาน</strong> (ใส่ได้หลายรายการ) — ประเภท, ขนาด, ตัวเลือก (ตาไก่/พับขอบ), จำนวน, ราคาต่อหน่วย<br>
+      <strong>ยอดรวมระบบคำนวณให้เอง</strong> = จำนวน × ราคาต่อหน่วย — พิมพ์ยอดรวมเองไม่ได้</li>
+  <li><strong>เงิน</strong> — ส่วนลด, มัดจำ, วิธีจ่าย, ค่าส่ง, ค่าธรรมเนียมโอน/เช็ค, ค่าใช้จ่ายอื่นๆ<br>
+      ใส่ "ค่าใช้จ่ายอื่นๆ" <strong>ต้องใส่หมายเหตุว่าค่าอะไร</strong> (ระบบบังคับ)</li>
+  <li><strong>รูป</strong> — รูปใบงาน + รูปอ้างอิงจากลูกค้า (สูงสุด 10 รูป)</li>
+</ol>
+<p>บันทึกแล้วได้เลขใบงานอัตโนมัติ (เช่น NK-2604-018) และเข้าคิว "รอออกแบบ"</p>
+<div class="tip"><strong>มอบหมายกราฟิกเองได้</strong> — ไม่ต้องรอกราฟิกกดรับ: เปิดใบงาน (ขณะยังสถานะ "รอออกแบบ")
+กดปุ่ม <span class="btn">📨 ส่งให้กราฟิก</span> แล้วเลือกคนที่ต้องการ เหมาะกับงานด่วนหรืองานที่คุยสเปคกับกราฟิกคนนั้นไว้แล้ว</div>
+<div class="warn"><strong>⚠️ ขายต่ำกว่าราคากลางระวังติดธง</strong> — ระบบเทียบราคาที่ตั้งกับราคากลางอัตโนมัติ ถ้าต่ำกว่าเกณฑ์จะติดธงแดงไปที่ฝ่ายการเงิน ถ้าจำเป็นต้องลดราคา ใช้ช่อง<strong>ส่วนลด</strong>และเตรียมอธิบายเหตุผลได้</div>
+
+<h2><span class="no">2</span>แก้ไขใบงาน</h2>
+<p>แก้ได้เฉพาะช่วงที่งานยัง <strong>รอออกแบบ / กำลังออกแบบ / รอคอนเฟิร์มแบบ</strong> — หลังคอนเฟิร์มแบบแล้วต้องแจ้งแอดมิน</p>
+<p><strong>ตัวเลขเงิน (ส่วนลด/มัดจำ/วิธีจ่าย) แก้เองไม่ได้หลังเปิดใบงาน</strong>ไม่ว่าสถานะไหน — แจ้งฝ่ายการเงินหรือแอดมินปรับให้พร้อมเหตุผล</p>
+
+<h2><span class="no">3</span>คอนเฟิร์มแบบ</h2>
+<ol>
+  <li>งานสถานะ <strong>รอคอนเฟิร์มแบบ</strong> → เปิดใบงาน ดูรูปที่กราฟิกแนบ (หัวข้อ "ฝ่ายกราฟิก › รูปที่ออกแบบ")</li>
+  <li>ส่งให้ลูกค้าดู</li>
+  <li>ลูกค้าโอเค → กด <span class="btn">คอนเฟิร์ม</span> (งานไปต่อคิวผลิต)</li>
+  <li>ลูกค้าขอแก้ → กด <span class="btn">ขอแก้</span> แล้วเขียนคอมเมนต์บอกกราฟิกว่าแก้ตรงไหน</li>
+</ol>
+<div class="warn"><strong>⚠️ คอนเฟิร์มแล้วย้อนกลับไม่ได้</strong> — ตรวจกับลูกค้าให้ชัวร์ก่อนกด</div>
+
+<h2><span class="no">4</span>รับเงิน / บันทึกการจ่าย</h2>
+<p>ทุกครั้งที่ลูกค้าจ่าย (มัดจำตอนเปิดใบงานระบบบันทึกให้แล้ว):</p>
+<ol>
+  <li>เปิดใบงาน → หัวข้อ <strong>การชำระเงิน (เงินสด/โอน/เช็ค)</strong></li>
+  <li>เลือกวิธีจ่าย ใส่จำนวนเงิน (ปุ่ม <span class="btn">จ่ายเต็ม</span> ใส่ยอดค้างให้อัตโนมัติ)</li>
+  <li>โอน/เช็ค → <strong>แนบสลิป</strong> + ใส่เลขอ้างอิง (เงินสดไม่ต้องแนบ)</li>
+  <li>กด <span class="btn">บันทึก</span> — ยอด "จ่ายจริงแล้ว" / "ค้างชำระจริง" อัปเดตอัตโนมัติ</li>
+</ol>
+<p><strong>จ่ายรวมหลายใบงาน</strong> — ลูกค้าโอนก้อนเดียวจ่ายหลายใบ กดปุ่ม <span class="btn">💳 จ่ายรวม</span> บนหน้าหลัก เลือกใบงานแล้วกระจายยอดในครั้งเดียว</p>
+<p><strong>ขอคืนเงิน</strong> — กด <span class="btn">ขอคืนเงิน</span> ในใบงาน ใส่จำนวน วิธีคืน เหตุผล → รอฝ่ายการเงินอนุมัติ (คืนเงินเองเลยไม่ได้)</p>
+
+<h2><span class="no">5</span>ส่งมอบงาน</h2>
+<ol>
+  <li>งานสถานะ <strong>รอส่งมอบ</strong> = พิมพ์เสร็จแล้ว → ส่งงานให้ลูกค้า</li>
+  <li>เปิดใบงาน กด <span class="btn">ส่งมอบ</span> — แนบสลิปงวดสุดท้ายได้ถ้ามี</li>
+  <li>ส่งมอบทั้งที่ค้างชำระได้ (ลูกค้าเครดิต) — ยอดค้างขึ้นรายการลูกหนี้ให้การเงินตามต่อ</li>
+</ol>
+<p>หลังส่งมอบ ระบบมี<strong>ใบเสร็จ QR</strong> ให้ลูกค้าสแกนดูใบเสร็จออนไลน์ได้</p>
+
+<h2><span class="no">6</span>เงินสดประจำวัน</h2>
+<p>งานที่รับ<strong>เงินสด</strong>และส่งมอบวันนั้น ระบบรวมยอดไว้ต่อคน — สิ้นวันนับเงินสดส่งฝ่ายการเงิน
+ฝ่ายการเงินจะกระทบยอดเทียบกับระบบ ถ้าไม่ตรง (ขาด/เกิน) จะติดธงและถูกสอบถาม <strong>นับให้ครบก่อนส่ง</strong></p>
+
+<h2><span class="no">7</span>บันทึกงานเสีย</h2>
+<p>งานของคุณพิมพ์เสีย/ตัดเสีย (เช่น ลูกค้าเปลี่ยนแบบหลังพิมพ์) → ปุ่ม <span class="btn">งานเสีย</span> ในใบงานของตัวเอง
+ใส่เหตุผล วัสดุ ปริมาณที่เสีย เพื่อให้บัญชีวัสดุตรงความจริง</p>
+
+<h2>คำถามที่พบบ่อย</h2>
+<table>
+  <tr><th style="width:45%">ปัญหา</th><th>ทางแก้</th></tr>
+  <tr><td>กรอกมัดจำ/ส่วนลดผิด</td><td>แจ้งฝ่ายการเงินหรือแอดมิน ปรับให้พร้อมเหตุผล</td></tr>
+  <tr><td>คอนเฟิร์มแบบผิดใบ</td><td>แจ้งแอดมิน (ย้อนสถานะเองไม่ได้)</td></tr>
+  <tr><td>ต้องการลบใบงาน</td><td>แจ้งแอดมิน (ฝ่ายขายลบเองไม่ได้)</td></tr>
+  <tr><td>มองไม่เห็นใบงานของเพื่อน</td><td>ปกติ — แต่ละคนเห็นเฉพาะงานตัวเอง</td></tr>
+</table>
+
+<footer class="doc-footer">
+  <span>Naikit Sticker — คู่มือฝ่ายขาย</span>
+  <span>สงสัยเพิ่มเติม ติดต่อแอดมิน</span>
+</footer>
+
+</body>
+</html>
