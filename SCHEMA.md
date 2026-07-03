@@ -193,22 +193,32 @@ Audit log — เขียน **ทุก action** ที่เปลี่ย�
 type ActionEnum =
   | 'create'              // สร้างใบงานใหม่
   | 'edit'                // แก้ field non-state
-  | 'claim_design'        // graphic claim
-  | 'claim_print'         // production claim
+  | 'claim_design'        // graphic claim จากคิวกลาง
+  | 'assign_design'       // seller มอบหมายงานตัวเองให้กราฟิกโดยตรง (📨 ส่งให้กราฟิก) — status='รอออกแบบ' AND design_uid=null; admin ทุกงาน
+  | 'transfer_design'     // graphic ส่งต่องานที่ตนถือให้กราฟิกคนอื่น (🔄 ส่งต่องาน) — status='กำลังออกแบบ' AND design_uid=self; status คงเดิม
+  | 'claim_print'         // ทีมผลิต/กราฟิก(FUJI) claim ต่อ task
   | 'submit_design'       // graphic ส่งแบบ
   | 'confirm_design'      // seller คอนเฟิร์ม
   | 'request_revision'    // seller ขอแก้
-  | 'start_print'         // production เริ่มพิมพ์
+  | 'start_print'         // graphic ส่งเข้าคิวผลิต (เขียนโดย sendToProduction — ชื่อ action เป็น legacy)
   | 'upload_print'        // อัปรูปงานพิมพ์
   | 'mark_delivered'      // ส่งมอบ
+  | 'payment_record'      // F8 — บันทึกการจ่าย
+  | 'payment_void'        // F8 — void payment (เช็คเด้ง/ปลอม/ยกเลิก)
+  | 'refund_request'      // F8 — seller ขอคืนเงิน
+  | 'refund_approve'      // F8 — finance/admin อนุมัติคืนเงิน
+  | 'refund_reject'       // F8 — finance/admin ปฏิเสธคำขอคืนเงิน
+  | 'rate_card_upsert'    // F7 — admin สร้าง/แก้ราคากลาง
   | 'material_upsert'     // F15 — admin เพิ่ม/แก้ materials master
-  | 'edit_production'     // F15 — production/admin แก้ค่าบันทึกการพิมพ์ที่กรอกผิด (before/after)
-  | 'defect_record'      // F15 — บันทึกงานเสีย (production/graphic/admin)
+  | 'edit_production'     // F15 — แก้บันทึกการพิมพ์ที่กรอกผิด (before/after + reason) — ทีมที่ดูแลเครื่องของ item นั้น (graphic=FUJI, production=non-FUJI) + admin; ผ่าน callable editProduction
+  | 'defect_record'      // F15 — บันทึกงานเสีย (production/graphic/admin + seller เจ้าของงาน)
   | 'defect_void'        // F15 — admin ยกเลิกงานเสียที่บันทึกผิด
+  | 'receipt_regenerate'  // F14 — สุ่ม receipt_code ใหม่ (ลิงก์ใบเสร็จเก่าหลุด)
   | 'payment_adjust'      // finance/admin แก้เงินหลังสร้าง (payload: before/after/reason)
   | 'comment_add'
   | 'comment_delete'
-  | 'admin_reassign'      // admin override design_uid/print_uid
+  | 'admin_reassign'      // admin เปลี่ยน design_uid / print_uid / seller_uid — **ไม่แตะ status**
+  | 'admin_set_status'    // admin override สถานะใบงาน (escape hatch — reason บังคับ, from/to ลง audit); ผ่าน callable adminSetStatus
   | 'delete'              // admin soft-delete job
   | 'restore';            // admin restore
 ```
@@ -377,15 +387,19 @@ Index: `cash_sessions (seller_uid, date desc)` + `jobs (is_deleted, seller_uid, 
 | `create_job` | ✓ → `seller_uid=self` | — | — | ✓ (เลือก seller_uid ใดก็ได้) | — → `'รอออกแบบ'` |
 | `edit_job` (non-state field, **ไม่รวม payment**) | ✓ ถ้า `seller_uid=self` AND `status in [รอออกแบบ, กำลังออกแบบ, รอคอนเฟิร์มแบบ]` | — | — | ✓ ทุก status | — (ถ้าแก้ `work_items` → total/remaining recompute อัตโนมัติ) |
 | `claim_design` | — | ✓ ถ้า `status='รอออกแบบ'` AND `design_uid=null` | — | ✓ | `รอออกแบบ` → `กำลังออกแบบ` |
+| `assign_design` | ✓ ถ้า `seller_uid=self` AND `status='รอออกแบบ'` AND `design_uid=null` | — | — | ✓ ทุกงาน | `รอออกแบบ` → `กำลังออกแบบ` (มอบหมายกราฟิกที่เลือกโดยตรง — ปุ่ม 📨 ส่งให้กราฟิก) |
+| `transfer_design` | — | ✓ ถ้า `design_uid=self` AND `status='กำลังออกแบบ'` | — | ✓ | — (status คงเดิม; เปลี่ยนแค่ design_uid — ปุ่ม 🔄 ส่งต่องาน) |
 | `submit_design` | — | ✓ ถ้า `design_uid=self` AND `status='กำลังออกแบบ'` | — | ✓ | `กำลังออกแบบ` → `รอคอนเฟิร์มแบบ` |
 | `confirm_design` | ✓ ถ้า `seller_uid=self` AND `status='รอคอนเฟิร์มแบบ'` | — | — | ✓ | `รอคอนเฟิร์มแบบ` → `คอนเฟิร์มแล้ว` |
 | `request_revision` | ✓ ถ้า `seller_uid=self` AND `status='รอคอนเฟิร์มแบบ'` | — | — | ✓ | `รอคอนเฟิร์มแบบ` → `กำลังออกแบบ` |
 | `send_to_production` | — | ✓ ถ้า `design_uid=self` AND `status='คอนเฟิร์มแล้ว'` | — | ✓ | `คอนเฟิร์มแล้ว` → `รอผลิต` |
 | `claim_print` (F13 ต่อ task) | — | ✓ ถ้า task `eligible` มี `fuji` (งาน FUJI) | ✓ ถ้า task `eligible` มี non-FUJI | ✓ | task `รอผลิต` → `กำลังผลิต`; job = derived (`deriveProductionStatus`) |
 | `upload_print` (F13 ต่อ task) | — | ✓ ตรงเครื่อง (FUJI) | ✓ ตรงเครื่อง (non-FUJI) | ✓ | **คนแนบ ≠ คนผลิตได้** (แค่อยู่ทีมที่ทำเครื่องนั้น). ทุก task เสร็จ → job `รอส่งมอบ`. **F15:** รับ payload `production[]` (วัสดุ/ม้วน/ความยาว/จำนวน) → server คำนวณ `area_used/billed/waste_pct` + set `printed_by_uid`. ดู docs/F15-PRODUCTION-MATERIAL.md |
+| `edit_production` (F15) | — | ✓ item เครื่อง FUJI | ✓ item เครื่อง non-FUJI | ✓ ทุก item | — (ไม่เปลี่ยน status). แก้ได้เฉพาะ item ที่**มี** `production` แล้ว (สร้างครั้งแรกผ่าน `upload_print` เท่านั้น); ผ่าน callable `editProduction({job_id, production[], reason})` — `reason` บังคับ; server คำนวณ area/waste ใหม่ แต่**คง** `printed_by_uid`/`printed_at` เดิม; event `edit_production` เก็บ before/after ต่อ item |
 | `mark_delivered` | ✓ ถ้า `seller_uid=self` AND `status='รอส่งมอบ'` | — | — | ✓ | `รอส่งมอบ` → `ส่งมอบแล้ว`. **F9 (แทนที่ F4 เดิม):** ไม่ hard-gate การจ่ายแล้ว — ส่งมอบแบบค้างชำระได้ (เครดิต/ลูกหนี้/AR); settlement ปิดเมื่อ `paid_amount ≥ net_receivable`. `delivery_slips` = optional (แนบถ้ามี). ดู docs/F9-TAX-PAYMENT-DESIGN.md |
 | `adjust_payment` (F2) | — | — | — | ✓ ทุก status | **finance** ด้วย (role ที่ 5 — ดู F3). แก้ discount/deposit/method/date + บังคับ `reason` → event `payment_adjust` before/after. total ยังคิดจาก work_items |
-| `admin_reassign` | — | — | — | ✓ ทุก status | (เปลี่ยน design_uid หรือ print_uid; status ตามที่ admin เลือก) |
+| `admin_reassign` | — | — | — | ✓ ทุก status | (เปลี่ยน design_uid / print_uid / seller_uid — **ไม่แตะ status**; เปลี่ยนสถานะใช้ `admin_set_status`) |
+| `admin_set_status` | — | — | — | ✓ ทุก status | override สถานะเป็นค่าใดก็ได้ใน StatusEnum (escape hatch — เช่น ย้อน `คอนเฟิร์มแล้ว` → `กำลังออกแบบ` เมื่อลูกค้าเปลี่ยนใจ) ผ่าน callable `adminSetStatus({job_id, status, reason})` — `reason` บังคับ; **ไม่ auto-แก้ field ปลายทาง** (print_tasks จะถูก reset ใหม่ตอน send_to_production รอบถัดไป; date_of_completion เซ็ตเมื่อ set เป็น `ส่งมอบแล้ว`) |
 | `delete_job` (soft) | — | — | — | ✓ | (set `is_deleted=true`) |
 | `restore_job` | — | — | — | ✓ | (set `is_deleted=false`) |
 | `add_comment` | ✓ readable | ✓ readable | ✓ readable | ✓ | — |
@@ -401,13 +415,30 @@ Index: `cash_sessions (seller_uid, date desc)` + `jobs (is_deleted, seller_uid, 
 | `resetPassword` | `{uid, password}` | ตั้ง password ใหม่ + revoke tokens ทุก device |
 | `upsertMaterial` (F15) | `{material_id?, category, brand, label, roll_widths_m, cost_per_sqm?, is_active}` | เพิ่ม/แก้ materials master (admin) → event `material_upsert` |
 | `listMaterials` (F15) | `{}` | list materials (staff ทุก role — ใช้ทำ dropdown ฟอร์มพิมพ์) |
+| `upsertRateCard` / `listRateCards` (F7) | ดู docs/F7-RATE-CARD-DESIGN.md | ราคากลาง (admin write / staff read) → event `rate_card_upsert` |
+| `adminSetStatus` | `{job_id, status, reason}` | override สถานะใบงานข้าม state machine (escape hatch) — reason บังคับ → event `admin_set_status` (from/to/reason) |
+
+### Callable Functions อื่นๆ (ไม่ใช่ admin-only — สรุปรวม; รายละเอียดดู design doc ของแต่ละ F)
+
+| Function | ใคร | Effect |
+|---|---|---|
+| `updateMyProfile` | ทุก role (ตัวเอง) | แก้ display_name/avatar + **เปลี่ยนรหัสผ่านตัวเอง** (ต้องส่งรหัสปัจจุบัน) |
+| `listGraphics` | seller/admin | รายชื่อกราฟิก active สำหรับ picker มอบหมาย/ส่งต่องาน |
+| `editProduction` (F15) | production/graphic/admin | แก้บันทึกการพิมพ์ — ดู row ใน write matrix |
+| `createPayment/voidPayment/deletePayment/editPayment` (F8/F12) | ดู docs/F8+F12 | payments ledger |
+| `requestRefund/approveRefund/rejectRefund` (F8) | seller ขอ / finance+admin ตัดสิน | คืนเงิน |
+| `reconcileCashSession/closeCashSession` (F5) | finance/admin | กระทบยอดเงินสดรายวัน |
+| `recordDefect/voidDefect` (F15) | ดู §defects | งานเสีย |
+| `computeWasteSummary` (F15) / `computeMaterialSummary`+`saveMaterialReconcile` | finance/admin | waste dashboard / กระทบยอดวัสดุ |
+| `regenerateReceiptCode` (F14) | seller เจ้าของงาน/admin | สุ่มโค้ดใบเสร็จใหม่ → event `receipt_regenerate` |
+| `getReceipt` (F14) | public (no-auth) | อ่านใบเสร็จผ่าน QR code |
 
 ## Status state machine (visual)
 
 ```
-                    ┌── claim_design ──→ กำลังออกแบบ
+                    ┌── claim_design (graphic) ──→ กำลังออกแบบ
 รอออกแบบ ───────────┤
-                    └── (admin manual)
+                    └── assign_design (seller/admin)
 
                               ↓ submit_design
 
@@ -421,7 +452,7 @@ Index: `cash_sessions (seller_uid, date desc)` + `jobs (is_deleted, seller_uid, 
                                           ↓
                     ┌── claim_print ──→ กำลังผลิต
               รอผลิต ┤                       ↓
-                    └── (admin manual)   upload_print
+                    └── (admin claim ได้)  upload_print
                                           ↓
                                        รอส่งมอบ
                                           ↓
@@ -431,6 +462,7 @@ Index: `cash_sessions (seller_uid, date desc)` + `jobs (is_deleted, seller_uid, 
 ```
 
 ห้าม transition อื่นนอกจาก table ข้างบน — Cloud Function ปฏิเสธทุกคำขอที่ไม่ตรง
+**ยกเว้น** `admin_set_status` (admin เท่านั้น + reason บังคับ) = escape hatch ข้าม state machine ได้ทุกทิศ — ใช้เมื่อ workflow ปกติพาไปไม่ถึง (เช่น คอนเฟิร์มผิด)
 
 ## Storage paths
 

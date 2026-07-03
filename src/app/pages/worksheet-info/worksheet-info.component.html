@@ -191,6 +191,56 @@
           <p class="text-[12px] text-ink-3 m-0">ทุกเครื่องเสร็จ → ใบงานเข้าสถานะ "รอส่งมอบ" อัตโนมัติ</p>
         </div>
 
+        <!-- F15 — บันทึกการพิมพ์ที่บันทึกแล้ว + แก้ไข (editProduction) -->
+        <div *ngIf="printLogs().length" class="w-full flex flex-col gap-1.5">
+          <span class="text-body-sm font-semibold">บันทึกการพิมพ์ที่บันทึกแล้ว ({{ printLogs().length }})</span>
+          <div *ngFor="let e of printLogs()" class="p-2 border border-ink rounded bg-surface-2 flex flex-col gap-1.5 text-[12px]">
+            <div class="flex items-start justify-between gap-2">
+              <div class="flex flex-col min-w-0">
+                <span class="font-bold">{{ e.wi.type }} · {{ e.wi.width }}×{{ e.wi.height }} {{ e.wi.unit_of_length }}</span>
+                <span class="text-ink-3">
+                  {{ e.wi.production!.material_label }}<ng-container *ngIf="e.wi.production!.backing"> ({{ e.wi.production!.backing }})</ng-container>
+                  · ม้วน {{ e.wi.production!.roll_width_m }} ม. × ยาว {{ e.wi.production!.length_used_m }} ม.
+                  · พิมพ์ {{ e.wi.production!.qty_printed }} ชิ้น
+                </span>
+                <span class="text-ink-3">
+                  📐 วัสดุ {{ e.wi.production!.area_used_sqm }} · เนื้องาน {{ e.wi.production!.area_billed_sqm }} ตร.ม.
+                  <ng-container *ngIf="e.wi.production!.waste_reliable">· ♻️ เศษ {{ e.wi.production!.waste_pct }}%</ng-container>
+                  <span *ngIf="e.wi.production!.waste_severity === 'hard'" class="text-danger font-bold"> ⚠️</span>
+                </span>
+              </div>
+              <button *ngIf="canEditProduction(e.wi) && editProdIndex !== e.index" type="button"
+                      (click)="openEditProduction(e.index)" [disabled]="actionLoading()"
+                      class="px-2 py-1 border-2 border-ink rounded font-bold bg-surface-3 cursor-pointer disabled:opacity-50 shrink-0">
+                ✏️ แก้บันทึก
+              </button>
+            </div>
+
+            <!-- ฟอร์มแก้ (prefill ค่าเดิม + เหตุผลบังคับ — ลง audit before/after) -->
+            <div *ngIf="editProdIndex === e.index" class="flex flex-col gap-1.5 pt-1.5 border-t border-ink">
+              <app-print-log-form [workItems]="workItems()" [materials]="materials()"
+                [onlyIndices]="[e.index]" [initial]="editProdInitial"
+                (inputsChange)="editProdInputs = $event"></app-print-log-form>
+              <label class="flex flex-col gap-0.5">
+                <span class="text-[11px] text-ink-3">เหตุผลที่แก้ (บังคับ — บันทึกลงประวัติ)</span>
+                <input type="text" class="input-base focus-ring w-full text-body-sm" maxlength="500"
+                       [(ngModel)]="editProdReason" placeholder="เช่น กรอกความยาวผิด วัดใหม่ได้ 4.2 ม.">
+              </label>
+              <div class="flex gap-1.5">
+                <button type="button" (click)="onSaveEditProduction()"
+                        [disabled]="actionLoading() || !editProdReason.trim() || editProdInputs.length === 0"
+                        class="px-3 py-1.5 bg-status-deliverq-bg border-2 border-ink rounded font-bold text-body-sm cursor-pointer disabled:opacity-50">
+                  💾 บันทึกการแก้
+                </button>
+                <button type="button" (click)="cancelEditProduction()" [disabled]="actionLoading()"
+                        class="px-3 py-1.5 border-2 border-ink rounded font-bold text-body-sm cursor-pointer bg-surface-3 disabled:opacity-50">
+                  ยกเลิก
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- F15 — บันทึกงานเสีย (ทีมผลิต/กราฟิก/admin + seller เจ้าของงาน) -->
         <div *ngIf="canRecordDefect()" class="w-full">
           <app-defect-form [jobId]="jobId" [workItems]="workItems()" [materials]="materials()"
@@ -229,6 +279,42 @@
             (click)="onMarkDelivered()">
             🎉 ส่งมอบงานแล้ว
           </button>
+        </div>
+
+        <!-- Admin: override สถานะ (escape hatch — admin_set_status) -->
+        <div *ngIf="isAdmin && !job()?.is_deleted" class="w-full flex flex-col gap-1.5">
+          <button *ngIf="!showSetStatus" type="button"
+            class="self-start px-3 py-1.5 bg-surface-3 border-2 border-ink rounded font-bold text-body-sm cursor-pointer disabled:opacity-50"
+            [disabled]="actionLoading()"
+            (click)="openSetStatus()">
+            🔀 ปรับสถานะ (admin)
+          </button>
+          <div *ngIf="showSetStatus" class="p-2.5 border-2 border-ink rounded-md bg-surface-2 flex flex-col gap-1.5">
+            <span class="font-bold text-body-sm">🔀 ปรับสถานะข้ามขั้น (admin เท่านั้น — ลงประวัติเสมอ)</span>
+            <label class="flex flex-col gap-0.5">
+              <span class="text-[11px] text-ink-3">สถานะใหม่ (ปัจจุบัน: {{ job()?.status }})</span>
+              <select class="input-base focus-ring w-full text-body-sm" [(ngModel)]="setStatusValue">
+                <option value="">— เลือก —</option>
+                <option *ngFor="let s of allStatuses" [value]="s" [disabled]="s === job()?.status">{{ s }}</option>
+              </select>
+            </label>
+            <label class="flex flex-col gap-0.5">
+              <span class="text-[11px] text-ink-3">เหตุผล (บังคับ — บันทึกลงประวัติ)</span>
+              <input type="text" class="input-base focus-ring w-full text-body-sm" maxlength="500"
+                     [(ngModel)]="setStatusReason" placeholder="เช่น ลูกค้าเปลี่ยนใจหลังคอนเฟิร์ม — ย้อนกลับไปแก้แบบ">
+            </label>
+            <div class="flex gap-1.5">
+              <button type="button" (click)="onAdminSetStatus()"
+                      [disabled]="actionLoading() || !setStatusValue || !setStatusReason.trim()"
+                      class="px-3 py-1.5 bg-status-designing-bg border-2 border-ink rounded font-bold text-body-sm cursor-pointer disabled:opacity-50">
+                💾 ปรับสถานะ
+              </button>
+              <button type="button" (click)="cancelSetStatus()" [disabled]="actionLoading()"
+                      class="px-3 py-1.5 border-2 border-ink rounded font-bold text-body-sm cursor-pointer bg-surface-3 disabled:opacity-50">
+                ยกเลิก
+              </button>
+            </div>
+          </div>
         </div>
 
         <!-- Admin: Delete / Restore -->

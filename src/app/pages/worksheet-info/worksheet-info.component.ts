@@ -17,11 +17,11 @@ import {
   TimelineComponent,
   TimelineStep,
 } from 'src/app/shared/components';
-import { Job, JobAction, JobComment, JobEvent, Material, ProductionInput, ProductionTask, WorkItem } from 'src/app/core/models/job';
+import { ALL_JOB_STATUSES, Job, JobAction, JobComment, JobEvent, JobStatus, Material, ProductionInput, ProductionTask, WorkItem } from 'src/app/core/models/job';
 import { PaymentRecord, RefundRecord } from 'src/app/core/models/payment';
 import { PaymentService } from 'src/app/services/payment.service';
 import { MaterialCatalogService } from 'src/app/services/material-catalog.service';
-import { canProduceMachines } from 'src/app/core/data/work-item-catalog';
+import { canProduceMachines, eligibleMachinesOf } from 'src/app/core/data/work-item-catalog';
 import { ReceiptQrModalComponent } from 'src/app/components/modals/receipt-qr/receipt-qr.modal';
 import { PrintLogFormComponent } from './print-log-form/print-log-form.component';
 import { DefectFormComponent } from './defect-form/defect-form.component';
@@ -40,8 +40,15 @@ const ACTION_LABELS: Record<JobAction, string> = {
   request_revision: 'ขอแก้ไขแบบ',
   start_print:      'ส่งเข้าผลิต',
   upload_print:     'อัพโหลดงานพิมพ์',
+  edit_production:  'แก้บันทึกการพิมพ์',
   mark_delivered:   'ส่งมอบแล้ว',
   payment_adjust:   'ปรับยอดเงิน (การเงิน)',
+  rate_card_upsert: 'แก้ราคากลาง',
+  material_upsert:  'แก้วัสดุ',
+  defect_record:    'บันทึกงานเสีย',
+  defect_void:      'ยกเลิกงานเสีย',
+  receipt_regenerate: 'ออกลิงก์ใบเสร็จใหม่',
+  admin_set_status: 'ปรับสถานะ (admin)',
   payment_record:   'บันทึกการจ่าย',
   payment_void:     'ยกเลิกการจ่าย (เช็คเด้ง/ปลอม)',
   refund_request:   'ขอคืนเงิน',
@@ -381,9 +388,12 @@ export class WorksheetInfoComponent implements OnInit, OnDestroy {
     }
   }
 
+  /** คงเหลือ (ตามบิล) = (total + other_fee) − deposit — สูตรเดียวกับ BE (SCHEMA.md);
+   *  คำนวณเองแทนการอ่าน p.remaining เพราะ doc เก่าที่ผ่าน editJob ช่วงที่ BE ลืมบวก
+   *  other_fee อาจเก็บค่าผิดค้างไว้ */
   get paymentRemaining(): number {
     const p = this.job()?.payment;
-    return (Number(p?.total) || 0) - (Number(p?.deposit) || 0);
+    return (Number(p?.total) || 0) + (Number(p?.other_fee) || 0) - (Number(p?.deposit) || 0);
   }
 
   formatTs(ts: Timestamp | null | undefined, withTime = false): string {
@@ -634,6 +644,97 @@ export class WorksheetInfoComponent implements OnInit, OnDestroy {
   // F13 — claim/upload "ต่อ task" (เครื่องที่เลือกตั้งฝั่ง BE ตาม role)
   async onClaimTask(taskKey: string) {
     await this._run(() => this.jobsSvc.claimPrint(this.jobId, taskKey));
+  }
+
+  // ── F15 — แก้บันทึกการพิมพ์ (editProduction) ────────────────────────────
+  /** work_item ที่มีบันทึกการพิมพ์แล้ว (โชว์สรุป + ปุ่มแก้) */
+  printLogs = computed(() =>
+    (this.job()?.work_items ?? [])
+      .map((wi, index) => ({ wi, index }))
+      .filter((e) => !!e.wi.production),
+  );
+  /** index ของ item ที่กำลังแก้ (null = ปิดฟอร์ม) */
+  editProdIndex: number | null = null;
+  editProdInputs: ProductionInput[] = [];
+  editProdReason = '';
+  /** prefill ให้ print-log-form (keyed by index) — สร้างตอนเปิดฟอร์ม */
+  editProdInitial: Record<number, ProductionInput> = {};
+
+  /** สิทธิ์แก้: ทีมที่ดูแลเครื่องของ item นั้น (mirror BE) + admin — ต้องมี production เดิม */
+  canEditProduction(wi: WorkItem): boolean {
+    if (!wi.production) return false;
+    return canProduceMachines(this.role(), eligibleMachinesOf(wi.type));
+  }
+
+  openEditProduction(index: number) {
+    const wi = this.job()?.work_items?.[index];
+    const p = wi?.production;
+    if (!p) return;
+    this.editProdInitial = {
+      [index]: {
+        work_item_index: index,
+        material_id: p.material_id,
+        backing: p.backing,
+        roll_width_m: p.roll_width_m,
+        length_used_m: p.length_used_m,
+        qty_printed: p.qty_printed,
+        roll_run_id: p.roll_run_id,
+      },
+    };
+    this.editProdInputs = [];
+    this.editProdReason = '';
+    this.actionError.set('');
+    this.editProdIndex = index;
+  }
+
+  cancelEditProduction() {
+    this.editProdIndex = null;
+    this.editProdInputs = [];
+    this.editProdReason = '';
+  }
+
+  // ── Admin: override สถานะ (admin_set_status escape hatch) ────────────────
+  readonly allStatuses = ALL_JOB_STATUSES;
+  showSetStatus = false;
+  setStatusValue: JobStatus | '' = '';
+  setStatusReason = '';
+
+  openSetStatus() {
+    this.setStatusValue = '';
+    this.setStatusReason = '';
+    this.actionError.set('');
+    this.showSetStatus = true;
+  }
+
+  cancelSetStatus() {
+    this.showSetStatus = false;
+  }
+
+  async onAdminSetStatus() {
+    if (!this.setStatusValue || !this.setStatusReason.trim()) {
+      this.actionError.set('เลือกสถานะใหม่และระบุเหตุผลก่อนบันทึก');
+      return;
+    }
+    if (!confirm(`ปรับสถานะ "${this.job()?.status}" → "${this.setStatusValue}" ข้ามขั้นตอนปกติ?`)) return;
+    await this._run(async () => {
+      await this.jobsSvc.adminSetStatus(this.jobId, this.setStatusValue as JobStatus, this.setStatusReason.trim());
+      this.cancelSetStatus();
+    });
+  }
+
+  async onSaveEditProduction() {
+    if (!this.editProdReason.trim()) {
+      this.actionError.set('กรุณาระบุเหตุผลการแก้บันทึกการพิมพ์');
+      return;
+    }
+    if (this.editProdInputs.length === 0) {
+      this.actionError.set('กรอกข้อมูลบันทึกการพิมพ์ให้ครบก่อนบันทึก');
+      return;
+    }
+    await this._run(async () => {
+      await this.jobsSvc.editProduction(this.jobId, this.editProdInputs, this.editProdReason.trim());
+      this.cancelEditProduction();
+    });
   }
 
   async onUploadTask(taskKey: string) {

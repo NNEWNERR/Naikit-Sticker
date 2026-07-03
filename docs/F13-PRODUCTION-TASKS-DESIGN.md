@@ -38,7 +38,9 @@ guard `canProduce(role, [machine])` (FUJI=graphic, non-FUJI=production — F-mac
 **D3** legacy `print_uid` = คน claim ล่าสุด (เก็บไว้โชว์/markDelivered), `print_images` = union ของทุก task (โชว์/ส่งมอบ).
 **D4** **rules ไม่ต้อง denorm เพิ่ม** — ใช้ `machines.hasAny([...])` ที่มีอยู่ + ขยาย status list
 (graphic/production อ่านงานเครื่องตัวเองได้ทุก stage ผลิต). queue/owned กรอง client-side จาก print_tasks.
-**D5** markDelivered: permission seller_uid==me OR print_uid==me OR (production/graphic ที่ canProduce) OR admin.
+**D5** markDelivered: ~~permission seller_uid==me OR print_uid==me OR (production/graphic ที่ canProduce) OR admin~~
+**(REVISED — implement จริงเป็น seller เจ้าของงาน + admin เท่านั้น)** ยึดว่าผู้ขายเป็นคนส่งมอบ/รับเงิน
+graphic/production ส่งมอบไม่ได้ (พิมพ์เสร็จ → job 'รอส่งมอบ' → seller ส่งมอบ) — ตรงกับ SCHEMA.md + `jobs.ts markDelivered`.
 
 ## เปลี่ยนอะไรบ้าง
 - **BE** types ProductionTask + JobDoc.print_tasks; sendToProduction สร้าง tasks; claimPrint/uploadPrint

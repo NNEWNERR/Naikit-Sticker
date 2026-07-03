@@ -18,6 +18,12 @@ export type JobStatus =
   | 'รอส่งมอบ'
   | 'ส่งมอบแล้ว';
 
+/** ทุกสถานะเรียงตาม workflow — ใช้ทำ dropdown adminSetStatus (mirror BE ALL_STATUSES) */
+export const ALL_JOB_STATUSES: readonly JobStatus[] = [
+  'รอออกแบบ', 'กำลังออกแบบ', 'รอคอนเฟิร์มแบบ', 'คอนเฟิร์มแล้ว',
+  'รอผลิต', 'กำลังผลิต', 'รอส่งมอบ', 'ส่งมอบแล้ว',
+] as const;
+
 export type Contact = 'หน้าร้าน' | 'เฟสบุ๊ค' | 'ไลน์' | 'อีเมล' | 'โทรศัพท์';
 export type UnitOfLength = 'mm.' | 'cm.' | 'inch' | 'm.';
 export type PaymentMethod = 'เงินสด' | 'โอน' | 'เช็ค' | 'เครดิต' | 'อื่นๆ' | '';
@@ -198,6 +204,10 @@ export interface CreateJobPayload {
   remark?: string;
   /** Admin-only: create on behalf of another seller. Ignored when caller is seller. */
   seller_uid?: string;
+  // F16 — หลักฐานมัดจำ (บังคับเมื่อ deposit > 0 และวิธีจ่ายเป็น โอน/เช็ค)
+  deposit_bank_ref?: string;
+  deposit_slip_url?: string | null;
+  deposit_slip_hash?: string | null;
   // F9 — tax inputs (BE คำนวณ tax block ให้)
   vat_mode?: VatMode;
   vat_rate?: number;
@@ -287,11 +297,12 @@ export interface Job {
 
 export type JobAction =
   | 'create' | 'edit' | 'claim_design' | 'assign_design' | 'transfer_design' | 'claim_print' | 'submit_design'
-  | 'confirm_design' | 'request_revision' | 'start_print' | 'upload_print'
+  | 'confirm_design' | 'request_revision' | 'start_print' | 'upload_print' | 'edit_production'
   | 'mark_delivered' | 'payment_adjust'
   | 'payment_record' | 'payment_void' | 'refund_request' | 'refund_approve' | 'refund_reject'
+  | 'rate_card_upsert' | 'material_upsert' | 'defect_record' | 'defect_void' | 'receipt_regenerate'
   | 'comment_add' | 'comment_delete'
-  | 'admin_reassign' | 'delete' | 'restore';
+  | 'admin_reassign' | 'admin_set_status' | 'delete' | 'restore';
 
 export interface JobEvent {
   id: string;

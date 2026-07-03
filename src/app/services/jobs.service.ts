@@ -91,8 +91,25 @@ export class JobsService {
     });
   }
 
+  /**
+   * F15 — แก้บันทึกการพิมพ์ที่กรอกผิด (item ต้องมี production แล้ว; reason บังคับ).
+   * สิทธิ์ต่อ item = ทีมเครื่องนั้น (graphic=FUJI, production=non-FUJI) + admin.
+   * server คำนวณ waste ใหม่ คง printed_by/printed_at เดิม → event `edit_production` (before/after)
+   */
+  async editProduction(jobId: string, production: ProductionInput[], reason: string): Promise<void> {
+    await this._call('editProduction', { job_id: jobId, production, reason });
+  }
+
   async markDelivered(jobId: string, slipUrls: string[] = []): Promise<void> {
     await this._call('markDelivered', { job_id: jobId, delivery_slips: slipUrls });
+  }
+
+  /**
+   * Admin escape hatch — override สถานะข้าม state machine (เช่น ย้อนงานคอนเฟิร์มผิด).
+   * reason บังคับ → event `admin_set_status` (from/to/reason) ลง audit เสมอ
+   */
+  async adminSetStatus(jobId: string, status: string, reason: string): Promise<void> {
+    await this._call('adminSetStatus', { job_id: jobId, status, reason });
   }
 
   async editJob(jobId: string, patch: Record<string, unknown>): Promise<void> {

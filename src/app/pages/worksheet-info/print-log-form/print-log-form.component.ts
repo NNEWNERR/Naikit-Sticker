@@ -97,6 +97,10 @@ export class PrintLogFormComponent implements OnChanges {
   @Input() materials: Material[] = [];
   /** ถ้ากำหนด → โชว์เฉพาะ work_item ของ task นี้ (task key = eligible เรียง+join). '' = โชว์ทั้งหมด */
   @Input() taskKey = '';
+  /** F15 edit — จำกัดเฉพาะ work_item index เหล่านี้ (null = ไม่จำกัด) */
+  @Input() onlyIndices: number[] | null = null;
+  /** F15 edit — ค่าเดิมสำหรับ prefill (จาก work_items[i].production) keyed by index */
+  @Input() initial: Record<number, ProductionInput> | null = null;
   /** emit เฉพาะแถวที่กรอกครบ (material + roll + length + qty) */
   @Output() inputsChange = new EventEmitter<ProductionInput[]>();
 
@@ -110,20 +114,32 @@ export class PrintLogFormComponent implements OnChanges {
   constructor(private readonly catalog: MaterialCatalogService) {}
 
   ngOnChanges(c: SimpleChanges): void {
-    if (c['workItems'] || c['taskKey']) {
+    if (c['workItems'] || c['taskKey'] || c['onlyIndices'] || c['initial']) {
       this.entries = this.workItems
         .map((wi, index) => ({ wi, index }))
-        .filter((e) => !this.taskKey || taskKeyForType(e.wi.type) === this.taskKey);
+        .filter((e) => !this.taskKey || taskKeyForType(e.wi.type) === this.taskKey)
+        .filter((e) => !this.onlyIndices || this.onlyIndices.includes(e.index));
       this.rows = {};
       for (const e of this.entries) {
-        this.rows[e.index] = {
-          material_id: '',
-          backing: '',
-          roll_width_m: null,
-          length_used_m: null,
-          qty_printed: e.wi.quantity ?? 1,
-          preview: null,
-        };
+        const seed = this.initial?.[e.index];
+        this.rows[e.index] = seed
+          ? {
+              material_id: seed.material_id,
+              backing: seed.backing,
+              roll_width_m: seed.roll_width_m,
+              length_used_m: seed.length_used_m,
+              qty_printed: seed.qty_printed,
+              preview: null,
+            }
+          : {
+              material_id: '',
+              backing: '',
+              roll_width_m: null,
+              length_used_m: null,
+              qty_printed: e.wi.quantity ?? 1,
+              preview: null,
+            };
+        if (seed) this.recompute(e.index); // โชว์เศษ% ของค่าเดิมทันที + emit ให้ parent มี state ครบ
       }
     }
   }
