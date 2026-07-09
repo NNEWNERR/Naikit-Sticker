@@ -169,10 +169,19 @@
             </div>
             <span *ngIf="taskPrinter(t)" class="text-[12px] text-ink-3">ผู้พิมพ์: {{ taskPrinter(t) }}</span>
 
-            <!-- รอผลิต: claim -->
-            <button *ngIf="canClaimTask(t)" type="button"
-              class="self-start px-3 py-1.5 bg-status-printing-bg border-2 border-ink rounded font-bold text-body-sm cursor-pointer disabled:opacity-50"
-              [disabled]="actionLoading()" (click)="onClaimTask(t.key)">รับงานนี้</button>
+            <!-- รอผลิต: claim (ถ้าทีมเรามีเครื่องให้เลือก >1 เช่น สติ๊กเกอร์ใหญ่/UV ต้องเลือกก่อน) -->
+            <div *ngIf="canClaimTask(t)" class="flex items-center gap-2 flex-wrap">
+              <select *ngIf="claimOptions(t).length > 1"
+                class="input-base focus-ring text-body-sm"
+                [(ngModel)]="claimMachineByTask[t.key]" [disabled]="actionLoading()">
+                <option value="" disabled selected>— เลือกเครื่องที่ใช้ —</option>
+                <option *ngFor="let m of claimOptions(t)" [value]="m">{{ machineLabel(m) }}</option>
+              </select>
+              <button type="button"
+                class="px-3 py-1.5 bg-status-printing-bg border-2 border-ink rounded font-bold text-body-sm cursor-pointer disabled:opacity-50"
+                [disabled]="actionLoading() || (claimOptions(t).length > 1 && !claimMachineByTask[t.key])"
+                (click)="onClaimTask(t.key)">รับงานนี้</button>
+            </div>
 
             <!-- กำลังผลิต: แนบรูป -->
             <div *ngIf="canUploadTask(t)" class="flex flex-col gap-1.5">

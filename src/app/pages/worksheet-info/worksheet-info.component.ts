@@ -21,7 +21,7 @@ import { ALL_JOB_STATUSES, Job, JobAction, JobComment, JobEvent, JobStatus, Mate
 import { PaymentRecord, RefundRecord } from 'src/app/core/models/payment';
 import { PaymentService } from 'src/app/services/payment.service';
 import { MaterialCatalogService } from 'src/app/services/material-catalog.service';
-import { canProduceMachines, eligibleMachinesOf } from 'src/app/core/data/work-item-catalog';
+import { canProduceMachines, choosableMachines, eligibleMachinesOf } from 'src/app/core/data/work-item-catalog';
 import { ReceiptQrModalComponent } from 'src/app/components/modals/receipt-qr/receipt-qr.modal';
 import { PrintLogFormComponent } from './print-log-form/print-log-form.component';
 import { DefectFormComponent } from './defect-form/defect-form.component';
@@ -65,6 +65,7 @@ const MACHINE_LABELS: Record<string, string> = {
   fuji:          'FUJI',
   vinyl:         'ไวนิล',
   large_sticker: 'สติ๊กเกอร์ใหญ่',
+  uv:            'สติกเกอร์ UV',
   cut_sticker:   'สติกเกอร์ตัด',
   other:         'อื่นๆ',
 };
@@ -266,6 +267,10 @@ export class WorksheetInfoComponent implements OnInit, OnDestroy {
     if (t.machine) return MACHINE_LABELS[t.machine] ?? t.machine;
     return (t.eligible_machines ?? []).map((m) => MACHINE_LABELS[m] ?? m).join(' / ');
   }
+  /** เครื่องที่ role นี้เลือกได้ตอน claim — >1 ตัวต้องเลือกก่อนกดรับงาน (เช่น สติ๊กเกอร์ใหญ่ vs UV). */
+  claimOptions(t: ProductionTask): string[] { return choosableMachines(this.role(), t.eligible_machines); }
+  /** เครื่องที่เลือกไว้ต่อ task (key = task.key) ก่อนกดรับงาน */
+  claimMachineByTask: Record<string, string> = {};
   /** ชื่อผู้รับผลิต task นี้ — ใช้ denormalized print_uid_name ก่อน (non-admin เห็นชื่อจริง),
    *  fallback personName (self/admin resolve ได้), ถ้ายังไม่ claim → null. */
   taskPrinter(t: ProductionTask): string | null {
@@ -641,9 +646,10 @@ export class WorksheetInfoComponent implements OnInit, OnDestroy {
     await this._run(() => this.jobsSvc.sendToProduction(this.jobId));
   }
 
-  // F13 — claim/upload "ต่อ task" (เครื่องที่เลือกตั้งฝั่ง BE ตาม role)
+  // F13 — claim/upload "ต่อ task" (ตัวเลือกเดียว BE เลือกให้; >1 ตัว เช่น สติ๊กเกอร์ใหญ่/UV ต้องส่ง machine ที่เลือก)
   async onClaimTask(taskKey: string) {
-    await this._run(() => this.jobsSvc.claimPrint(this.jobId, taskKey));
+    const machine = this.claimMachineByTask[taskKey] || undefined;
+    await this._run(() => this.jobsSvc.claimPrint(this.jobId, taskKey, machine));
   }
 
   // ── F15 — แก้บันทึกการพิมพ์ (editProduction) ────────────────────────────

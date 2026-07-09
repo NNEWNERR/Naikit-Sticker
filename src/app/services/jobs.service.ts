@@ -72,8 +72,9 @@ export class JobsService {
     await this._call('sendToProduction', { job_id: jobId });
   }
 
-  async claimPrint(jobId: string, taskKey: string): Promise<void> {
-    await this._call('claimPrint', { job_id: jobId, task_key: taskKey });
+  /** machine — เครื่องที่เลือกจริง (บังคับเมื่อ task มีตัวเลือก >1 สำหรับ role นั้น เช่น large_sticker+uv) */
+  async claimPrint(jobId: string, taskKey: string, machine?: string): Promise<void> {
+    await this._call('claimPrint', { job_id: jobId, task_key: taskKey, ...(machine ? { machine } : {}) });
   }
 
   /** F15 — production[] optional: บันทึกวัสดุ/เศษต่อ work_item (server คำนวณ area/waste) */

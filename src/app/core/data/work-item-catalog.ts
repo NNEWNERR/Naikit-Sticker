@@ -99,27 +99,32 @@ export const UNIT_OPTIONS: CatalogUnit[] = [
 
 export interface MachineGroup { value: string; label: string; }
 
+// เครื่องจริง: vinyl=Deruisen G4-3200, large_sticker=Deruisen D2-1800XC,
+//              uv=Deruisen TDP-1800UV, fuji=FUJIFILM ApeosPro C650.
+//              cut_sticker = ขั้นไดคัต (ไม่ใช่เครื่องพิมพ์).
 export const MACHINE_GROUPS: MachineGroup[] = [
   { value: 'fuji',          label: 'FUJI' },
   { value: 'vinyl',         label: 'ไวนิล' },
   { value: 'large_sticker', label: 'สติ๊กเกอร์ใหญ่' },
+  { value: 'uv',            label: 'สติกเกอร์ UV' },
   { value: 'cut_sticker',   label: 'สติกเกอร์ตัด' },
   { value: 'other',         label: 'อื่นๆ' },
 ];
 
-/** ประเภทงาน (work_item.type value) → เครื่อง/กลุ่มผลิต. [] = ยังไม่ระบุ → จัดเป็น 'other'. */
+/** ประเภทงาน (work_item.type value) → เครื่อง/กลุ่มผลิต. [] = ยังไม่ระบุ → จัดเป็น 'other'.
+ *  uv พิมพ์ได้ทุกประเภทเหมือน large_sticker (D2) — คนผลิตเลือกเครื่องจริงตอน claim. */
 export const MACHINE_OF_TYPE: Record<string, string[]> = {
   'ไวนิล':        ['vinyl'],
-  'สติกเกอร์':     ['fuji', 'large_sticker'], // value 'สติกเกอร์' = สติกเกอร์ พิมพ์
+  'สติกเกอร์':     ['fuji', 'large_sticker', 'uv'], // value 'สติกเกอร์' = สติกเกอร์ พิมพ์
   'สติกเกอร์ตัด':  ['cut_sticker'],
-  'ฉลาก':         ['fuji', 'large_sticker'],
+  'ฉลาก':         ['fuji', 'large_sticker', 'uv'],
   'นามบัตร':       ['fuji'],
   'ใบปลิว':        ['fuji'],
-  'โปสเตอร์':      ['fuji', 'large_sticker'],
+  'โปสเตอร์':      ['fuji', 'large_sticker', 'uv'],
   'ตรายาง':        ['fuji'],
-  'โลอัพ':         ['large_sticker'],
-  'แบล็คลิส':      ['large_sticker'],
-  'กล่องไฟ':       ['large_sticker'],
+  'โลอัพ':         ['large_sticker', 'uv'],
+  'แบล็คลิส':      ['large_sticker', 'uv'],
+  'กล่องไฟ':       ['large_sticker', 'uv'],
   'พลาสวูด':       [], // ยังไม่ระบุเครื่อง → 'other'
 };
 
@@ -154,6 +159,16 @@ export function canProduceMachines(role: string | null | undefined, machines: st
   if (role === 'graphic') return ms.includes('fuji');
   if (role === 'production') return ms.some((m) => m !== 'fuji');
   return false;
+}
+
+/** เครื่องในชุด eligible ที่ role นี้เลือกใช้ได้ตอน claim (mirror BE choosableMachinesFor).
+ *  >1 ตัว = ต้องให้ผู้ใช้เลือกก่อนกดรับงาน (เช่น production เจอ large_sticker+uv). */
+export function choosableMachines(role: string | null | undefined, eligible: string[] | undefined): string[] {
+  const ms = eligible ?? [];
+  if (role === 'graphic') return ms.filter((m) => m === 'fuji');
+  if (role === 'production') return ms.filter((m) => m !== 'fuji');
+  if (role === 'admin') return [...ms];
+  return [];
 }
 
 export function optionsForType(typeValue: string): CatalogOption[] {
