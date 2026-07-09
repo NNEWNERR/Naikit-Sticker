@@ -508,6 +508,20 @@ export class StockComponent implements OnInit, OnDestroy {
     window.open(`/naikit-sticker/stock-print/${this.reportPeriod}`, '_blank');
   }
 
+  /** ใบนับแบบพิมพ์ — เดินนับด้วยกระดาษแล้วค่อยคีย์ (ไม่ต้องพกโทรศัพท์) */
+  printCountSheet(): void {
+    const q = this.countScope.length > 0
+      ? `?cats=${encodeURIComponent(this.countScope.join(','))}`
+      : '';
+    window.open(`/naikit-sticker/stock-count-print${q}`, '_blank');
+  }
+
+  /** พิมพ์ชุดสุ่มตรวจที่ระบบเพิ่งเลือก (ส่ง item ids — ชุดเดียวกับบนจอเป๊ะ) */
+  printSpotSheet(): void {
+    const ids = this.countLines.map((l) => l.item.id).join(',');
+    window.open(`/naikit-sticker/stock-count-print?items=${encodeURIComponent(ids)}`, '_blank');
+  }
+
   private currentMonthStr(): string {
     return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' }).slice(0, 7);
   }

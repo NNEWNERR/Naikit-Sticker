@@ -1,0 +1,59 @@
+<div class="max-w-4xl mx-auto p-6 bg-white text-ink text-[13px]">
+
+  <!-- เครื่องมือ — ซ่อนตอนพิมพ์ -->
+  <div class="flex items-center justify-between mb-4 print:hidden">
+    <span class="text-body-sm text-ink-3">พิมพ์ → เดินนับด้วยปากกา → กลับมาคีย์ผลในแท็บ "นับสต๊อก"</span>
+    <button type="button" (click)="print()"
+            class="px-4 py-2 bg-brand border-2 border-ink rounded font-bold cursor-pointer shadow-brutal">🖨 พิมพ์</button>
+  </div>
+
+  <p *ngIf="loading" class="text-body-sm text-ink-3">กำลังโหลดรายการ…</p>
+
+  <ng-container *ngIf="!loading">
+    <!-- หัวใบนับ -->
+    <div class="text-center mb-2">
+      <h1 class="text-lg font-bold m-0">ใบนับสต๊อก{{ isSpot ? ' (สุ่มตรวจ)' : '' }} — {{ totalItems }} รายการ</h1>
+      <p class="m-0 text-ink-3 text-[11px]">พิมพ์เมื่อ {{ today }} · กติกา: นับตามของจริงที่เห็น · ไม่มีของ = เขียน 0 · ห้ามเว้นว่าง</p>
+    </div>
+
+    <div class="flex justify-between mb-3 text-[12px]">
+      <span>วันที่นับ: ________________</span>
+      <span>ผู้นับ (ชื่อ): ____________________</span>
+      <span>เริ่ม-จบ: ______ ถึง ______ น.</span>
+    </div>
+
+    <!-- ตารางต่อหมวด -->
+    <div *ngFor="let g of groups" class="mb-4 [break-inside:avoid-page]">
+      <h2 class="font-bold m-0 mb-1 text-[14px]">หมวด {{ g.name }} <span class="font-normal text-ink-3 text-[11px]">({{ g.items.length }} รายการ)</span></h2>
+      <table class="w-full border-collapse text-[11px]">
+        <thead>
+          <tr>
+            <th class="border border-ink px-1 py-0.5 w-[5%]">ลำดับ</th>
+            <th class="border border-ink px-1 py-0.5 text-left w-[45%]">รายการ</th>
+            <th class="border border-ink px-1 py-0.5 w-[10%]">หน่วย</th>
+            <th class="border border-ink px-1 py-0.5 w-[15%]">นับได้</th>
+            <th class="border border-ink px-1 py-0.5 w-[25%]">หมายเหตุ (ของเสีย/หาไม่เจอ)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let i of g.items; let idx = index">
+            <td class="border border-ink px-1 py-1 text-center">{{ idx + 1 }}</td>
+            <td class="border border-ink px-1 py-1">{{ i.name }}</td>
+            <td class="border border-ink px-1 py-1 text-center">{{ i.unit }}</td>
+            <td class="border border-ink px-1 py-1"></td>
+            <td class="border border-ink px-1 py-1"></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="flex justify-between mt-6 text-[12px]">
+      <span>ลงชื่อผู้นับ: ____________________</span>
+      <span>ลงชื่อผู้คีย์เข้าระบบ: ____________________</span>
+      <span>ลงชื่อแอดมินผู้ตรวจ: ____________________</span>
+    </div>
+    <p class="text-ink-3 mt-2 text-[10px]">
+      ใบนี้ตั้งใจไม่แสดงยอดคงเหลือในระบบ (นับแบบไม่เห็นเฉลย) · คีย์ผลที่แท็บ "นับสต๊อก" แล้วให้แอดมินล็อก · F17 Naikit Sticker
+    </p>
+  </ng-container>
+</div>

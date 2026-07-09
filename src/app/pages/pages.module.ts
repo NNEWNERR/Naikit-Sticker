@@ -14,6 +14,7 @@ import { MaterialComponent } from './setting/material/material.component';
 import { ReportComponent } from './report/report.component';
 import { StockComponent } from './stock/stock.component';
 import { StockPrintComponent } from './stock/stock-print.component';
+import { StockCountPrintComponent } from './stock/stock-count-print.component';
 import { DiarySummaryComponent } from './diary-summary/diary-summary.component';
 import { ShowImageComponent } from './show-image/show-image.component';
 import { WorkItemModalComponent } from './create-work-sheet/work-item-modal/work-item-modal.component';
@@ -48,6 +49,7 @@ import {
     ReportComponent,
     StockComponent,
     StockPrintComponent,
+    StockCountPrintComponent,
     DiarySummaryComponent,
     ShowImageComponent,
     WorkItemModalComponent,

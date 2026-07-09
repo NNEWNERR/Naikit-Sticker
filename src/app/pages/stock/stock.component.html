@@ -296,16 +296,25 @@
                 class="px-3 py-2 bg-brand border-2 border-ink rounded font-bold cursor-pointer">เริ่มนับเต็ม (หมวดที่เลือก)</button>
         <button type="button" (click)="startSpotCount()"
                 class="px-3 py-2 bg-surface-3 border-2 border-ink rounded font-bold cursor-pointer">🎲 สุ่มตรวจ ~10 รายการ</button>
+        <button type="button" (click)="printCountSheet()"
+                class="px-3 py-2 bg-surface-2 border-2 border-ink rounded font-bold cursor-pointer">
+          🖨 พิมพ์ใบนับ{{ countScope.length > 0 ? ' (หมวดที่เลือก)' : ' (ทุกหมวด)' }}</button>
       </div>
+      <p class="text-[11px] text-ink-3 m-0">เดินนับด้วยกระดาษ: พิมพ์ใบนับ → นับด้วยปากกา → กลับมากด "เริ่มนับเต็ม" หมวดเดิมแล้วคีย์ตามใบ</p>
     </div>
 
     <!-- ฟอร์มนับ (blind — ไม่โชว์ยอดระบบ) -->
     <div *ngIf="countMode" class="border-2 border-ink rounded-lg p-4 bg-surface-2 shadow-brutal flex flex-col gap-3">
       <div class="flex items-center justify-between flex-wrap gap-2">
         <h4 class="text-h4 m-0">{{ countMode === 'full' ? 'นับเต็ม' : 'สุ่มตรวจ' }} — {{ countLines.length }} รายการ</h4>
-        <button type="button" (click)="cancelCount()" class="px-2 py-1 text-[12px] border-2 border-ink rounded bg-surface-3 font-bold cursor-pointer">ยกเลิก</button>
+        <div class="flex gap-2">
+          <button type="button" *ngIf="countMode === 'spot'" (click)="printSpotSheet()"
+                  class="px-2 py-1 text-[12px] border-2 border-ink rounded bg-surface-2 font-bold cursor-pointer">🖨 พิมพ์ใบนับชุดนี้</button>
+          <button type="button" (click)="cancelCount()" class="px-2 py-1 text-[12px] border-2 border-ink rounded bg-surface-3 font-bold cursor-pointer">ยกเลิก</button>
+        </div>
       </div>
-      <p class="text-[12px] text-ink-3 m-0">เดินนับของจริงแล้วกรอกตามที่เห็น — ระบบตั้งใจ<b>ไม่โชว์ยอดคงเหลือ</b>ระหว่างนับ (กันนับตามตัวเลข) · ไม่มีของ = 0</p>
+      <p class="text-[12px] text-ink-3 m-0">เดินนับของจริงแล้วกรอกตามที่เห็น — ระบบตั้งใจ<b>ไม่โชว์ยอดคงเหลือ</b>ระหว่างนับ (กันนับตามตัวเลข) · ไม่มีของ = 0
+        <ng-container *ngIf="countMode === 'spot'"><br />⚠ ถ้าพิมพ์ใบนับไปเดินนับ <b>อย่าปิดหน้านี้</b> — ชุดสุ่มจะเปลี่ยนถ้าเริ่มใหม่</ng-container></p>
       <div class="flex flex-col gap-1">
         <div *ngFor="let l of countLines" class="flex items-center gap-2 p-1.5 border-2 border-ink rounded bg-white">
           <span class="text-body-sm font-semibold flex-1 min-w-0">{{ l.item.name }}

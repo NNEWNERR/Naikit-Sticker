@@ -16,6 +16,7 @@ import { ProfileComponent } from './pages/profile/profile.component';
 import { ReceiptComponent } from './pages/receipt/receipt.component';
 import { StockComponent } from './pages/stock/stock.component';
 import { StockPrintComponent } from './pages/stock/stock-print.component';
+import { StockCountPrintComponent } from './pages/stock/stock-count-print.component';
 
 // RBAC per SCHEMA.md — home is open to every authenticated role
 // (component renders the queue relevant to that role).
@@ -84,6 +85,12 @@ export const routes: Routes = [
     path: 'naikit-sticker/stock-print/:period',
     component: StockPrintComponent,
     canActivate: [authGuard, roleGuard(['stock', 'admin', 'finance'])],
+  },
+  {
+    // F17 S2.1 — ใบนับสต๊อกแบบพิมพ์ (เดินนับด้วยกระดาษ ?cats=... หรือ ?items=...)
+    path: 'naikit-sticker/stock-count-print',
+    component: StockCountPrintComponent,
+    canActivate: [authGuard, roleGuard(['stock', 'admin'])],
   },
   {
     path: 'login',
