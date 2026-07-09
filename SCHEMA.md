@@ -393,7 +393,9 @@ issue — ชื่อใหม่ auto-เพิ่มเข้า stock_staff)
 Callables (F17): `createStockDoc` (stock/admin; adjust/opening = admin) · `voidStockDoc`
 (stock: ใบตัวเอง+วันเดียวกับที่คีย์ / admin) · `upsertStockItem`/`upsertStockCategory`
 (สร้าง: stock/admin · แก้: admin — กัน rename กลบร่องรอย) · `upsertStockStaff` (stock/admin) ·
-**S2:** `submitStockCount` (stock/admin) · `lockStockCount` (admin) · `discardStockCount`
+**S2:** `submitStockCount` (stock/admin) · `lockStockCount` (admin; `as_opening:true` = รอบ baseline แรก
+— gen doc type 'opening' แทน 'adjust' และบังคับทุก delta ≥ 0; doc_date ของใบที่ gen = submitted_at
+ของรอบนับ ไม่ใช่วันที่ lock — ส่วนต่างตกเดือนที่นับจริง) · `discardStockCount`
 (admin/ผู้นับเอง) · `computeStockReport({period:'YYYYMM'})` (stock/finance/admin) — รายงานรายเดือน
 ต่อรายการ ยกมา/รับ/ใช้/ส่วนต่างนับจริง/คงเหลือ/มูลค่า (invariant: ยกมา+รับ−ใช้±ปรับ=คงเหลือ;
 closing derive จาก on_hand ปัจจุบัน rollback เอกสารหลังสิ้นเดือน; มูลค่า = last_unit_price ปัจจุบัน)

@@ -332,7 +332,10 @@ export class StockComponent implements OnInit, OnDestroy {
     this.countErr = '';
     if (this.countScope.length === 0) { this.countErr = 'เลือกอย่างน้อย 1 หมวดก่อนเริ่มนับ'; return; }
     const scope = new Set(this.countScope);
-    const items = this.items().filter((i) => i.is_active && scope.has(i.category_id));
+    // รวม item ที่ถูกปิดใช้งานแต่ยอดยังไม่ 0 ด้วย — ไม่งั้นยอดค้างของมันไม่ถูก reconcile อีกเลย
+    const items = this.items().filter(
+      (i) => scope.has(i.category_id) && (i.is_active || i.on_hand !== 0),
+    );
     if (items.length === 0) { this.countErr = 'หมวดที่เลือกไม่มีรายการ'; return; }
     this.countMode = 'full';
     this.countLines = items.map((item) => ({ item, counted: null }));
@@ -426,14 +429,16 @@ export class StockComponent implements OnInit, OnDestroy {
     return c.lines.filter((l) => l.diff !== 0).length;
   }
 
-  async lockCount(c: StockCount): Promise<void> {
+  async lockCount(c: StockCount, asOpening = false): Promise<void> {
     if (this.lockingId) return;
     this.lockingId = c.id;
     try {
-      const res = await this.stock.lockCount(c.id);
+      const res = await this.stock.lockCount(c.id, asOpening);
       this.svc.presentToast(
         res.adjust_line_count > 0
-          ? `ล็อกแล้ว — สร้างใบปรับยอด ${res.adjust_line_count} รายการ`
+          ? (asOpening
+              ? `ล็อกเป็นยอดตั้งต้นแล้ว — ${res.adjust_line_count} รายการ`
+              : `ล็อกแล้ว — สร้างใบปรับยอด ${res.adjust_line_count} รายการ`)
           : 'ล็อกแล้ว — ยอดตรงทั้งหมด ไม่ต้องปรับ',
         'success',
       );
@@ -442,6 +447,11 @@ export class StockComponent implements OnInit, OnDestroy {
     } finally {
       this.lockingId = null;
     }
+  }
+
+  /** รอบนับนี้เป็น baseline ครั้งแรกไหม (ทุกรายการยอดระบบ = 0) → เสนอปุ่ม "ล็อกเป็นยอดตั้งต้น" */
+  isBaselineCount(c: StockCount): boolean {
+    return c.lines.length > 0 && c.lines.every((l) => l.ledger_qty === 0);
   }
 
   async discardCount(c: StockCount): Promise<void> {

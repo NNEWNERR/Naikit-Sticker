@@ -260,8 +260,12 @@
           <span class="text-[12px] font-bold" [class.text-red-700]="countDiffs(c) > 0" [class.text-green-700]="countDiffs(c) === 0">
             {{ countDiffs(c) > 0 ? 'ไม่ตรง ' + countDiffs(c) + ' รายการ' : 'ตรงทั้งหมด ✓' }}</span>
           <ng-container *ngIf="isAdmin">
+            <button type="button" *ngIf="isBaselineCount(c)" (click)="lockCount(c, true)" [disabled]="lockingId !== null"
+                    class="ml-auto px-3 py-1 text-[12px] border-2 border-purple-900 rounded bg-purple-100 text-purple-900 font-bold cursor-pointer disabled:opacity-50">
+              {{ lockingId === c.id ? 'กำลังล็อก…' : '🏁 ล็อกเป็นยอดตั้งต้น (baseline)' }}</button>
             <button type="button" (click)="lockCount(c)" [disabled]="lockingId !== null"
-                    class="ml-auto px-3 py-1 text-[12px] border-2 border-ink rounded bg-brand font-bold cursor-pointer disabled:opacity-50">
+                    class="px-3 py-1 text-[12px] border-2 border-ink rounded bg-brand font-bold cursor-pointer disabled:opacity-50"
+                    [class.ml-auto]="!isBaselineCount(c)">
               {{ lockingId === c.id ? 'กำลังล็อก…' : 'ล็อก + สร้างใบปรับ' }}</button>
             <button type="button" (click)="discardCount(c)" [disabled]="lockingId !== null"
                     class="px-3 py-1 text-[12px] border-2 border-ink rounded bg-surface-3 font-bold cursor-pointer disabled:opacity-50">ทิ้ง</button>

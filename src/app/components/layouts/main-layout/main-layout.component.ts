@@ -19,7 +19,8 @@ export class MainLayoutComponent {
    * can't actually open (e.g. a seller seeing the admin-only ตั้งค่า).
    */
   private readonly allNavItems: NavItem[] = [
-    { key: 'home', label: 'หน้าหลัก', icon: '📋', routerLink: '/naikit-sticker/home', section: 'WORKFLOW' },
+    // home ไม่ใส่ role 'stock' — role นั้นอ่าน jobs ไม่ได้ (เข้าไปก็โดน redirect กลับ /stock)
+    { key: 'home', label: 'หน้าหลัก', icon: '📋', routerLink: '/naikit-sticker/home', section: 'WORKFLOW', roles: ['seller', 'graphic', 'production', 'admin', 'finance'] },
     { key: 'create', label: 'สร้างใบงาน', icon: '➕', routerLink: '/naikit-sticker/create-work-sheet', section: 'WORKFLOW', roles: ['seller', 'admin'] },
     { key: 'all', label: 'งานทั้งหมด', icon: '📊', routerLink: '/naikit-sticker/all', section: 'WORKFLOW', roles: ['admin', 'seller', 'finance'] },
     { key: 'diary', label: 'สรุปงานรายวัน', icon: '✅', routerLink: '/naikit-sticker/diary-summary', section: 'WORKFLOW', roles: ['admin', 'seller', 'finance'] },
@@ -30,7 +31,7 @@ export class MainLayoutComponent {
   ];
 
   private readonly allPrimaryTabs: NavItem[] = [
-    { key: 'home', label: 'งาน', icon: '📋', routerLink: '/naikit-sticker/home' },
+    { key: 'home', label: 'งาน', icon: '📋', routerLink: '/naikit-sticker/home', roles: ['seller', 'graphic', 'production', 'admin', 'finance'] },
     { key: 'create-fab', label: 'สร้าง', icon: '➕', routerLink: '/naikit-sticker/create-work-sheet', fab: true, roles: ['seller', 'admin'] },
     { key: 'all', label: 'รายงาน', icon: '📊', routerLink: '/naikit-sticker/all', roles: ['admin', 'seller', 'finance'] },
     { key: 'stock', label: 'สต๊อก', icon: '📦', routerLink: '/naikit-sticker/stock', roles: ['stock', 'admin', 'finance'] },

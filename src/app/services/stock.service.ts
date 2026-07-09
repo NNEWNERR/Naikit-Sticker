@@ -189,8 +189,8 @@ export class StockService implements OnDestroy {
     return this.call('submitStockCount', input);
   }
 
-  async lockCount(count_id: string): Promise<{ id: string; adjust_doc_id: string | null; adjust_line_count: number }> {
-    return this.call('lockStockCount', { count_id });
+  async lockCount(count_id: string, as_opening = false): Promise<{ id: string; adjust_doc_id: string | null; adjust_line_count: number }> {
+    return this.call('lockStockCount', { count_id, ...(as_opening ? { as_opening: true } : {}) });
   }
 
   async discardCount(count_id: string, reason?: string): Promise<{ id: string }> {
