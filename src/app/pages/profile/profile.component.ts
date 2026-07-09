@@ -8,7 +8,7 @@ import { AuthService } from 'src/app/services/auth.service';
 import { PageHeaderComponent } from 'src/app/shared/components';
 
 const ROLE_LABELS: Record<string, string> = {
-  seller: 'ฝ่ายขาย', graphic: 'กราฟิก', production: 'ฝ่ายผลิต', admin: 'แอดมิน', finance: 'การเงิน',
+  seller: 'ฝ่ายขาย', graphic: 'กราฟิก', production: 'ฝ่ายผลิต', admin: 'แอดมิน', finance: 'การเงิน', stock: 'สต๊อก',
 };
 
 @Component({

@@ -14,6 +14,7 @@ const ROLE_LABEL: Record<Role, string> = {
   production: 'ผลิต',
   admin: 'แอดมิน',
   finance: 'การเงิน',
+  stock: 'สต๊อก',
 };
 
 @Component({
@@ -70,6 +71,7 @@ export class UserComponent implements OnInit, OnDestroy {
       case 'graphic':    return 'bg-blue-100 text-blue-900 border-blue-900';
       case 'production': return 'bg-green-100 text-green-900 border-green-900';
       case 'finance':    return 'bg-amber-100 text-amber-900 border-amber-900';
+      case 'stock':      return 'bg-purple-100 text-purple-900 border-purple-900';
       default:           return 'bg-surface-2 text-ink border-ink';
     }
   }

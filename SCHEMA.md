@@ -31,7 +31,7 @@ Key = Firebase Auth uid ของ user
 |---|---|---|---|
 | `username` | string | ✓ | unique, lowercase, [a-z0-9_]+ |
 | `display_name` | string | ✓ | ชื่อที่แสดง ("ฟลุ๊ค") |
-| `role` | `'seller' \| 'graphic' \| 'production' \| 'admin' \| 'finance'` | ✓ | mirror ของ custom claim. `finance` = ผู้ตรวจเงิน (F3): read-all (jobs/job_events/comments/users ทั้งหมดเหมือน admin) + adjustPayment; ไม่ทำ workflow/สร้างงาน/จัดการ user |
+| `role` | `'seller' \| 'graphic' \| 'production' \| 'admin' \| 'finance' \| 'stock'` | ✓ | mirror ของ custom claim. `finance` = ผู้ตรวจเงิน (F3): read-all (jobs/job_events/comments/users ทั้งหมดเหมือน admin) + adjustPayment; ไม่ทำ workflow/สร้างงาน/จัดการ user. `stock` = พนักงานสต๊อก (F17): อ่าน/เขียนเฉพาะ stock_* — ไม่เห็น jobs/เงิน (home redirect ไป /stock) |
 | `is_active` | boolean | ✓ | false = ล็อกล็อกอิน |
 | `created_at` | Timestamp | ✓ | serverTimestamp |
 | `created_by_uid` | string | ✓ | admin uid ที่สร้าง (หรือ `"system"` สำหรับ seed) |
@@ -214,6 +214,11 @@ type ActionEnum =
   | 'defect_record'      // F15 — บันทึกงานเสีย (production/graphic/admin + seller เจ้าของงาน)
   | 'defect_void'        // F15 — admin ยกเลิกงานเสียที่บันทึกผิด
   | 'receipt_regenerate'  // F14 — สุ่ม receipt_code ใหม่ (ลิงก์ใบเสร็จเก่าหลุด)
+  | 'stock_category_upsert' // F17 — เพิ่ม/แก้หมวดสต๊อก (สร้าง: stock/admin · แก้: admin)
+  | 'stock_item_upsert'     // F17 — เพิ่ม/แก้รายการสต๊อก (สร้าง: stock/admin · แก้: admin)
+  | 'stock_staff_upsert'    // F17 — เพิ่ม/แก้รายชื่อผู้รับของ (stock/admin)
+  | 'stock_doc_create'      // F17 — สร้างเอกสาร receive/issue (stock/admin) · adjust/opening (admin)
+  | 'stock_doc_void'        // F17 — void เอกสารสต๊อก (stock: ใบตัวเองวันเดียวกับที่คีย์ / admin: ทุกใบ)
   | 'payment_adjust'      // finance/admin แก้เงินหลังสร้าง (payload: before/after/reason)
   | 'comment_add'
   | 'comment_delete'
@@ -350,6 +355,38 @@ Index: `cash_sessions (seller_uid, date desc)` + `jobs (is_deleted, seller_uid, 
 | `created_at / updated_at` | Timestamp | ✓ | serverTimestamp |
 | `is_deleted / deleted_at` | boolean / Timestamp\|null | ✓ | soft delete |
 
+### `stock_*` (F17 — สต๊อกวัสดุอุปกรณ์ภายในร้าน)
+
+ดู docs/F17-STOCK-DESIGN.md — หลักการ: **สต๊อก = ledger ของ movement (append-only)**;
+เอกสารแก้ไม่ได้ มีแต่ void+สร้างใหม่; `on_hand` เป็น SERVER-COMPUTED ใน transaction เดียวกับเอกสาร
+อ่าน: `stock`/finance/admin (rules `canReadStock`); role อื่นไม่เห็น; เขียนผ่าน CF เท่านั้น
+
+**`stock_categories/{id}`** — id = slug(ชื่อ) — `name` · `sort_order` · `count_cadence: 'monthly'|'quarterly'`
+(ตรายาง = quarterly) + timestamps/soft-delete
+
+**`stock_items/{id}`** — `category_id` · `name` · `unit` (free text — ม้วน/แผ่น/รีม/แกลอน/...) ·
+`on_hand` (**SERVER**) · `min_qty: number|null` (เตือนใกล้หมด) · `last_unit_price: number|null`
+(อัปเดตจาก receive line ล่าสุดที่มีราคา) · `material_id: string|null` (เชื่อม F15 — อนาคตหักอัตโนมัติ) ·
+`is_active` + timestamps/soft-delete. Import 386 รายการจาก Excel: `scripts/import-stock-master.ts`
+
+**`stock_docs/{id}`** — ledger append-only. **กระดาษจริง = ใบรวมรายวัน** (ทั้งเบิกและรับ) →
+ผู้รับของ/ผู้ขาย/บิล อยู่**ต่อบรรทัด** และ item ซ้ำในใบได้ (คนละคนเบิกของเดียวกัน — server รวม
+delta ต่อ item ใน transaction):
+`type: 'opening'|'receive'|'issue'|'adjust'` · `doc_date` (วันที่หน้ากระดาษ — role stock ย้อนหลังได้
+≤7 วัน, admin ไม่จำกัด, ห้ามอนาคต) · `is_backdated` (**SERVER**) · `lines[]: {item_id,
+item_name(snapshot), unit(snapshot), qty, unit_price|null, recipient_name|null (บังคับต่อบรรทัดเมื่อ
+issue — ชื่อใหม่ auto-เพิ่มเข้า stock_staff), supplier|null, bill_no|null (optional ต่อบรรทัดเมื่อ receive)}`
+· doc-level `supplier`/`bill_no`/`recipient_name` = null เสมอ (คงไว้เพื่อ compat) · issue: `job_serial?`
+· adjust: `adjust_reason` (บังคับ) · `note` · `recorded_by_uid/name` · `status: 'active'|'voided'`
++ `voided_reason/by/at`. เบิกเกินคงเหลือ = failed-precondition (ledger ห้ามติดลบ — บังคับหา movement
+ตกหล่นก่อน); void = ทั้งใบ (ย้อนทุกบรรทัด); void ที่ทำให้ติดลบ = ให้ใช้ adjust แทน
+
+**`stock_staff/{id}`** — master รายชื่อผู้รับของ (พนักงานร้าน > app users): `name` · `is_active`
+
+Callables (F17): `createStockDoc` (stock/admin; adjust/opening = admin) · `voidStockDoc`
+(stock: ใบตัวเอง+วันเดียวกับที่คีย์ / admin) · `upsertStockItem`/`upsertStockCategory`
+(สร้าง: stock/admin · แก้: admin — กัน rename กลบร่องรอย) · `upsertStockStaff` (stock/admin)
+
 ### Collections ที่ **เลิกใช้**
 
 ลบทิ้งทั้งหมดจาก Firebase console ก่อนเริ่ม Phase 3:
@@ -393,7 +430,7 @@ Index: `cash_sessions (seller_uid, date desc)` + `jobs (is_deleted, seller_uid, 
 | `confirm_design` | ✓ ถ้า `seller_uid=self` AND `status='รอคอนเฟิร์มแบบ'` | — | — | ✓ | `รอคอนเฟิร์มแบบ` → `คอนเฟิร์มแล้ว` |
 | `request_revision` | ✓ ถ้า `seller_uid=self` AND `status='รอคอนเฟิร์มแบบ'` | — | — | ✓ | `รอคอนเฟิร์มแบบ` → `กำลังออกแบบ` |
 | `send_to_production` | — | ✓ ถ้า `design_uid=self` AND `status='คอนเฟิร์มแล้ว'` | — | ✓ | `คอนเฟิร์มแล้ว` → `รอผลิต` |
-| `claim_print` (F13 ต่อ task) | — | ✓ ถ้า task `eligible` มี `fuji` (งาน FUJI) | ✓ ถ้า task `eligible` มี non-FUJI | ✓ | task `รอผลิต` → `กำลังผลิต`; job = derived (`deriveProductionStatus`) |
+| `claim_print` (F13 ต่อ task) | — | ✓ ถ้า task `eligible` มี `fuji` (งาน FUJI) | ✓ ถ้า task `eligible` มี non-FUJI | ✓ | task `รอผลิต` → `กำลังผลิต`; job = derived (`deriveProductionStatus`). payload `machine` **บังคับ**เมื่อ role มีเครื่องให้เลือก >1 ใน eligible (เช่น `large_sticker`/`uv` — สติ๊กเกอร์ใหญ่ D2 vs สติกเกอร์ UV) |
 | `upload_print` (F13 ต่อ task) | — | ✓ ตรงเครื่อง (FUJI) | ✓ ตรงเครื่อง (non-FUJI) | ✓ | **คนแนบ ≠ คนผลิตได้** (แค่อยู่ทีมที่ทำเครื่องนั้น). ทุก task เสร็จ → job `รอส่งมอบ`. **F15:** รับ payload `production[]` (วัสดุ/ม้วน/ความยาว/จำนวน) → server คำนวณ `area_used/billed/waste_pct` + set `printed_by_uid`. ดู docs/F15-PRODUCTION-MATERIAL.md |
 | `edit_production` (F15) | — | ✓ item เครื่อง FUJI | ✓ item เครื่อง non-FUJI | ✓ ทุก item | — (ไม่เปลี่ยน status). แก้ได้เฉพาะ item ที่**มี** `production` แล้ว (สร้างครั้งแรกผ่าน `upload_print` เท่านั้น); ผ่าน callable `editProduction({job_id, production[], reason})` — `reason` บังคับ; server คำนวณ area/waste ใหม่ แต่**คง** `printed_by_uid`/`printed_at` เดิม; event `edit_production` เก็บ before/after ต่อ item |
 | `mark_delivered` | ✓ ถ้า `seller_uid=self` AND `status='รอส่งมอบ'` | — | — | ✓ | `รอส่งมอบ` → `ส่งมอบแล้ว`. **F9 (แทนที่ F4 เดิม):** ไม่ hard-gate การจ่ายแล้ว — ส่งมอบแบบค้างชำระได้ (เครดิต/ลูกหนี้/AR); settlement ปิดเมื่อ `paid_amount ≥ net_receivable`. `delivery_slips` = optional (แนบถ้ามี). ดู docs/F9-TAX-PAYMENT-DESIGN.md |

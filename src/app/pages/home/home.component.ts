@@ -54,6 +54,7 @@ const ROLE_DEFAULT_COLUMNS: Record<Role, readonly Status[]> = {
   production: ['รอผลิต', 'กำลังผลิต', 'รอส่งมอบ'],
   admin:      STATUS_ORDER,
   finance:    STATUS_ORDER,
+  stock:      [], // F17 — ไม่เห็น jobs (redirect ไป /stock ใน ngOnInit)
 };
 
 const MOBILE_TABS: Record<Role, { key: 'all' | Status; label: string }[]> = {
@@ -90,6 +91,7 @@ const MOBILE_TABS: Record<Role, { key: 'all' | Status; label: string }[]> = {
     { key: 'กำลังผลิต',    label: 'ผลิต' },
     { key: 'รอส่งมอบ',     label: 'ส่งมอบ' },
   ],
+  stock:      [{ key: 'all', label: 'ทั้งหมด' }], // F17 — ไม่ถูก render (redirect)
 };
 
 @Component({
@@ -156,6 +158,12 @@ export class HomeComponent implements OnInit, OnDestroy {
   ngOnInit() {
     const role = this.currentRole;
     const uid  = this.appState.uid() ?? '';
+
+    // F17 — role stock ไม่มีสิทธิ์อ่าน jobs (rules) → home ว่างเปล่า; ส่งไปหน้าสต๊อกเลย
+    if (role === 'stock') {
+      void this.router.navigate(['/naikit-sticker/stock'], { replaceUrl: true });
+      return;
+    }
 
     // Pre-set team chip for admin; non-admin have fixed column view
     if (role !== 'admin') {

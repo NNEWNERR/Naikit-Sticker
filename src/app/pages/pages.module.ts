@@ -12,6 +12,7 @@ import { UserComponent } from './setting/user/user.component';
 import { RateCardComponent } from './setting/rate-card/rate-card.component';
 import { MaterialComponent } from './setting/material/material.component';
 import { ReportComponent } from './report/report.component';
+import { StockComponent } from './stock/stock.component';
 import { DiarySummaryComponent } from './diary-summary/diary-summary.component';
 import { ShowImageComponent } from './show-image/show-image.component';
 import { WorkItemModalComponent } from './create-work-sheet/work-item-modal/work-item-modal.component';
@@ -44,6 +45,7 @@ import {
     LoginComponent,
     CreateWorkSheetComponent,
     ReportComponent,
+    StockComponent,
     DiarySummaryComponent,
     ShowImageComponent,
     WorkItemModalComponent,

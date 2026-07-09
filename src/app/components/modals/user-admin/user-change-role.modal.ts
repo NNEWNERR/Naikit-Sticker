@@ -89,6 +89,7 @@ export class UserChangeRoleModalComponent implements OnInit {
       production: 'ผลิต (production)',
       admin: 'แอดมิน (admin)',
       finance: 'การเงิน (finance)',
+      stock: 'สต๊อก (stock)',
     }[r];
   }
 

@@ -8,8 +8,9 @@ rules_version = '2';
 //     staff member. The old plain-text-password / custom-localStorage login is
 //     GONE (A1 landed) — there is no public `users` read hole anymore.
 //   * Role = custom claim `request.auth.token.role`
-//     ('seller' | 'graphic' | 'production' | 'admin' | 'finance').
+//     ('seller' | 'graphic' | 'production' | 'admin' | 'finance' | 'stock').
 //     finance = read-all (เหมือน admin) เพื่อตรวจเงิน — ดู docs/FINANCE-CONTROLS.md F3.
+//     stock = คนคุมสต๊อก (F17) — อ่านเฉพาะ stock_* (ไม่เห็น jobs/เงิน).
 //   * ALL writes go through Cloud Functions (Admin SDK), which bypass these
 //     rules. Therefore every collection here is `write: if false` for clients —
 //     create/update/delete are impossible from the browser. This guarantees
@@ -64,7 +65,7 @@ service cloud.firestore {
     // below; single-doc detail reads (watchJob) are checked the same way.
     match /jobs/{jobId} {
       // graphic เห็น: งานที่ตนออกแบบ/รับพิมพ์ + คิวออกแบบ + **คิวพิมพ์ FUJI** (machines มี 'fuji')
-      // production เห็น: งานที่ตนรับพิมพ์ + **คิวพิมพ์ที่ไม่ใช่ FUJI** (machines มี vinyl/large_sticker/cut_sticker/other)
+      // production เห็น: งานที่ตนรับพิมพ์ + **คิวพิมพ์ที่ไม่ใช่ FUJI** (machines มี vinyl/large_sticker/uv/cut_sticker/other)
       // machines = denormalized จาก work_items.type (ดู lib/machines.ts) — rules วน work_items ไม่ได้
       allow read: if isSignedIn() && (
         canReadAll() ||
@@ -78,7 +79,7 @@ service cloud.firestore {
         (role() == 'production'  && (resource.data.print_uid == request.auth.uid
                                     || (resource.data.status in ['คอนเฟิร์มแล้ว', 'รอผลิต', 'กำลังผลิต', 'รอส่งมอบ', 'ส่งมอบแล้ว']
                                         && 'machines' in resource.data
-                                        && resource.data.machines.hasAny(['vinyl', 'large_sticker', 'cut_sticker', 'other']))))
+                                        && resource.data.machines.hasAny(['vinyl', 'large_sticker', 'uv', 'cut_sticker', 'other']))))
       );
       allow write: if false; // all mutations via Cloud Functions
     }
@@ -148,6 +149,31 @@ service cloud.firestore {
     // (upsertMaterial, admin) เท่านั้น. ดู docs/F15-PRODUCTION-MATERIAL.md
     match /materials/{materialId} {
       allow read: if isSignedIn();
+      allow write: if false;
+    }
+
+    // ---- stock_* (F17 — สต๊อกวัสดุอุปกรณ์ภายในร้าน) -------------------------
+    // อ่าน: stock (คนคุมสต๊อก) + finance/admin (report/ตรวจ). role อื่นไม่เห็น.
+    // เขียนผ่าน Cloud Functions เท่านั้น (createStockDoc/voidStockDoc/upsertStock*)
+    // — stock_docs เป็น ledger append-only, on_hand ใน stock_items คำนวณโดย server.
+    // ดู docs/F17-STOCK-DESIGN.md
+    function canReadStock() {
+      return isSignedIn() && (role() == 'stock' || canReadAll());
+    }
+    match /stock_categories/{categoryId} {
+      allow read: if canReadStock();
+      allow write: if false;
+    }
+    match /stock_items/{itemId} {
+      allow read: if canReadStock();
+      allow write: if false;
+    }
+    match /stock_docs/{docId} {
+      allow read: if canReadStock();
+      allow write: if false;
+    }
+    match /stock_staff/{staffId} {
+      allow read: if canReadStock();
       allow write: if false;
     }
 

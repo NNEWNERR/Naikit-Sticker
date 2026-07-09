@@ -14,6 +14,7 @@ import { FinanceComponent } from './pages/finance/finance.component';
 import { CombinedPaymentComponent } from './pages/combined-payment/combined-payment.component';
 import { ProfileComponent } from './pages/profile/profile.component';
 import { ReceiptComponent } from './pages/receipt/receipt.component';
+import { StockComponent } from './pages/stock/stock.component';
 
 // RBAC per SCHEMA.md — home is open to every authenticated role
 // (component renders the queue relevant to that role).
@@ -63,6 +64,12 @@ export const routes: Routes = [
         path: 'combined-payment',
         component: CombinedPaymentComponent,
         canActivate: [roleGuard(['seller', 'finance', 'admin'])],
+      },
+      {
+        // F17 — สต๊อกวัสดุอุปกรณ์: stock/admin เขียน, finance ดู (ปุ่มถูกซ่อน + BE บังคับซ้ำ)
+        path: 'stock',
+        component: StockComponent,
+        canActivate: [roleGuard(['stock', 'admin', 'finance'])],
       },
       {
         path: 'profile',
