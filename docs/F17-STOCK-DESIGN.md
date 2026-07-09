@@ -1,8 +1,11 @@
 # F17 — ระบบสต๊อกวัสดุอุปกรณ์ภายในร้าน (Stock Management)
 
-> สถานะ: **Sprint 1 implemented 2026-07-08 (ยังไม่ deploy)** — BE callables + rules + import script +
-> FE หน้า /stock (คงเหลือ/ลงบันทึก/ประวัติ) + role `stock`. ค้าง: Sprint 2 (รอบนับ+report) / Sprint 3
-> (spot-check+print). design สรุปจาก grill session 2026-07-08
+> สถานะ: **Sprint 1 DEPLOYED prod 2026-07-09 · Sprint 2 implemented 2026-07-09 (รอ deploy)**
+> S1: BE callables + rules + import + FE /stock (คงเหลือ/ลงบันทึกใบรวมรายวัน/ประวัติ) + role `stock`
+> S2: รอบนับ (stock_counts: blind count → admin lock → gen adjust) + สุ่มตรวจ ~10 ตัว/สัปดาห์ +
+> รายงานรายเดือน (computeStockReport) + หน้าปริ้น /stock-print/:period
+> ค้าง Sprint 3: badge/แจ้งเตือนเพิ่มเติม + ธงแดง diff ซ้ำ ≥2 เดือน + export ประวัติ
+> design สรุปจาก grill session 2026-07-08
 > เป้าหมายหลัก: **กันของหาย/รั่วไหล** (audit-grade) · รอง: รู้มูลค่า + เตือนของใกล้หมด
 > อ้างอิงข้อมูลจริง: `D:\นิว 30-4-69\สต๊อก\สต๊อก มกราคม 69.xlsx` (~386 items / 16 หมวด / สมุดใหม่ทุกเดือน + ชีทรายวัน 31 ชีท — หยุดทำไปตั้งแต่ ก.พ. 69)
 

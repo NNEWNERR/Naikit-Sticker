@@ -21,6 +21,17 @@
             class="px-3 py-1.5 rounded font-bold text-body-sm cursor-pointer border-2"
             [class.bg-brand]="tab === 'entry'" [class.border-ink]="tab === 'entry'"
             [class.border-transparent]="tab !== 'entry'">ลงบันทึก</button>
+    <button type="button" *ngIf="canWrite" (click)="setTab('count')"
+            class="px-3 py-1.5 rounded font-bold text-body-sm cursor-pointer border-2"
+            [class.bg-brand]="tab === 'count'" [class.border-ink]="tab === 'count'"
+            [class.border-transparent]="tab !== 'count'">นับสต๊อก
+      <span *ngIf="pendingCounts().length > 0"
+            class="ml-1 px-1.5 text-[11px] bg-red-100 text-red-900 border border-red-900 rounded-full">{{ pendingCounts().length }}</span>
+    </button>
+    <button type="button" (click)="setTab('report')"
+            class="px-3 py-1.5 rounded font-bold text-body-sm cursor-pointer border-2"
+            [class.bg-brand]="tab === 'report'" [class.border-ink]="tab === 'report'"
+            [class.border-transparent]="tab !== 'report'">รายงาน</button>
     <button type="button" (click)="setTab('history')"
             class="px-3 py-1.5 rounded font-bold text-body-sm cursor-pointer border-2"
             [class.bg-brand]="tab === 'history'" [class.border-ink]="tab === 'history'"
@@ -232,6 +243,174 @@
         </button>
       </div>
     </div>
+  </ng-container>
+
+  <!-- ═══════════ แท็บ: นับสต๊อก (S2) ═══════════ -->
+  <ng-container *ngIf="tab === 'count' && canWrite">
+
+    <!-- รอบนับที่รอแอดมิน -->
+    <div *ngIf="pendingCounts().length > 0" class="flex flex-col gap-1.5">
+      <h4 class="text-h4 m-0">รอบนับที่รอตรวจ ({{ pendingCounts().length }})</h4>
+      <div *ngFor="let c of pendingCounts()" class="p-2.5 border-2 border-amber-900 rounded bg-amber-50 flex flex-col gap-1">
+        <div class="flex items-center gap-2 flex-wrap">
+          <span class="px-2 py-0.5 text-[11px] font-bold border-2 border-ink rounded bg-surface-2">
+            {{ c.type === 'full' ? 'นับเต็ม' : 'สุ่มตรวจ' }}</span>
+          <span class="font-num text-body-sm font-bold">{{ countDateStr(c) }}</span>
+          <span class="text-[12px] text-ink-3">นับโดย {{ c.counted_by_name }} · {{ c.lines.length }} รายการ</span>
+          <span class="text-[12px] font-bold" [class.text-red-700]="countDiffs(c) > 0" [class.text-green-700]="countDiffs(c) === 0">
+            {{ countDiffs(c) > 0 ? 'ไม่ตรง ' + countDiffs(c) + ' รายการ' : 'ตรงทั้งหมด ✓' }}</span>
+          <ng-container *ngIf="isAdmin">
+            <button type="button" (click)="lockCount(c)" [disabled]="lockingId !== null"
+                    class="ml-auto px-3 py-1 text-[12px] border-2 border-ink rounded bg-brand font-bold cursor-pointer disabled:opacity-50">
+              {{ lockingId === c.id ? 'กำลังล็อก…' : 'ล็อก + สร้างใบปรับ' }}</button>
+            <button type="button" (click)="discardCount(c)" [disabled]="lockingId !== null"
+                    class="px-3 py-1 text-[12px] border-2 border-ink rounded bg-surface-3 font-bold cursor-pointer disabled:opacity-50">ทิ้ง</button>
+          </ng-container>
+        </div>
+        <!-- แถวที่ไม่ตรง (โชว์เฉพาะ diff) -->
+        <ul *ngIf="countDiffs(c) > 0" class="text-[12px] m-0 pl-4">
+          <li *ngFor="let l of c.lines">
+            <ng-container *ngIf="l.diff !== 0">
+              {{ l.item_name }} — นับได้ {{ l.counted_qty }} / ระบบ {{ l.ledger_qty }} {{ l.unit }}
+              <b [class.text-red-700]="l.diff < 0" [class.text-green-700]="l.diff > 0">({{ l.diff > 0 ? '+' : '' }}{{ l.diff }})</b>
+            </ng-container>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- เริ่มรอบนับใหม่ -->
+    <div *ngIf="!countMode" class="border-2 border-ink rounded-lg p-4 bg-surface-2 shadow-brutal flex flex-col gap-3">
+      <h4 class="text-h4 m-0">เริ่มรอบนับใหม่</h4>
+      <p class="text-[12px] text-ink-3 m-0">นับเต็ม: เดือนละครั้งต่อหมวด (ตรายางทุก 3 เดือน) · สุ่มตรวจ: ~10 รายการ/สัปดาห์ ระบบเลือกให้</p>
+      <div class="flex flex-wrap gap-2">
+        <label *ngFor="let c of categories()" class="flex items-center gap-1.5 px-2 py-1.5 border-2 border-ink rounded bg-white text-[12px] font-semibold cursor-pointer"
+               [class.bg-amber-100]="countScope.includes(c.id)">
+          <input type="checkbox" [checked]="countScope.includes(c.id)" (change)="toggleScope(c.id)" class="w-4 h-4" />
+          {{ c.name }}<span *ngIf="c.count_cadence === 'quarterly'" class="text-ink-3 font-normal">·3ด</span>
+        </label>
+      </div>
+      <p *ngIf="countErr" class="text-body-sm text-red-700 font-semibold m-0">{{ countErr }}</p>
+      <div class="flex gap-2 flex-wrap">
+        <button type="button" (click)="startFullCount()"
+                class="px-3 py-2 bg-brand border-2 border-ink rounded font-bold cursor-pointer">เริ่มนับเต็ม (หมวดที่เลือก)</button>
+        <button type="button" (click)="startSpotCount()"
+                class="px-3 py-2 bg-surface-3 border-2 border-ink rounded font-bold cursor-pointer">🎲 สุ่มตรวจ ~10 รายการ</button>
+      </div>
+    </div>
+
+    <!-- ฟอร์มนับ (blind — ไม่โชว์ยอดระบบ) -->
+    <div *ngIf="countMode" class="border-2 border-ink rounded-lg p-4 bg-surface-2 shadow-brutal flex flex-col gap-3">
+      <div class="flex items-center justify-between flex-wrap gap-2">
+        <h4 class="text-h4 m-0">{{ countMode === 'full' ? 'นับเต็ม' : 'สุ่มตรวจ' }} — {{ countLines.length }} รายการ</h4>
+        <button type="button" (click)="cancelCount()" class="px-2 py-1 text-[12px] border-2 border-ink rounded bg-surface-3 font-bold cursor-pointer">ยกเลิก</button>
+      </div>
+      <p class="text-[12px] text-ink-3 m-0">เดินนับของจริงแล้วกรอกตามที่เห็น — ระบบตั้งใจ<b>ไม่โชว์ยอดคงเหลือ</b>ระหว่างนับ (กันนับตามตัวเลข) · ไม่มีของ = 0</p>
+      <div class="flex flex-col gap-1">
+        <div *ngFor="let l of countLines" class="flex items-center gap-2 p-1.5 border-2 border-ink rounded bg-white">
+          <span class="text-body-sm font-semibold flex-1 min-w-0">{{ l.item.name }}
+            <span class="text-[11px] text-ink-3">· {{ catName(l.item.category_id) }}</span></span>
+          <input type="number" min="0" [(ngModel)]="l.counted" class="input-base focus-ring w-24 font-num" placeholder="นับได้" />
+          <span class="text-[12px] text-ink-3 w-12">{{ l.item.unit }}</span>
+        </div>
+      </div>
+      <label class="flex flex-col gap-1 text-body-sm">หมายเหตุ (ไม่บังคับ)
+        <input type="text" [(ngModel)]="countNote" class="input-base focus-ring w-full" />
+      </label>
+      <label class="flex items-center gap-2 text-body-sm font-semibold">
+        <input type="checkbox" [(ngModel)]="paperConfirmed" class="w-5 h-5" />
+        ยืนยันว่ากระดาษเบิก/รับของก่อนหน้า <u>ลงระบบครบแล้ว</u> (กันส่วนต่างปลอมจากใบที่ยังไม่ได้คีย์)
+      </label>
+      <p *ngIf="countErr" class="text-body-sm text-red-700 font-semibold m-0">{{ countErr }}</p>
+      <button type="button" (click)="submitCount()" [disabled]="countSaving"
+              class="ml-auto px-4 py-2 bg-brand border-2 border-ink rounded font-bold cursor-pointer disabled:opacity-50 shadow-brutal">
+        {{ countSaving ? 'กำลังส่ง…' : 'ส่งผลนับ' }}</button>
+    </div>
+
+    <!-- รอบนับล่าสุดที่จบแล้ว -->
+    <div *ngIf="recentDoneCounts().length > 0" class="flex flex-col gap-1">
+      <h4 class="text-h4 m-0">รอบนับล่าสุด</h4>
+      <div *ngFor="let c of recentDoneCounts()" class="flex items-center gap-2 p-2 border-2 border-ink rounded bg-surface-2 text-[12px] flex-wrap"
+           [class.opacity-60]="c.status === 'discarded'">
+        <span class="font-bold">{{ c.type === 'full' ? 'นับเต็ม' : 'สุ่มตรวจ' }}</span>
+        <span class="font-num">{{ countDateStr(c) }}</span>
+        <span class="text-ink-3">{{ c.counted_by_name }} · {{ c.lines.length }} รายการ · ไม่ตรง {{ countDiffs(c) }}</span>
+        <span class="px-1.5 py-0.5 border rounded font-bold"
+              [class.bg-green-100]="c.status === 'locked'" [class.text-green-900]="c.status === 'locked'"
+              [class.bg-surface-3]="c.status === 'discarded'">
+          {{ c.status === 'locked' ? 'ล็อกแล้ว' : 'ทิ้งแล้ว' }}</span>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- ═══════════ แท็บ: รายงาน (S2) ═══════════ -->
+  <ng-container *ngIf="tab === 'report'">
+    <div class="flex items-end gap-2 flex-wrap">
+      <label class="flex flex-col gap-1 text-body-sm">เดือน
+        <input type="month" [(ngModel)]="reportMonth" class="input-base focus-ring font-num" />
+      </label>
+      <button type="button" (click)="loadReport()" [disabled]="reportLoading"
+              class="px-3 py-2 bg-brand border-2 border-ink rounded font-bold cursor-pointer disabled:opacity-50">
+        {{ reportLoading ? 'กำลังคำนวณ…' : 'คำนวณรายงาน' }}</button>
+      <button type="button" *ngIf="report" (click)="openPrint()"
+              class="px-3 py-2 bg-surface-2 border-2 border-ink rounded font-bold cursor-pointer">🖨 หน้าปริ้น (PDF)</button>
+    </div>
+    <p *ngIf="reportErr" class="text-body-sm text-red-700 font-semibold m-0">{{ reportErr }}</p>
+
+    <ng-container *ngIf="report">
+      <div *ngIf="!report.meta.full_count_locked"
+           class="p-2.5 border-2 border-amber-900 rounded bg-amber-50 text-body-sm font-semibold">
+        ⚠ เดือนนี้ยังไม่มีรอบนับเต็มที่ล็อก — ตัวเลขคงเหลือยังไม่ได้ยืนยันกับของจริง (สุ่มตรวจล็อกแล้ว {{ report.meta.spot_counts_locked }} ครั้ง)
+      </div>
+
+      <!-- รายการที่ต้องดู -->
+      <div *ngIf="reportWatchRows.length > 0" class="p-2.5 border-2 border-red-900 rounded bg-red-50 flex flex-col gap-1">
+        <span class="font-bold text-body-sm">รายการที่ต้องดู ({{ reportWatchRows.length }})</span>
+        <ul class="text-[12px] m-0 pl-4">
+          <li *ngFor="let r of reportWatchRows">
+            {{ r.name }} —
+            <ng-container *ngIf="r.adjusted !== 0">ส่วนต่างนับจริง <b [class.text-red-700]="r.adjusted < 0">{{ r.adjusted > 0 ? '+' : '' }}{{ r.adjusted }} {{ r.unit }}</b></ng-container>
+            <ng-container *ngIf="r.min_qty !== null && r.closing < r.min_qty"> · ต่ำกว่าจุดสั่งซื้อ (เหลือ {{ r.closing }}/min {{ r.min_qty }})</ng-container>
+          </li>
+        </ul>
+      </div>
+
+      <!-- ตารางรายวัสดุต่อหมวด -->
+      <div *ngFor="let g of reportGroups" class="flex flex-col gap-1">
+        <h4 class="text-h4 m-0 flex items-baseline gap-2">{{ g.cat.name }}
+          <span class="text-[12px] text-ink-3 font-normal">มูลค่าคงเหลือ ฿{{ g.totalValue | number:'1.0-2' }}</span></h4>
+        <div class="overflow-x-auto">
+          <table class="w-full text-[12px] border-collapse">
+            <thead>
+              <tr class="bg-surface-3">
+                <th class="border-2 border-ink px-2 py-1 text-left">รายการ</th>
+                <th class="border-2 border-ink px-2 py-1">หน่วย</th>
+                <th class="border-2 border-ink px-2 py-1">ยกมา</th>
+                <th class="border-2 border-ink px-2 py-1">รับเข้า</th>
+                <th class="border-2 border-ink px-2 py-1">ใช้ไป</th>
+                <th class="border-2 border-ink px-2 py-1">ส่วนต่างนับจริง</th>
+                <th class="border-2 border-ink px-2 py-1">คงเหลือ</th>
+                <th class="border-2 border-ink px-2 py-1">มูลค่า (฿)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let r of g.rows" [class.opacity-50]="!r.is_active">
+                <td class="border border-line px-2 py-0.5">{{ r.name }}</td>
+                <td class="border border-line px-2 py-0.5 text-center">{{ r.unit }}</td>
+                <td class="border border-line px-2 py-0.5 text-right font-num">{{ r.opening }}</td>
+                <td class="border border-line px-2 py-0.5 text-right font-num">{{ r.received || '' }}</td>
+                <td class="border border-line px-2 py-0.5 text-right font-num">{{ r.issued || '' }}</td>
+                <td class="border border-line px-2 py-0.5 text-right font-num font-bold"
+                    [class.text-red-700]="r.adjusted < 0" [class.text-green-700]="r.adjusted > 0">
+                  {{ r.adjusted !== 0 ? (r.adjusted > 0 ? '+' : '') + r.adjusted : '' }}</td>
+                <td class="border border-line px-2 py-0.5 text-right font-num font-bold">{{ r.closing }}</td>
+                <td class="border border-line px-2 py-0.5 text-right font-num">{{ r.closing_value !== null ? (r.closing_value | number:'1.0-2') : '—' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </ng-container>
   </ng-container>
 
   <!-- ═══════════ แท็บ: ประวัติ ═══════════ -->

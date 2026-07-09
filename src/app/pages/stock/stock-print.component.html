@@ -1,0 +1,76 @@
+<div class="max-w-4xl mx-auto p-6 bg-white text-ink text-[13px]">
+
+  <!-- ปุ่มเครื่องมือ — ซ่อนตอนพิมพ์ -->
+  <div class="flex items-center justify-between mb-4 print:hidden">
+    <span class="text-body-sm text-ink-3">ตรวจหน้ากระดาษแล้วกดพิมพ์ → เลือก "Save as PDF" ได้</span>
+    <button type="button" (click)="print()"
+            class="px-4 py-2 bg-brand border-2 border-ink rounded font-bold cursor-pointer shadow-brutal">🖨 พิมพ์</button>
+  </div>
+
+  <p *ngIf="loading" class="text-body-sm text-ink-3">กำลังคำนวณรายงาน…</p>
+  <p *ngIf="error" class="text-body-sm text-red-700 font-semibold">{{ error }}</p>
+
+  <ng-container *ngIf="report && !loading">
+    <!-- หัวรายงาน -->
+    <div class="text-center mb-3">
+      <h1 class="text-lg font-bold m-0">รายงานสต๊อกวัสดุอุปกรณ์ — ประจำเดือน {{ periodLabel }}</h1>
+      <p class="m-0 text-ink-3 text-[11px]">
+        ออกรายงาน {{ generatedAt.toLocaleString('th-TH') }} · มูลค่าคงเหลือรวม ฿{{ grandTotalValue | number:'1.0-2' }}
+        · รอบนับเต็ม: {{ report.meta.full_count_locked ? 'ล็อกแล้ว ✓' : 'ยังไม่ได้นับ ⚠' }}
+        · สุ่มตรวจ {{ report.meta.spot_counts_locked }} ครั้ง
+      </p>
+    </div>
+
+    <div *ngIf="!report.meta.full_count_locked"
+         class="border-2 border-amber-700 rounded p-2 mb-3 font-semibold text-[12px]">
+      ⚠ เดือนนี้ยังไม่มีรอบนับเต็มที่ล็อก — ตัวเลข "คงเหลือ" ยังไม่ได้ยืนยันกับของจริง
+    </div>
+
+    <!-- รายการที่ต้องดู -->
+    <div *ngIf="watchRows.length > 0" class="border-2 border-ink rounded p-2 mb-4">
+      <b class="text-[12px]">รายการที่ต้องดู ({{ watchRows.length }})</b>
+      <ul class="m-0 pl-5 text-[11px]">
+        <li *ngFor="let r of watchRows">
+          {{ r.name }}<ng-container *ngIf="r.adjusted !== 0"> — ส่วนต่างนับจริง <b>{{ r.adjusted > 0 ? '+' : '' }}{{ r.adjusted }} {{ r.unit }}</b></ng-container><ng-container *ngIf="r.min_qty !== null && r.closing < r.min_qty"> — ต่ำกว่าจุดสั่งซื้อ (เหลือ {{ r.closing }} / min {{ r.min_qty }})</ng-container>
+        </li>
+      </ul>
+    </div>
+
+    <!-- ตารางต่อหมวด -->
+    <div *ngFor="let g of groups" class="mb-4 [break-inside:auto]">
+      <h2 class="font-bold m-0 mb-1 text-[14px]">หมวด {{ g.name }}
+        <span class="font-normal text-ink-3 text-[11px]">— มูลค่าคงเหลือ ฿{{ g.totalValue | number:'1.0-2' }}</span></h2>
+      <table class="w-full border-collapse text-[11px]">
+        <thead>
+          <tr>
+            <th class="border border-ink px-1 py-0.5 text-left w-[34%]">รายการ</th>
+            <th class="border border-ink px-1 py-0.5">หน่วย</th>
+            <th class="border border-ink px-1 py-0.5">ยกมา</th>
+            <th class="border border-ink px-1 py-0.5">รับเข้า</th>
+            <th class="border border-ink px-1 py-0.5">ใช้ไป</th>
+            <th class="border border-ink px-1 py-0.5">ส่วนต่างนับจริง</th>
+            <th class="border border-ink px-1 py-0.5">คงเหลือ</th>
+            <th class="border border-ink px-1 py-0.5">มูลค่า (฿)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let r of g.rows">
+            <td class="border border-ink px-1 py-0.5">{{ r.name }}</td>
+            <td class="border border-ink px-1 py-0.5 text-center">{{ r.unit }}</td>
+            <td class="border border-ink px-1 py-0.5 text-right">{{ r.opening }}</td>
+            <td class="border border-ink px-1 py-0.5 text-right">{{ r.received || '' }}</td>
+            <td class="border border-ink px-1 py-0.5 text-right">{{ r.issued || '' }}</td>
+            <td class="border border-ink px-1 py-0.5 text-right font-bold">{{ r.adjusted !== 0 ? (r.adjusted > 0 ? '+' : '') + r.adjusted : '' }}</td>
+            <td class="border border-ink px-1 py-0.5 text-right font-bold">{{ r.closing }}</td>
+            <td class="border border-ink px-1 py-0.5 text-right">{{ r.closing_value !== null ? (r.closing_value | number:'1.0-2') : '—' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="text-ink-3 mt-4 text-[10px]">
+      สูตรทุกแถว: ยกมา + รับเข้า − ใช้ไป ± ส่วนต่างนับจริง = คงเหลือ (ระบบคำนวณจาก ledger) ·
+      มูลค่าคิดจากราคาซื้อล่าสุดต่อหน่วย · รายการไม่มีราคา = "—" · F17 Naikit Sticker
+    </p>
+  </ng-container>
+</div>

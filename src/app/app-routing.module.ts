@@ -15,6 +15,7 @@ import { CombinedPaymentComponent } from './pages/combined-payment/combined-paym
 import { ProfileComponent } from './pages/profile/profile.component';
 import { ReceiptComponent } from './pages/receipt/receipt.component';
 import { StockComponent } from './pages/stock/stock.component';
+import { StockPrintComponent } from './pages/stock/stock-print.component';
 
 // RBAC per SCHEMA.md — home is open to every authenticated role
 // (component renders the queue relevant to that role).
@@ -77,6 +78,12 @@ export const routes: Routes = [
         // ทุก role ที่ล็อกอิน (authGuard จาก parent) — โปรไฟล์ตัวเอง ไม่ต้อง roleGuard
       },
     ],
+  },
+  {
+    // F17 S2 — หน้าปริ้นรายงานสต๊อก (นอก MainLayout — หน้าสะอาดสำหรับ print → PDF)
+    path: 'naikit-sticker/stock-print/:period',
+    component: StockPrintComponent,
+    canActivate: [authGuard, roleGuard(['stock', 'admin', 'finance'])],
   },
   {
     path: 'login',

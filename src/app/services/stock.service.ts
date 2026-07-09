@@ -13,9 +13,12 @@ import { db, functions } from './firebase-config';
 import {
   CreateStockDocInput,
   StockCategory,
+  StockCount,
   StockDocument,
   StockItem,
+  StockReport,
   StockStaff,
+  SubmitStockCountInput,
   UpsertStockCategoryInput,
   UpsertStockItemInput,
 } from '../core/models/stock';
@@ -37,11 +40,13 @@ export class StockService implements OnDestroy {
   private readonly _items = signal<StockItem[]>([]);
   private readonly _staff = signal<StockStaff[]>([]);
   private readonly _docs = signal<StockDocument[]>([]);
+  private readonly _counts = signal<StockCount[]>([]);
   private readonly _loading = signal<boolean>(false);
   readonly categories = this._categories.asReadonly();
   readonly items = this._items.asReadonly();
   readonly staff = this._staff.asReadonly();
   readonly docs = this._docs.asReadonly();
+  readonly counts = this._counts.asReadonly();
   readonly loading = this._loading.asReadonly();
 
   private unsubs: Unsubscribe[] = [];
@@ -139,6 +144,16 @@ export class StockService implements OnDestroy {
       },
       err('docs'),
     ));
+
+    this.unsubs.push(onSnapshot(
+      query(collection(db, 'stock_counts'), orderBy('submitted_at', 'desc'), limit(50)),
+      (snap) => {
+        const list: StockCount[] = [];
+        snap.forEach((d) => list.push({ id: d.id, ...(d.data() as Omit<StockCount, 'id'>) }));
+        this._counts.set(list);
+      },
+      err('counts'),
+    ));
   }
 
   private stopListeners(): void {
@@ -166,6 +181,24 @@ export class StockService implements OnDestroy {
 
   async upsertStaff(input: { staff_id?: string; name: string; is_active?: boolean }): Promise<{ id: string }> {
     return this.call('upsertStockStaff', input);
+  }
+
+  // ── Sprint 2: รอบนับ + รายงาน ──
+
+  async submitCount(input: SubmitStockCountInput): Promise<{ id: string }> {
+    return this.call('submitStockCount', input);
+  }
+
+  async lockCount(count_id: string): Promise<{ id: string; adjust_doc_id: string | null; adjust_line_count: number }> {
+    return this.call('lockStockCount', { count_id });
+  }
+
+  async discardCount(count_id: string, reason?: string): Promise<{ id: string }> {
+    return this.call('discardStockCount', { count_id, ...(reason ? { reason } : {}) });
+  }
+
+  async computeReport(period: string): Promise<StockReport> {
+    return this.call('computeStockReport', { period });
   }
 
   private async call<Req, Res>(name: string, data: Req): Promise<Res> {

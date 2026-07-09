@@ -118,3 +118,64 @@ export interface UpsertStockCategoryInput {
   sort_order?: number;
   count_cadence?: 'monthly' | 'quarterly';
 }
+
+// ── F17 Sprint 2 — รอบนับจริง + รายงานเดือน ──
+
+export interface StockCountLine {
+  item_id: string;
+  item_name: string;
+  unit: string;
+  counted_qty: number;
+  ledger_qty: number;
+  diff: number;
+}
+
+export interface StockCount {
+  id: string;
+  type: 'full' | 'spot';
+  scope_category_ids: string[];
+  status: 'submitted' | 'locked' | 'discarded';
+  paper_confirmed: boolean;
+  lines: StockCountLine[];
+  note: string;
+  counted_by_uid: string;
+  counted_by_name: string;
+  submitted_at: Timestamp;
+  locked_by_uid: string | null;
+  locked_at: Timestamp | null;
+  adjust_doc_id: string | null;
+}
+
+export interface SubmitStockCountInput {
+  type: 'full' | 'spot';
+  scope_category_ids: string[];
+  paper_confirmed: boolean;
+  lines: { item_id: string; counted_qty: number }[];
+  note?: string;
+}
+
+export interface StockReportRow {
+  item_id: string;
+  category_id: string;
+  name: string;
+  unit: string;
+  opening: number;
+  received: number;
+  issued: number;
+  adjusted: number;   // ± ส่วนต่างนับจริง
+  closing: number;
+  last_unit_price: number | null;
+  closing_value: number | null;
+  min_qty: number | null;
+  is_active: boolean;
+}
+
+export interface StockReport {
+  period: string; // YYYYMM
+  rows: StockReportRow[];
+  meta: {
+    full_count_locked: boolean;
+    spot_counts_locked: number;
+    generated_at: number;
+  };
+}

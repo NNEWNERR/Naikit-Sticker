@@ -176,6 +176,10 @@ service cloud.firestore {
       allow read: if canReadStock();
       allow write: if false;
     }
+    match /stock_counts/{countId} {
+      allow read: if canReadStock();
+      allow write: if false;
+    }
 
     // ---- defects (F15 — งานเสีย) ------------------------------------------
     // อ่าน: finance/admin ทั้งหมด + production เฉพาะที่ตัวเองบันทึก; เขียนผ่าน CF

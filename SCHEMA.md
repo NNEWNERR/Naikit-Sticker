@@ -383,9 +383,21 @@ issue — ชื่อใหม่ auto-เพิ่มเข้า stock_staff)
 
 **`stock_staff/{id}`** — master รายชื่อผู้รับของ (พนักงานร้าน > app users): `name` · `is_active`
 
+**`stock_counts/{id}`** (S2) — รอบนับจริง: `type: 'full'|'spot'` · `scope_category_ids[]` ·
+`status: 'submitted'|'locked'|'discarded'` · `paper_confirmed` (บังคับ true — ยืนยันกระดาษลงครบก่อนนับ) ·
+`lines[]: {item_id, item_name, unit, counted_qty, ledger_qty(snapshot ตอน submit), diff}` ·
+`counted_by_uid/name` · `submitted_at` · `locked_by_uid/at` · `adjust_doc_id`. FE นับแบบ blind
+(ไม่โชว์ยอด ledger ระหว่างนับ). lock (admin) = สร้างเอกสาร adjust อัตโนมัติ โดย delta คำนวณ**สด**
+(counted − on_hand ปัจจุบัน — กัน drift ระหว่างรอ lock) แล้ว set on_hand = counted
+
 Callables (F17): `createStockDoc` (stock/admin; adjust/opening = admin) · `voidStockDoc`
 (stock: ใบตัวเอง+วันเดียวกับที่คีย์ / admin) · `upsertStockItem`/`upsertStockCategory`
-(สร้าง: stock/admin · แก้: admin — กัน rename กลบร่องรอย) · `upsertStockStaff` (stock/admin)
+(สร้าง: stock/admin · แก้: admin — กัน rename กลบร่องรอย) · `upsertStockStaff` (stock/admin) ·
+**S2:** `submitStockCount` (stock/admin) · `lockStockCount` (admin) · `discardStockCount`
+(admin/ผู้นับเอง) · `computeStockReport({period:'YYYYMM'})` (stock/finance/admin) — รายงานรายเดือน
+ต่อรายการ ยกมา/รับ/ใช้/ส่วนต่างนับจริง/คงเหลือ/มูลค่า (invariant: ยกมา+รับ−ใช้±ปรับ=คงเหลือ;
+closing derive จาก on_hand ปัจจุบัน rollback เอกสารหลังสิ้นเดือน; มูลค่า = last_unit_price ปัจจุบัน)
+· หน้าปริ้น `/naikit-sticker/stock-print/:period` (print → PDF)
 
 ### Collections ที่ **เลิกใช้**
 
