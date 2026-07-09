@@ -1,6 +1,6 @@
 # F17 — ระบบสต๊อกวัสดุอุปกรณ์ภายในร้าน (Stock Management)
 
-> สถานะ: **Sprint 1 DEPLOYED prod 2026-07-09 · Sprint 2 implemented 2026-07-09 (รอ deploy)**
+> สถานะ: **Sprint 1 + Sprint 2 DEPLOYED prod 2026-07-09**
 > S1: BE callables + rules + import + FE /stock (คงเหลือ/ลงบันทึกใบรวมรายวัน/ประวัติ) + role `stock`
 > S2: รอบนับ (stock_counts: blind count → admin lock → gen adjust) + สุ่มตรวจ ~10 ตัว/สัปดาห์ +
 > รายงานรายเดือน (computeStockReport) + หน้าปริ้น /stock-print/:period
