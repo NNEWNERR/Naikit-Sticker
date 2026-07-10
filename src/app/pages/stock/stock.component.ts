@@ -1,4 +1,5 @@
-import { Component, OnDestroy, OnInit, computed, signal } from '@angular/core';
+import { Component, ElementRef, HostListener, OnDestroy, OnInit, QueryList, ViewChild, ViewChildren, computed, effect, signal } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Timestamp } from 'firebase/firestore';
 import { AppStateService } from 'src/app/services/app-state.service';
 import { ServiceService } from 'src/app/services/service.service';
@@ -52,7 +53,12 @@ export class StockComponent implements OnInit, OnDestroy {
   readonly backdateLimit = STOCK_BACKDATE_LIMIT_DAYS;
 
   tab: Tab = 'onhand';
+  private static readonly TABS: Tab[] = ['onhand', 'entry', 'count', 'report', 'history'];
   private detach: (() => void) | null = null;
+
+  @ViewChild('entrySearch') private entrySearchRef?: ElementRef<HTMLInputElement>;
+  @ViewChildren('qtyInput') private qtyInputs?: QueryList<ElementRef<HTMLInputElement>>;
+  @ViewChildren('countInput') private countInputs?: QueryList<ElementRef<HTMLInputElement>>;
 
   readonly categories = this.stock.categories;
   readonly items = this.stock.items;
@@ -70,18 +76,54 @@ export class StockComponent implements OnInit, OnDestroy {
   searchTerm = signal('');
   /** หมวดที่เลือกดู ('' = ทุกหมวด) */
   filterCat = signal('');
+  /** แสดงเฉพาะของใกล้หมด (toggle จาก badge บนหัวหน้า) */
+  lowOnly = signal(false);
+  /** หมวดที่กางอยู่ — default พับหมด (386 รายการ/16 หมวด ไม่ควรเป็นม้วนเดียว) */
+  private expandedCats = new Set<string>();
+
+  /** ค้นหาหลายคำ — แยกด้วยช่องว่าง ทุกคำต้องเจอ (เช่น "ไวนิล 1.62" เจอ "ไวนิลหลังขาว ขนาด 1.62*50") */
+  private matchTokens(hay: string, q: string): boolean {
+    const h = hay.toLowerCase();
+    return q.toLowerCase().split(/\s+/).filter(Boolean).every((t) => h.includes(t));
+  }
 
   readonly filteredGroups = computed(() => {
-    const q = this.searchTerm().trim().toLowerCase();
+    const q = this.searchTerm().trim();
     const cat = this.filterCat();
+    const low = this.lowOnly();
     const items = this.items().filter((i) =>
       (!cat || i.category_id === cat) &&
-      (!q || i.name.toLowerCase().includes(q)),
+      (!low || this.isLow(i)) &&
+      (!q || this.matchTokens(i.name, q)),
     );
     return this.categories()
       .map((c) => ({ cat: c, items: items.filter((i) => i.category_id === c.id) }))
       .filter((g) => g.items.length > 0);
   });
+
+  /** มีตัวกรอง/คำค้นอยู่ → กางทุกหมวดอัตโนมัติ (ผลลัพธ์ถูกกรองจนสั้นแล้ว) */
+  get hasActiveFilter(): boolean {
+    return !!this.searchTerm().trim() || !!this.filterCat() || this.lowOnly();
+  }
+
+  isExpanded(catId: string): boolean {
+    return this.hasActiveFilter || this.expandedCats.has(catId);
+  }
+
+  toggleCat(catId: string): void {
+    if (this.hasActiveFilter) return;
+    if (this.expandedCats.has(catId)) this.expandedCats.delete(catId);
+    else this.expandedCats.add(catId);
+  }
+
+  lowInGroup(g: { items: StockItem[] }): number {
+    return g.items.filter((i) => i.is_active && this.isLow(i)).length;
+  }
+
+  toggleLowOnly(): void {
+    this.lowOnly.set(!this.lowOnly());
+    if (this.lowOnly() && this.tab !== 'onhand') this.setTab('onhand');
+  }
 
   readonly lowStockCount = computed(() =>
     this.items().filter((i) => i.is_active && i.min_qty !== null && i.on_hand < i.min_qty).length,
@@ -170,14 +212,26 @@ export class StockComponent implements OnInit, OnDestroy {
 
   /** ผลค้นหา item สำหรับเพิ่มบรรทัด — item ซ้ำในใบได้ (ใบรวมรายวัน คนละคนเบิกของเดียวกัน) */
   get itemSuggestions(): StockItem[] {
-    const q = this.itemQuery.trim().toLowerCase();
+    const q = this.itemQuery.trim();
     if (!q) return [];
     return this.items()
-      .filter((i) => i.is_active && i.name.toLowerCase().includes(q))
+      .filter((i) => i.is_active && this.matchTokens(i.name, q))
       .slice(0, 8);
   }
 
+  /** item ซ้ำในใบได้เฉพาะใบเบิก (ใบรวมรายวัน คนละคนเบิกของเดียวกัน) — ชนิดอื่นรวมจำนวนที่บรรทัดเดิม */
+  isDupInSheet(i: StockItem): boolean {
+    return this.entryType !== 'issue' && this.entryLines.some((l) => l.item.id === i.id);
+  }
+
   addLine(item: StockItem): void {
+    if (this.isDupInSheet(item)) {
+      this.itemQuery = '';
+      const dupIdx = this.entryLines.findIndex((l) => l.item.id === item.id);
+      this.svc.presentToast(`"${item.name}" อยู่ในใบแล้ว — แก้จำนวนที่บรรทัดเดิม (ซ้ำได้เฉพาะใบเบิก)`, 'danger');
+      setTimeout(() => this.qtyInputs?.get(dupIdx)?.nativeElement.focus());
+      return;
+    }
     // default ผู้รับ = บรรทัดก่อนหน้า (คนเดียวมักเบิกหลายรายการติดกันบนกระดาษ)
     const prev = this.entryLines[this.entryLines.length - 1];
     this.entryLines.push({
@@ -186,13 +240,31 @@ export class StockComponent implements OnInit, OnDestroy {
       supplier: prev?.supplier ?? '', bill_no: prev?.bill_no ?? '',
     });
     this.itemQuery = '';
+    this.scheduleDraftSave('entry');
+    // โฟกัสช่องจำนวนของบรรทัดใหม่ทันที — คีย์ทั้งปึกโดยไม่ต้องแตะเมาส์
+    setTimeout(() => this.qtyInputs?.last?.nativeElement.focus());
   }
 
-  removeLine(idx: number): void { this.entryLines.splice(idx, 1); }
+  /** Enter ในช่องค้นหา = เพิ่ม suggestion ตัวแรก */
+  onSearchEnter(): void {
+    const first = this.itemSuggestions[0];
+    if (first) this.addLine(first);
+  }
+
+  /** Enter จากช่องท้ายบรรทัด = กลับไปช่องค้นหา คีย์รายการต่อไป */
+  focusEntrySearch(): void {
+    this.entrySearchRef?.nativeElement.focus();
+  }
+
+  removeLine(idx: number): void {
+    this.entryLines.splice(idx, 1);
+    this.scheduleDraftSave('entry');
+  }
 
   setEntryType(t: StockDocType): void {
     this.entryType = t;
     this.entryErr = '';
+    this.scheduleDraftSave('entry');
   }
 
   catName(id: string): string {
@@ -204,6 +276,17 @@ export class StockComponent implements OnInit, OnDestroy {
     if (this.entryLines.length === 0) { this.entryErr = 'ยังไม่มีรายการในใบ — ค้นหาแล้วเพิ่มก่อน'; return; }
     if (this.entryType === 'adjust' && !this.adjustReason.trim()) {
       this.entryErr = 'ต้องระบุเหตุผลการปรับยอด'; return;
+    }
+    // item ซ้ำได้เฉพาะใบเบิก — กันเคสสลับชนิดใบหลังเพิ่มบรรทัดไว้แล้ว
+    if (this.entryType !== 'issue') {
+      const seen = new Set<string>();
+      for (const l of this.entryLines) {
+        if (seen.has(l.item.id)) {
+          this.entryErr = `"${l.item.name}" ซ้ำในใบ — ${this.typeLabel[this.entryType]}ต้องรวมจำนวนไว้บรรทัดเดียว (ซ้ำได้เฉพาะใบเบิก)`;
+          return;
+        }
+        seen.add(l.item.id);
+      }
     }
     const lines: StockDocLineInput[] = [];
     for (const l of this.entryLines) {
@@ -245,6 +328,7 @@ export class StockComponent implements OnInit, OnDestroy {
       this.jobSerial = '';
       this.adjustReason = '';
       this.entryNote = '';
+      this.clearDraft('entry');
     } catch (err) {
       this.entryErr = err instanceof StockError ? err.message : 'บันทึกไม่สำเร็จ';
     } finally {
@@ -254,13 +338,46 @@ export class StockComponent implements OnInit, OnDestroy {
 
   // ── แท็บประวัติ ──
   historyType = signal<'' | StockDocType>('');
+  /** ค้นหาในประวัติ — ชื่อของ/คนเบิก/ร้าน/บิล/ใบงาน/คนคีย์ (คำถาม audit: "ใครเบิกอะไรเมื่อไหร่") */
+  historyQuery = signal('');
+  historyFrom = signal(''); // YYYY-MM-DD
+  historyTo = signal('');
   voidingId: string | null = null;
   voidReason = '';
 
   readonly filteredDocs = computed(() => {
     const t = this.historyType();
-    return this.docs().filter((d) => !t || d.type === t);
+    const q = this.historyQuery().trim();
+    const from = this.historyFrom();
+    const to = this.historyTo();
+    return this.docs().filter((d) => {
+      if (t && d.type !== t) return false;
+      if (from || to) {
+        const ds = d.doc_date instanceof Timestamp ? this.toDateStr(d.doc_date.toDate()) : '';
+        if (from && ds < from) return false;
+        if (to && ds > to) return false;
+      }
+      if (q) {
+        const hay = [
+          d.recorded_by_name ?? '', d.job_serial ?? '', d.note ?? '', d.adjust_reason ?? '',
+          ...d.lines.flatMap((l) => [l.item_name, l.recipient_name ?? '', l.supplier ?? '', l.bill_no ?? '']),
+        ].join(' ');
+        if (!this.matchTokens(hay, q)) return false;
+      }
+      return true;
+    });
   });
+
+  get hasHistoryFilter(): boolean {
+    return !!this.historyQuery().trim() || !!this.historyFrom() || !!this.historyTo() || !!this.historyType();
+  }
+
+  clearHistoryFilters(): void {
+    this.historyQuery.set('');
+    this.historyFrom.set('');
+    this.historyTo.set('');
+    this.historyType.set('');
+  }
 
   /** stock void ได้เฉพาะใบตัวเองที่คีย์วันนี้ (mirror ของกติกา BE — ตัวจริงบังคับที่ server) */
   canVoid(d: StockDocument): boolean {
@@ -315,7 +432,19 @@ export class StockComponent implements OnInit, OnDestroy {
   countNote = '';
   countSaving = false;
   countErr = '';
+  /** เคยกดส่งแล้วไม่ครบ → ไฮไลต์ช่องที่ยังว่างสีแดง */
+  countTried = false;
   lockingId: string | null = null;
+
+  isCountFilled(l: { counted: number | null }): boolean {
+    if (l.counted === null || (l.counted as unknown as string) === '') return false;
+    const v = Number(l.counted);
+    return Number.isFinite(v) && v >= 0;
+  }
+
+  get countFilledCount(): number {
+    return this.countLines.filter((l) => this.isCountFilled(l)).length;
+  }
 
   readonly pendingCounts = computed(() => this.counts().filter((c) => c.status === 'submitted'));
   readonly recentDoneCounts = computed(() =>
@@ -338,7 +467,9 @@ export class StockComponent implements OnInit, OnDestroy {
     );
     if (items.length === 0) { this.countErr = 'หมวดที่เลือกไม่มีรายการ'; return; }
     this.countMode = 'full';
+    this.countTried = false;
     this.countLines = items.map((item) => ({ item, counted: null }));
+    this.scheduleDraftSave('count');
   }
 
   /** สุ่มตรวจ ~10 ตัว: ของแพงที่ขยับ 7 วันล่าสุด + ตัวที่เคยมีส่วนต่าย (adjust) + สุ่มเติม */
@@ -384,7 +515,9 @@ export class StockComponent implements OnInit, OnDestroy {
 
     this.countMode = 'spot';
     this.countScope = [];
+    this.countTried = false;
     this.countLines = [...picked.values()].map((item) => ({ item, counted: null }));
+    this.scheduleDraftSave('count');
   }
 
   cancelCount(): void {
@@ -393,20 +526,28 @@ export class StockComponent implements OnInit, OnDestroy {
     this.paperConfirmed = false;
     this.countNote = '';
     this.countErr = '';
+    this.countTried = false;
+    this.clearDraft('count');
   }
 
   async submitCount(): Promise<void> {
     this.countErr = '';
     if (!this.countMode) return;
     if (!this.paperConfirmed) { this.countErr = 'ต้องติ๊กยืนยันว่ากระดาษเบิก/รับลงระบบครบแล้ว'; return; }
-    const lines: { item_id: string; counted_qty: number }[] = [];
-    for (const l of this.countLines) {
-      const v = Number(l.counted);
-      if (l.counted === null || (l.counted as unknown as string) === '' || !Number.isFinite(v) || v < 0) {
-        this.countErr = `"${l.item.name}" ยังไม่ได้กรอกจำนวนที่นับได้ (ไม่มีของ = 0)`; return;
-      }
-      lines.push({ item_id: l.item.id, counted_qty: v });
+    const missIdx = this.countLines.findIndex((l) => !this.isCountFilled(l));
+    if (missIdx >= 0) {
+      this.countTried = true;
+      const missing = this.countLines.length - this.countFilledCount;
+      this.countErr = `ยังกรอกไม่ครบ ${missing} รายการ (ไม่มีของ = 0) — พาไปช่องแรกที่ว่างแล้ว`;
+      const el = this.countInputs?.get(missIdx)?.nativeElement;
+      el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el?.focus({ preventScroll: true });
+      return;
     }
+    const lines: { item_id: string; counted_qty: number }[] = this.countLines.map((l) => ({
+      item_id: l.item.id,
+      counted_qty: Number(l.counted),
+    }));
     this.countSaving = true;
     try {
       await this.stock.submitCount({
@@ -536,17 +677,151 @@ export class StockComponent implements OnInit, OnDestroy {
     return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' }).slice(0, 7);
   }
 
+  // ── draft persistence (กันคีย์ค้างแล้วหลุด/refresh — เก็บใน localStorage เครื่องเดิม) ──
+  private static readonly ENTRY_DRAFT_KEY = 'nk_stock_entry_draft';
+  private static readonly COUNT_DRAFT_KEY = 'nk_stock_count_draft';
+  private draftsRestored = false;
+  private draftTimer: ReturnType<typeof setTimeout> | null = null;
+
+  scheduleDraftSave(kind: 'entry' | 'count'): void {
+    if (this.draftTimer) clearTimeout(this.draftTimer);
+    this.draftTimer = setTimeout(() => {
+      this.draftTimer = null;
+      this.saveDraft(kind);
+    }, 400);
+  }
+
+  private saveDraft(kind: 'entry' | 'count'): void {
+    try {
+      if (kind === 'entry') {
+        if (this.entryLines.length === 0) { localStorage.removeItem(StockComponent.ENTRY_DRAFT_KEY); return; }
+        localStorage.setItem(StockComponent.ENTRY_DRAFT_KEY, JSON.stringify({
+          type: this.entryType, date: this.entryDate, job_serial: this.jobSerial,
+          adjust_reason: this.adjustReason, note: this.entryNote,
+          lines: this.entryLines.map((l) => ({
+            item_id: l.item.id, qty: l.qty, unit_price: l.unit_price,
+            recipient_name: l.recipient_name, supplier: l.supplier, bill_no: l.bill_no,
+          })),
+        }));
+      } else {
+        if (!this.countMode) { localStorage.removeItem(StockComponent.COUNT_DRAFT_KEY); return; }
+        localStorage.setItem(StockComponent.COUNT_DRAFT_KEY, JSON.stringify({
+          mode: this.countMode, scope: this.countScope, note: this.countNote,
+          lines: this.countLines.map((l) => ({ item_id: l.item.id, counted: l.counted })),
+        }));
+      }
+    } catch { /* storage เต็ม/ถูกปิด — draft เป็นแค่ safety net ไม่ต้อง fail งานหลัก */ }
+  }
+
+  private clearDraft(kind: 'entry' | 'count'): void {
+    if (this.draftTimer) { clearTimeout(this.draftTimer); this.draftTimer = null; }
+    try {
+      localStorage.removeItem(kind === 'entry' ? StockComponent.ENTRY_DRAFT_KEY : StockComponent.COUNT_DRAFT_KEY);
+    } catch { /* noop */ }
+  }
+
+  /** กู้ draft หลัง items โหลดเสร็จ (บรรทัด draft อ้าง item_id — ต้อง map กลับเป็น StockItem) */
+  private restoreDrafts(): void {
+    const byId = new Map(this.items().map((i) => [i.id, i]));
+    try {
+      const raw = localStorage.getItem(StockComponent.ENTRY_DRAFT_KEY);
+      if (raw) {
+        const d = JSON.parse(raw);
+        const lines: EntryLine[] = (d.lines ?? [])
+          .map((l: { item_id: string; qty: number | null; unit_price: number | null; recipient_name?: string; supplier?: string; bill_no?: string }) => {
+            const item = byId.get(l.item_id);
+            return item ? {
+              item, qty: l.qty ?? null, unit_price: l.unit_price ?? null,
+              recipient_name: l.recipient_name ?? '', supplier: l.supplier ?? '', bill_no: l.bill_no ?? '',
+            } : null;
+          })
+          .filter((l: EntryLine | null): l is EntryLine => l !== null);
+        if (lines.length > 0 && this.canWrite) {
+          if (this.entryTypes.includes(d.type)) this.entryType = d.type;
+          if (typeof d.date === 'string' && d.date) this.entryDate = d.date;
+          this.jobSerial = d.job_serial ?? '';
+          this.adjustReason = d.adjust_reason ?? '';
+          this.entryNote = d.note ?? '';
+          this.entryLines = lines;
+          this.svc.presentToast(`กู้ใบลงบันทึกที่ค้างไว้ ${lines.length} บรรทัด — ยังไม่ได้บันทึก`, 'success');
+        } else {
+          localStorage.removeItem(StockComponent.ENTRY_DRAFT_KEY);
+        }
+      }
+    } catch { localStorage.removeItem(StockComponent.ENTRY_DRAFT_KEY); }
+    try {
+      const raw = localStorage.getItem(StockComponent.COUNT_DRAFT_KEY);
+      if (raw) {
+        const d = JSON.parse(raw);
+        const lines = (d.lines ?? [])
+          .map((l: { item_id: string; counted: number | null }) => {
+            const item = byId.get(l.item_id);
+            return item ? { item, counted: l.counted ?? null } : null;
+          })
+          .filter((l: { item: StockItem; counted: number | null } | null): l is { item: StockItem; counted: number | null } => l !== null);
+        if (lines.length > 0 && this.canWrite && (d.mode === 'full' || d.mode === 'spot')) {
+          this.countMode = d.mode;
+          this.countScope = Array.isArray(d.scope) ? d.scope : [];
+          this.countNote = d.note ?? '';
+          this.countLines = lines;
+          this.svc.presentToast(`กู้รอบนับที่ค้างไว้ ${lines.length} รายการ — ชุดเดิม นับต่อได้เลย`, 'success');
+        } else {
+          localStorage.removeItem(StockComponent.COUNT_DRAFT_KEY);
+        }
+      }
+    } catch { localStorage.removeItem(StockComponent.COUNT_DRAFT_KEY); }
+  }
+
+  /** refresh/ปิดแท็บ — flush draft ที่ยัง debounce ค้าง */
+  @HostListener('window:beforeunload')
+  flushDrafts(): void {
+    if (this.draftTimer) { clearTimeout(this.draftTimer); this.draftTimer = null; }
+    this.saveDraft('entry');
+    this.saveDraft('count');
+  }
+
   // ── lifecycle / utils ──
   constructor(
     private stock: StockService,
     private appState: AppStateService,
     private svc: ServiceService,
-  ) {}
+    private router: Router,
+    private route: ActivatedRoute,
+  ) {
+    // กู้ draft ครั้งเดียวหลัง items มาจาก listener (draft เก็บแค่ item_id)
+    effect(() => {
+      if (this.draftsRestored || this.items().length === 0) return;
+      this.draftsRestored = true;
+      this.restoreDrafts();
+    });
+  }
 
-  ngOnInit(): void { this.detach = this.stock.attachListeners(); }
-  ngOnDestroy(): void { this.detach?.(); }
+  ngOnInit(): void {
+    this.detach = this.stock.attachListeners();
+    // เปิดแท็บตาม ?tab= ใน URL (refresh/แชร์ลิงก์ไม่เด้งกลับคงเหลือ)
+    const t = this.route.snapshot.queryParamMap.get('tab') as Tab | null;
+    if (t && StockComponent.TABS.includes(t) && (this.canWrite || (t !== 'entry' && t !== 'count'))) {
+      this.tab = t;
+      if (t === 'report') this.loadReport();
+    }
+  }
 
-  setTab(t: Tab): void { this.tab = t; }
+  ngOnDestroy(): void {
+    this.flushDrafts();
+    this.detach?.();
+  }
+
+  setTab(t: Tab): void {
+    this.tab = t;
+    // เปิดแท็บรายงาน = โหลดเดือนปัจจุบันให้เลย ไม่ต้องกดคำนวณเอง
+    if (t === 'report' && !this.report && !this.reportLoading) this.loadReport();
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { tab: t === 'onhand' ? null : t },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+  }
 
   trackItem = (_i: number, it: StockItem): string => it.id;
   trackDoc = (_i: number, d: StockDocument): string => d.id;

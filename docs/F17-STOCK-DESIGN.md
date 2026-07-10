@@ -57,7 +57,7 @@
   - `type: 'opening' | 'receive' | 'issue' | 'adjust'`
   - `lines[]: { item_id, item_name(snapshot), unit(snapshot), qty, unit_price?,
     recipient_name (บังคับต่อบรรทัดเมื่อ issue — ชื่อใหม่ auto-เพิ่มเข้า stock_staff),
-    supplier?, bill_no? (ต่อบรรทัดเมื่อ receive) }` — **item ซ้ำในใบได้** (server รวม delta ต่อ item)
+    supplier?, bill_no? (ต่อบรรทัดเมื่อ receive) }` — **item ซ้ำในใบได้เฉพาะ issue** (คนละคนเบิกของเดียวกัน; server รวม delta ต่อ item — ชนิดอื่น FE บล็อกซ้ำ รวมจำนวนบรรทัดเดียว, ปรับ 2026-07-10)
   - issue: `job_serial?` (ระดับใบ) · adjust: `adjust_reason` บังคับ · `note?`
   - `recorded_by_uid/name`, `doc_date` (เลือกย้อนหลังได้ ดู §2.5; `is_backdated` server เซ็ตอัตโนมัติ), `status: 'active' | 'voided'`, `voided_by/reason/at` — void = ทั้งใบ (ผิดบรรทัดเดียว → void แล้วคีย์ใหม่ หรือ admin adjust)
 - **`stock_counts/{id}`** — รอบนับจริง: `scope_category_ids[]`, `type: 'full' | 'spot'`, `status: 'draft' → 'submitted' → 'locked'`, `lines[]: { item_id, counted_qty, ledger_qty(snapshot), diff }`, `counted_by`, `locked_by` → ตอน lock ระบบ gen `stock_docs` type=adjust ให้อัตโนมัติ (เหตุผลบังคับต่อบรรทัดที่ diff)

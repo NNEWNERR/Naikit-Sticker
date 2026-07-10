@@ -6,34 +6,37 @@
       <h2 class="text-h3 m-0">สต๊อกวัสดุอุปกรณ์ 📦</h2>
       <p class="text-body-sm text-ink-3 m-0">รับเข้า · ใบเบิก · คงเหลือ — ทุกการเคลื่อนไหวมีชื่อคนกำกับ (F17)</p>
     </div>
-    <span *ngIf="lowStockCount() > 0"
-          class="px-2 py-1 text-[12px] font-bold border-2 border-red-900 rounded bg-red-100 text-red-900">
-      ⚠ ใกล้หมด {{ lowStockCount() }} รายการ
-    </span>
+    <button type="button" *ngIf="lowStockCount() > 0" (click)="toggleLowOnly()"
+            [attr.aria-pressed]="lowOnly()"
+            class="px-2 py-1 text-body font-bold border-2 border-red-900 rounded cursor-pointer"
+            [class.bg-red-100]="!lowOnly()" [class.text-red-900]="!lowOnly()"
+            [class.bg-red-900]="lowOnly()" [class.text-white]="lowOnly()">
+      ⚠ ใกล้หมด {{ lowStockCount() }} รายการ{{ lowOnly() ? ' ✕' : '' }}
+    </button>
   </div>
 
-  <div class="flex gap-1 border-2 border-ink rounded-lg p-1 bg-surface-2 w-fit">
+  <div class="flex gap-1 border-2 border-ink rounded-lg p-1 bg-surface-2 w-fit max-w-full overflow-x-auto">
     <button type="button" (click)="setTab('onhand')"
-            class="px-3 py-1.5 rounded font-bold text-body-sm cursor-pointer border-2"
+            class="px-3 py-1.5 rounded font-bold text-body-sm cursor-pointer border-2 whitespace-nowrap shrink-0"
             [class.bg-brand]="tab === 'onhand'" [class.border-ink]="tab === 'onhand'"
             [class.border-transparent]="tab !== 'onhand'">คงเหลือ</button>
     <button type="button" *ngIf="canWrite" (click)="setTab('entry')"
-            class="px-3 py-1.5 rounded font-bold text-body-sm cursor-pointer border-2"
+            class="px-3 py-1.5 rounded font-bold text-body-sm cursor-pointer border-2 whitespace-nowrap shrink-0"
             [class.bg-brand]="tab === 'entry'" [class.border-ink]="tab === 'entry'"
             [class.border-transparent]="tab !== 'entry'">ลงบันทึก</button>
     <button type="button" *ngIf="canWrite" (click)="setTab('count')"
-            class="px-3 py-1.5 rounded font-bold text-body-sm cursor-pointer border-2"
+            class="px-3 py-1.5 rounded font-bold text-body-sm cursor-pointer border-2 whitespace-nowrap shrink-0"
             [class.bg-brand]="tab === 'count'" [class.border-ink]="tab === 'count'"
             [class.border-transparent]="tab !== 'count'">นับสต๊อก
       <span *ngIf="pendingCounts().length > 0"
-            class="ml-1 px-1.5 text-[11px] bg-red-100 text-red-900 border border-red-900 rounded-full">{{ pendingCounts().length }}</span>
+            class="ml-1 px-1.5 text-body-sm bg-red-100 text-red-900 border border-red-900 rounded-full">{{ pendingCounts().length }}</span>
     </button>
     <button type="button" (click)="setTab('report')"
-            class="px-3 py-1.5 rounded font-bold text-body-sm cursor-pointer border-2"
+            class="px-3 py-1.5 rounded font-bold text-body-sm cursor-pointer border-2 whitespace-nowrap shrink-0"
             [class.bg-brand]="tab === 'report'" [class.border-ink]="tab === 'report'"
             [class.border-transparent]="tab !== 'report'">รายงาน</button>
     <button type="button" (click)="setTab('history')"
-            class="px-3 py-1.5 rounded font-bold text-body-sm cursor-pointer border-2"
+            class="px-3 py-1.5 rounded font-bold text-body-sm cursor-pointer border-2 whitespace-nowrap shrink-0"
             [class.bg-brand]="tab === 'history'" [class.border-ink]="tab === 'history'"
             [class.border-transparent]="tab !== 'history'">ประวัติ</button>
   </div>
@@ -60,7 +63,7 @@
     <!-- panel เพิ่ม/แก้รายการ -->
     <div *ngIf="itemEdit" class="border-2 border-ink rounded-lg p-4 bg-amber-50 shadow-brutal flex flex-col gap-3">
       <h4 class="text-h4 m-0">{{ itemEdit.isNew ? 'เพิ่มรายการใหม่' : 'แก้ไข: ' + itemEdit.name }}</h4>
-      <p *ngIf="itemEdit.isNew && !isAdmin" class="text-[12px] text-ink-3 m-0">
+      <p *ngIf="itemEdit.isNew && !isAdmin" class="text-body text-ink-3 m-0">
         เพิ่มใหม่ได้เลย — แต่การแก้/ปิดรายการเดิมต้องให้แอดมินทำ
       </p>
       <p *ngIf="itemErr" class="text-body-sm text-red-700 font-semibold m-0">{{ itemErr }}</p>
@@ -97,19 +100,25 @@
       </div>
     </div>
 
-    <!-- รายการตามหมวด -->
+    <!-- รายการตามหมวด — พับ default, กางอัตโนมัติเมื่อค้นหา/กรอง -->
     <div *ngFor="let g of filteredGroups(); trackBy: trackGroup" class="flex flex-col gap-2">
-      <h4 class="text-h4 m-0">{{ g.cat.name }}
-        <span class="text-body-sm text-ink-3 font-normal">({{ g.items.length }})</span>
-        <span *ngIf="g.cat.count_cadence === 'quarterly'" class="text-[11px] text-ink-3 font-normal">· นับทุก 3 เดือน</span>
-      </h4>
-      <div class="flex flex-col gap-1.5">
+      <button type="button" (click)="toggleCat(g.cat.id)" [attr.aria-expanded]="isExpanded(g.cat.id)"
+              class="flex items-center gap-2 p-0 bg-transparent border-0 text-left cursor-pointer w-fit">
+        <span class="text-h4 font-extrabold">{{ isExpanded(g.cat.id) ? '▾' : '▸' }} {{ g.cat.name }}
+          <span class="text-body-sm text-ink-3 font-normal">({{ g.items.length }})</span>
+          <span *ngIf="g.cat.count_cadence === 'quarterly'" class="text-body-sm text-ink-3 font-normal">· นับทุก 3 เดือน</span>
+        </span>
+        <span *ngIf="lowInGroup(g) > 0"
+              class="px-1.5 py-0.5 text-body-sm font-bold border border-red-900 rounded-full bg-red-100 text-red-900">
+          ⚠ {{ lowInGroup(g) }}</span>
+      </button>
+      <div *ngIf="isExpanded(g.cat.id)" class="flex flex-col gap-1.5">
         <div *ngFor="let i of g.items; trackBy: trackItem"
              class="flex items-center justify-between gap-2 p-2.5 border-2 border-ink rounded bg-surface-2"
              [class.opacity-50]="!i.is_active">
           <div class="flex flex-col min-w-0">
             <span class="font-bold text-body-sm">{{ i.name }}</span>
-            <span class="text-[12px] text-ink-3">
+            <span class="text-body text-ink-3">
               {{ i.last_unit_price != null ? '฿' + i.last_unit_price + '/' + i.unit : 'ยังไม่มีราคา' }}
               <ng-container *ngIf="i.min_qty !== null"> · min {{ i.min_qty }}</ng-container>
             </span>
@@ -121,7 +130,7 @@
               {{ i.on_hand }} {{ i.unit }}
             </span>
             <button type="button" *ngIf="isAdmin" (click)="startEditItem(i)" [disabled]="!!itemEdit"
-                    class="px-2 py-1 text-[12px] border-2 border-ink rounded font-bold cursor-pointer disabled:opacity-50">แก้</button>
+                    class="px-2 py-1 text-body border-2 border-ink rounded font-bold cursor-pointer disabled:opacity-50">แก้</button>
           </div>
         </div>
       </div>
@@ -135,7 +144,9 @@
   <!-- ═══════════ แท็บ: ลงบันทึก (คีย์จากกระดาษ วันต่อวัน) ═══════════ -->
   <ng-container *ngIf="tab === 'entry' && canWrite">
 
-    <div class="border-2 border-ink rounded-lg p-4 bg-surface-2 shadow-brutal flex flex-col gap-3">
+    <!-- (input) → เซฟ draft ลง localStorage (debounce) — refresh/หลุดแล้วกู้กลับได้ -->
+    <div class="border-2 border-ink rounded-lg p-4 bg-surface-2 shadow-brutal flex flex-col gap-3"
+         (input)="scheduleDraftSave('entry')">
 
       <!-- ชนิด + วันที่ (คงไว้ข้ามใบ — คีย์ทั้งปึกของวันเดียวกันรวดเดียว) -->
       <div class="flex items-end gap-3 flex-wrap">
@@ -149,14 +160,14 @@
           <input type="date" [(ngModel)]="entryDate" [min]="minEntryDate" [max]="maxEntryDate"
                  class="input-base focus-ring font-num" />
         </label>
-        <span *ngIf="entryDate !== maxEntryDate" class="text-[12px] text-amber-800 font-semibold pb-2">
+        <span *ngIf="entryDate !== maxEntryDate" class="text-body text-amber-800 font-semibold pb-2">
           ↩ ลงย้อนหลัง (ปกติสำหรับกระดาษของวันก่อน — ย้อนได้สูงสุด {{ isAdmin ? 'ไม่จำกัด' : backdateLimit + ' วัน' }})
         </span>
       </div>
 
       <!-- field ตามชนิด -->
       <div *ngIf="entryType === 'issue'" class="flex flex-col gap-1">
-        <p class="text-[12px] text-ink-3 m-0">
+        <p class="text-body text-ink-3 m-0">
           ใบเบิกรวมรายวัน — ใครมาเบิกอะไรก็เพิ่มเป็นบรรทัด ระบุชื่อผู้รับต่อบรรทัด (ชื่อใหม่ระบบจำให้อัตโนมัติ)
         </p>
         <label class="flex flex-col gap-1 text-body-sm w-full md:w-1/2">เลขใบงาน (ถ้าทั้งใบผูกงานเดียว — ไม่บังคับ)
@@ -164,31 +175,36 @@
         </label>
       </div>
 
-      <p *ngIf="entryType === 'receive'" class="text-[12px] text-ink-3 m-0">
+      <p *ngIf="entryType === 'receive'" class="text-body text-ink-3 m-0">
         ใบรับรวมรายวัน — วันเดียวรับหลายร้าน/หลายบิลได้ ระบุผู้ขาย/บิล/ราคาต่อบรรทัด (ถ้ามี)
       </p>
 
       <label *ngIf="entryType === 'adjust'" class="flex flex-col gap-1 text-body-sm">
-        เหตุผลการปรับยอด * <span class="text-[11px] text-ink-3">(จำนวน + = เพิ่ม, − = ลด; ประวัติการปรับทั้งหมดขึ้นรายงานส่วนต่าง)</span>
+        เหตุผลการปรับยอด * <span class="text-body-sm text-ink-3">(จำนวน + = เพิ่ม, − = ลด; ประวัติการปรับทั้งหมดขึ้นรายงานส่วนต่าง)</span>
         <input type="text" [(ngModel)]="adjustReason" class="input-base focus-ring w-full"
                placeholder="เช่น นับจริง มิ.ย. ขาด 2 ม้วน" />
       </label>
 
-      <p *ngIf="entryType === 'opening'" class="text-[12px] text-ink-3 m-0">
+      <p *ngIf="entryType === 'opening'" class="text-body text-ink-3 m-0">
         ยอดตั้งต้น — ใช้ครั้งแรกหลังนับทั้งร้าน (จำนวน = ที่นับได้จริง; บวกทับของเดิม)
       </p>
 
       <!-- เพิ่มบรรทัด: ค้นหา item -->
       <div class="flex flex-col gap-1 relative">
-        <label class="text-body-sm font-semibold">เพิ่มรายการในใบ — พิมพ์ค้นหา</label>
-        <input type="text" [(ngModel)]="itemQuery" class="input-base focus-ring w-full"
+        <label class="text-body-sm font-semibold">เพิ่มรายการในใบ — พิมพ์ค้นหา
+          <span class="text-ink-3 font-normal">(Enter = เลือกรายการแรก · ค้นหลายคำได้ เช่น "ไวนิล 1.62")</span>
+        </label>
+        <input #entrySearch type="text" [(ngModel)]="itemQuery" (keydown.enter)="onSearchEnter()"
+               class="input-base focus-ring w-full"
                placeholder="เช่น ไวนิล 1.62 / กาวร้อน / ฟิวเจอร์บอร์ด" />
         <div *ngIf="itemSuggestions.length > 0"
              class="border-2 border-ink rounded bg-white shadow-brutal flex flex-col max-h-64 overflow-y-auto">
           <button *ngFor="let s of itemSuggestions" type="button" (click)="addLine(s)"
                   class="text-left px-3 py-2 hover:bg-amber-50 cursor-pointer border-b border-line last:border-b-0">
             <span class="font-semibold text-body-sm">{{ s.name }}</span>
-            <span class="text-[12px] text-ink-3"> · {{ catName(s.category_id) }} · คงเหลือ {{ s.on_hand }} {{ s.unit }}</span>
+            <span class="text-body text-ink-3"> · {{ catName(s.category_id) }} · คงเหลือ {{ s.on_hand }} {{ s.unit }}</span>
+            <span *ngIf="isDupInSheet(s)"
+                  class="ml-1 px-1.5 text-body-sm font-bold border border-amber-900 rounded bg-amber-100 text-amber-900">อยู่ในใบแล้ว</span>
           </button>
         </div>
       </div>
@@ -198,15 +214,17 @@
         <div *ngFor="let l of entryLines; let idx = index"
              class="flex items-center gap-2 p-2 border-2 border-ink rounded bg-white flex-wrap">
           <span class="font-semibold text-body-sm flex-1 min-w-[140px]">{{ l.item.name }}
-            <span class="text-[11px] text-ink-3">(เหลือ {{ l.item.on_hand }} {{ l.item.unit }})</span>
+            <span class="text-body-sm text-ink-3">(เหลือ {{ l.item.on_hand }} {{ l.item.unit }})</span>
           </span>
           <label class="flex items-center gap-1 text-body-sm">จำนวน
-            <input type="number" [(ngModel)]="l.qty" [min]="entryType === 'adjust' ? undefined : 0"
+            <input #qtyInput type="number" [(ngModel)]="l.qty" [min]="entryType === 'adjust' ? undefined : 0"
+                   (keydown.enter)="focusEntrySearch()"
                    class="input-base focus-ring w-24 font-num" [placeholder]="l.item.unit" />
-            <span class="text-ink-3 text-[12px]">{{ l.item.unit }}</span>
+            <span class="text-ink-3 text-body">{{ l.item.unit }}</span>
           </label>
           <label *ngIf="entryType === 'issue'" class="flex items-center gap-1 text-body-sm">ผู้รับ *
             <input type="text" [(ngModel)]="l.recipient_name" list="staffList"
+                   (keydown.enter)="focusEntrySearch()"
                    class="input-base focus-ring w-36" placeholder="ใครเบิก" />
           </label>
           <ng-container *ngIf="entryType === 'receive'">
@@ -222,7 +240,7 @@
             </label>
           </ng-container>
           <button type="button" (click)="removeLine(idx)"
-                  class="px-2 py-1 text-[12px] border-2 border-ink rounded bg-surface-3 font-bold cursor-pointer">✕</button>
+                  class="px-2 py-1 text-body border-2 border-ink rounded bg-surface-3 font-bold cursor-pointer">✕</button>
         </div>
       </div>
       <datalist id="staffList">
@@ -236,7 +254,7 @@
       <p *ngIf="entryErr" class="text-body-sm text-red-700 font-semibold m-0">{{ entryErr }}</p>
 
       <div class="flex items-center justify-between gap-2 flex-wrap">
-        <span *ngIf="savedCount > 0" class="text-[12px] text-ink-3">บันทึกแล้ว {{ savedCount }} ใบในรอบนี้ — วันที่ค้างไว้ให้ คีย์ใบต่อไปได้เลย</span>
+        <span *ngIf="savedCount > 0" class="text-body text-ink-3">บันทึกแล้ว {{ savedCount }} ใบในรอบนี้ — วันที่ค้างไว้ให้ คีย์ใบต่อไปได้เลย</span>
         <button type="button" (click)="saveEntry()" [disabled]="entrySaving || entryLines.length === 0"
                 class="ml-auto px-4 py-2 bg-brand border-2 border-ink rounded font-bold cursor-pointer disabled:opacity-50 shadow-brutal">
           {{ entrySaving ? 'กำลังบันทึก…' : 'บันทึก' + typeLabel[entryType] }}
@@ -253,26 +271,26 @@
       <h4 class="text-h4 m-0">รอบนับที่รอตรวจ ({{ pendingCounts().length }})</h4>
       <div *ngFor="let c of pendingCounts()" class="p-2.5 border-2 border-amber-900 rounded bg-amber-50 flex flex-col gap-1">
         <div class="flex items-center gap-2 flex-wrap">
-          <span class="px-2 py-0.5 text-[11px] font-bold border-2 border-ink rounded bg-surface-2">
+          <span class="px-2 py-0.5 text-body-sm font-bold border-2 border-ink rounded bg-surface-2">
             {{ c.type === 'full' ? 'นับเต็ม' : 'สุ่มตรวจ' }}</span>
           <span class="font-num text-body-sm font-bold">{{ countDateStr(c) }}</span>
-          <span class="text-[12px] text-ink-3">นับโดย {{ c.counted_by_name }} · {{ c.lines.length }} รายการ</span>
-          <span class="text-[12px] font-bold" [class.text-red-700]="countDiffs(c) > 0" [class.text-green-700]="countDiffs(c) === 0">
+          <span class="text-body text-ink-3">นับโดย {{ c.counted_by_name }} · {{ c.lines.length }} รายการ</span>
+          <span class="text-body font-bold" [class.text-red-700]="countDiffs(c) > 0" [class.text-green-700]="countDiffs(c) === 0">
             {{ countDiffs(c) > 0 ? 'ไม่ตรง ' + countDiffs(c) + ' รายการ' : 'ตรงทั้งหมด ✓' }}</span>
           <ng-container *ngIf="isAdmin">
             <button type="button" *ngIf="isBaselineCount(c)" (click)="lockCount(c, true)" [disabled]="lockingId !== null"
-                    class="ml-auto px-3 py-1 text-[12px] border-2 border-purple-900 rounded bg-purple-100 text-purple-900 font-bold cursor-pointer disabled:opacity-50">
+                    class="ml-auto px-3 py-1 text-body border-2 border-purple-900 rounded bg-purple-100 text-purple-900 font-bold cursor-pointer disabled:opacity-50">
               {{ lockingId === c.id ? 'กำลังล็อก…' : '🏁 ล็อกเป็นยอดตั้งต้น (baseline)' }}</button>
             <button type="button" (click)="lockCount(c)" [disabled]="lockingId !== null"
-                    class="px-3 py-1 text-[12px] border-2 border-ink rounded bg-brand font-bold cursor-pointer disabled:opacity-50"
+                    class="px-3 py-1 text-body border-2 border-ink rounded bg-brand font-bold cursor-pointer disabled:opacity-50"
                     [class.ml-auto]="!isBaselineCount(c)">
               {{ lockingId === c.id ? 'กำลังล็อก…' : 'ล็อก + สร้างใบปรับ' }}</button>
             <button type="button" (click)="discardCount(c)" [disabled]="lockingId !== null"
-                    class="px-3 py-1 text-[12px] border-2 border-ink rounded bg-surface-3 font-bold cursor-pointer disabled:opacity-50">ทิ้ง</button>
+                    class="px-3 py-1 text-body border-2 border-ink rounded bg-surface-3 font-bold cursor-pointer disabled:opacity-50">ทิ้ง</button>
           </ng-container>
         </div>
         <!-- แถวที่ไม่ตรง (โชว์เฉพาะ diff) -->
-        <ul *ngIf="countDiffs(c) > 0" class="text-[12px] m-0 pl-4">
+        <ul *ngIf="countDiffs(c) > 0" class="text-body m-0 pl-4">
           <li *ngFor="let l of c.lines">
             <ng-container *ngIf="l.diff !== 0">
               {{ l.item_name }} — นับได้ {{ l.counted_qty }} / ระบบ {{ l.ledger_qty }} {{ l.unit }}
@@ -286,9 +304,9 @@
     <!-- เริ่มรอบนับใหม่ -->
     <div *ngIf="!countMode" class="border-2 border-ink rounded-lg p-4 bg-surface-2 shadow-brutal flex flex-col gap-3">
       <h4 class="text-h4 m-0">เริ่มรอบนับใหม่</h4>
-      <p class="text-[12px] text-ink-3 m-0">นับเต็ม: เดือนละครั้งต่อหมวด (ตรายางทุก 3 เดือน) · สุ่มตรวจ: ~10 รายการ/สัปดาห์ ระบบเลือกให้</p>
+      <p class="text-body text-ink-3 m-0">นับเต็ม: เดือนละครั้งต่อหมวด (ตรายางทุก 3 เดือน) · สุ่มตรวจ: ~10 รายการ/สัปดาห์ ระบบเลือกให้</p>
       <div class="flex flex-wrap gap-2">
-        <label *ngFor="let c of categories()" class="flex items-center gap-1.5 px-2 py-1.5 border-2 border-ink rounded bg-white text-[12px] font-semibold cursor-pointer"
+        <label *ngFor="let c of categories()" class="flex items-center gap-1.5 px-2 py-1.5 border-2 border-ink rounded bg-white text-body font-semibold cursor-pointer"
                [class.bg-amber-100]="countScope.includes(c.id)">
           <input type="checkbox" [checked]="countScope.includes(c.id)" (change)="toggleScope(c.id)" class="w-4 h-4" />
           {{ c.name }}<span *ngIf="c.count_cadence === 'quarterly'" class="text-ink-3 font-normal">·3ด</span>
@@ -304,27 +322,33 @@
                 class="px-3 py-2 bg-surface-2 border-2 border-ink rounded font-bold cursor-pointer">
           🖨 พิมพ์ใบนับ{{ countScope.length > 0 ? ' (หมวดที่เลือก)' : ' (ทุกหมวด)' }}</button>
       </div>
-      <p class="text-[11px] text-ink-3 m-0">เดินนับด้วยกระดาษ: พิมพ์ใบนับ → นับด้วยปากกา → กลับมากด "เริ่มนับเต็ม" หมวดเดิมแล้วคีย์ตามใบ</p>
+      <p class="text-body-sm text-ink-3 m-0">เดินนับด้วยกระดาษ: พิมพ์ใบนับ → นับด้วยปากกา → กลับมากด "เริ่มนับเต็ม" หมวดเดิมแล้วคีย์ตามใบ</p>
     </div>
 
     <!-- ฟอร์มนับ (blind — ไม่โชว์ยอดระบบ) -->
-    <div *ngIf="countMode" class="border-2 border-ink rounded-lg p-4 bg-surface-2 shadow-brutal flex flex-col gap-3">
+    <div *ngIf="countMode" class="border-2 border-ink rounded-lg p-4 bg-surface-2 shadow-brutal flex flex-col gap-3"
+         (input)="scheduleDraftSave('count')">
       <div class="flex items-center justify-between flex-wrap gap-2">
-        <h4 class="text-h4 m-0">{{ countMode === 'full' ? 'นับเต็ม' : 'สุ่มตรวจ' }} — {{ countLines.length }} รายการ</h4>
+        <h4 class="text-h4 m-0">{{ countMode === 'full' ? 'นับเต็ม' : 'สุ่มตรวจ' }}
+          — นับแล้ว <span class="font-num">{{ countFilledCount }}/{{ countLines.length }}</span> รายการ</h4>
         <div class="flex gap-2">
           <button type="button" *ngIf="countMode === 'spot'" (click)="printSpotSheet()"
-                  class="px-2 py-1 text-[12px] border-2 border-ink rounded bg-surface-2 font-bold cursor-pointer">🖨 พิมพ์ใบนับชุดนี้</button>
-          <button type="button" (click)="cancelCount()" class="px-2 py-1 text-[12px] border-2 border-ink rounded bg-surface-3 font-bold cursor-pointer">ยกเลิก</button>
+                  class="px-2 py-1 text-body border-2 border-ink rounded bg-surface-2 font-bold cursor-pointer">🖨 พิมพ์ใบนับชุดนี้</button>
+          <button type="button" (click)="cancelCount()" class="px-2 py-1 text-body border-2 border-ink rounded bg-surface-3 font-bold cursor-pointer">ยกเลิก</button>
         </div>
       </div>
-      <p class="text-[12px] text-ink-3 m-0">เดินนับของจริงแล้วกรอกตามที่เห็น — ระบบตั้งใจ<b>ไม่โชว์ยอดคงเหลือ</b>ระหว่างนับ (กันนับตามตัวเลข) · ไม่มีของ = 0
-        <ng-container *ngIf="countMode === 'spot'"><br />⚠ ถ้าพิมพ์ใบนับไปเดินนับ <b>อย่าปิดหน้านี้</b> — ชุดสุ่มจะเปลี่ยนถ้าเริ่มใหม่</ng-container></p>
+      <p class="text-body text-ink-3 m-0">เดินนับของจริงแล้วกรอกตามที่เห็น — ระบบตั้งใจ<b>ไม่โชว์ยอดคงเหลือ</b>ระหว่างนับ (กันนับตามตัวเลข) · ไม่มีของ = 0
+        <ng-container *ngIf="countMode === 'spot'"><br />💾 ชุดนับถูกเซฟไว้ในเครื่องนี้ — ปิด/refresh แล้วกลับมาคีย์ต่อได้ (แต่ถ้ากด "สุ่มตรวจ" ใหม่ ชุดจะเปลี่ยน)</ng-container></p>
       <div class="flex flex-col gap-1">
-        <div *ngFor="let l of countLines" class="flex items-center gap-2 p-1.5 border-2 border-ink rounded bg-white">
+        <div *ngFor="let l of countLines" class="flex items-center gap-2 p-1.5 border-2 rounded"
+             [class.border-ink]="!(countTried && !isCountFilled(l))"
+             [class.bg-white]="!(countTried && !isCountFilled(l))"
+             [class.border-red-700]="countTried && !isCountFilled(l)"
+             [class.bg-red-50]="countTried && !isCountFilled(l)">
           <span class="text-body-sm font-semibold flex-1 min-w-0">{{ l.item.name }}
-            <span class="text-[11px] text-ink-3">· {{ catName(l.item.category_id) }}</span></span>
-          <input type="number" min="0" [(ngModel)]="l.counted" class="input-base focus-ring w-24 font-num" placeholder="นับได้" />
-          <span class="text-[12px] text-ink-3 w-12">{{ l.item.unit }}</span>
+            <span class="text-body-sm text-ink-3">· {{ catName(l.item.category_id) }}</span></span>
+          <input #countInput type="number" min="0" [(ngModel)]="l.counted" class="input-base focus-ring w-24 font-num" placeholder="นับได้" />
+          <span class="text-body text-ink-3 w-12">{{ l.item.unit }}</span>
         </div>
       </div>
       <label class="flex flex-col gap-1 text-body-sm">หมายเหตุ (ไม่บังคับ)
@@ -343,7 +367,7 @@
     <!-- รอบนับล่าสุดที่จบแล้ว -->
     <div *ngIf="recentDoneCounts().length > 0" class="flex flex-col gap-1">
       <h4 class="text-h4 m-0">รอบนับล่าสุด</h4>
-      <div *ngFor="let c of recentDoneCounts()" class="flex items-center gap-2 p-2 border-2 border-ink rounded bg-surface-2 text-[12px] flex-wrap"
+      <div *ngFor="let c of recentDoneCounts()" class="flex items-center gap-2 p-2 border-2 border-ink rounded bg-surface-2 text-body flex-wrap"
            [class.opacity-60]="c.status === 'discarded'">
         <span class="font-bold">{{ c.type === 'full' ? 'นับเต็ม' : 'สุ่มตรวจ' }}</span>
         <span class="font-num">{{ countDateStr(c) }}</span>
@@ -379,7 +403,7 @@
       <!-- รายการที่ต้องดู -->
       <div *ngIf="reportWatchRows.length > 0" class="p-2.5 border-2 border-red-900 rounded bg-red-50 flex flex-col gap-1">
         <span class="font-bold text-body-sm">รายการที่ต้องดู ({{ reportWatchRows.length }})</span>
-        <ul class="text-[12px] m-0 pl-4">
+        <ul class="text-body m-0 pl-4">
           <li *ngFor="let r of reportWatchRows">
             {{ r.name }} —
             <ng-container *ngIf="r.adjusted !== 0">ส่วนต่างนับจริง <b [class.text-red-700]="r.adjusted < 0">{{ r.adjusted > 0 ? '+' : '' }}{{ r.adjusted }} {{ r.unit }}</b></ng-container>
@@ -391,9 +415,9 @@
       <!-- ตารางรายวัสดุต่อหมวด -->
       <div *ngFor="let g of reportGroups" class="flex flex-col gap-1">
         <h4 class="text-h4 m-0 flex items-baseline gap-2">{{ g.cat.name }}
-          <span class="text-[12px] text-ink-3 font-normal">มูลค่าคงเหลือ ฿{{ g.totalValue | number:'1.0-2' }}</span></h4>
+          <span class="text-body text-ink-3 font-normal">มูลค่าคงเหลือ ฿{{ g.totalValue | number:'1.0-2' }}</span></h4>
         <div class="overflow-x-auto">
-          <table class="w-full text-[12px] border-collapse">
+          <table class="w-full text-body border-collapse">
             <thead>
               <tr class="bg-surface-3">
                 <th class="border-2 border-ink px-2 py-1 text-left">รายการ</th>
@@ -429,13 +453,30 @@
   <!-- ═══════════ แท็บ: ประวัติ ═══════════ -->
   <ng-container *ngIf="tab === 'history'">
 
+    <!-- ค้นหา + ช่วงวันที่ — ตอบคำถาม audit "ใครเบิกอะไรไปเมื่อไหร่" ไม่ต้องไล่อ่านทุกใบ -->
+    <div class="flex items-end gap-2 flex-wrap">
+      <input type="text" [ngModel]="historyQuery()" (ngModelChange)="historyQuery.set($event)"
+             class="input-base focus-ring flex-1 min-w-[180px]"
+             placeholder="ค้นหา ชื่อของ / คนเบิก / ร้าน / เลขบิล / ใบงาน / คนคีย์…" />
+      <label class="flex flex-col gap-1 text-body-sm">ตั้งแต่
+        <input type="date" [ngModel]="historyFrom()" (ngModelChange)="historyFrom.set($event)"
+               class="input-base focus-ring font-num" />
+      </label>
+      <label class="flex flex-col gap-1 text-body-sm">ถึง
+        <input type="date" [ngModel]="historyTo()" (ngModelChange)="historyTo.set($event)"
+               class="input-base focus-ring font-num" />
+      </label>
+      <button type="button" *ngIf="hasHistoryFilter" (click)="clearHistoryFilters()"
+              class="px-3 py-2 text-body-sm border-2 border-ink rounded bg-surface-3 font-bold cursor-pointer">ล้างตัวกรอง</button>
+    </div>
+
     <div class="flex gap-1 flex-wrap">
       <button type="button" (click)="historyType.set('')"
-              class="px-3 py-1.5 rounded font-bold text-[12px] cursor-pointer border-2 border-ink"
+              class="px-3 py-1.5 rounded font-bold text-body cursor-pointer border-2 border-ink"
               [class.bg-brand]="historyType() === ''" [class.bg-surface-2]="historyType() !== ''">ทั้งหมด</button>
       <button *ngFor="let t of ['receive', 'issue', 'adjust', 'opening']" type="button"
               (click)="historyType.set($any(t))"
-              class="px-3 py-1.5 rounded font-bold text-[12px] cursor-pointer border-2 border-ink"
+              class="px-3 py-1.5 rounded font-bold text-body cursor-pointer border-2 border-ink"
               [class.bg-brand]="historyType() === t" [class.bg-surface-2]="historyType() !== t">
         {{ typeLabel[$any(t)] }}</button>
     </div>
@@ -445,39 +486,40 @@
            class="p-2.5 border-2 border-ink rounded bg-surface-2 flex flex-col gap-1"
            [class.opacity-60]="d.status === 'voided'">
         <div class="flex items-center gap-2 flex-wrap">
-          <span class="px-2 py-0.5 text-[11px] font-bold border-2 rounded" [class]="typeBadgeClass(d.type)">
+          <span class="px-2 py-0.5 text-body-sm font-bold border-2 rounded" [class]="typeBadgeClass(d.type)">
             {{ typeLabel[d.type] }}</span>
           <span class="font-num font-bold text-body-sm">{{ docDateStr(d) }}</span>
-          <span *ngIf="d.is_backdated" class="text-[11px] text-ink-3">↩ ลงย้อนหลัง</span>
-          <span class="text-[12px] text-ink-3">คีย์โดย {{ d.recorded_by_name || '—' }}</span>
-          <span class="text-[12px] text-ink-3">{{ d.lines.length }} บรรทัด</span>
-          <span *ngIf="d.job_serial" class="text-[12px] text-ink-3">ใบงาน {{ d.job_serial }}</span>
+          <span *ngIf="d.is_backdated" class="text-body-sm text-ink-3">↩ ลงย้อนหลัง</span>
+          <span class="text-body text-ink-3">คีย์โดย {{ d.recorded_by_name || '—' }}</span>
+          <span class="text-body text-ink-3">{{ d.lines.length }} บรรทัด</span>
+          <span *ngIf="d.job_serial" class="text-body text-ink-3">ใบงาน {{ d.job_serial }}</span>
           <span *ngIf="d.status === 'voided'"
-                class="px-2 py-0.5 text-[11px] font-bold border-2 border-red-900 rounded bg-red-100 text-red-900">
+                class="px-2 py-0.5 text-body-sm font-bold border-2 border-red-900 rounded bg-red-100 text-red-900">
             ยกเลิกแล้ว: {{ d.voided_reason }}</span>
           <button type="button" *ngIf="canVoid(d)" (click)="startVoid(d)"
-                  class="ml-auto px-2 py-1 text-[11px] border-2 border-ink rounded bg-surface-3 font-bold cursor-pointer">
+                  class="ml-auto px-2 py-1 text-body-sm border-2 border-ink rounded bg-surface-3 font-bold cursor-pointer">
             ยกเลิกใบนี้</button>
         </div>
-        <ul class="text-[12px] m-0 pl-4 flex flex-col gap-0.5" [class.line-through]="d.status === 'voided'">
+        <ul class="text-body m-0 pl-4 flex flex-col gap-0.5" [class.line-through]="d.status === 'voided'">
           <li *ngFor="let l of d.lines">{{ lineLabel(l) }}</li>
         </ul>
-        <p *ngIf="d.adjust_reason" class="text-[12px] text-amber-800 m-0">เหตุผล: {{ d.adjust_reason }}</p>
-        <p *ngIf="d.note" class="text-[12px] text-ink-3 m-0">หมายเหตุ: {{ d.note }}</p>
+        <p *ngIf="d.adjust_reason" class="text-body text-amber-800 m-0">เหตุผล: {{ d.adjust_reason }}</p>
+        <p *ngIf="d.note" class="text-body text-ink-3 m-0">หมายเหตุ: {{ d.note }}</p>
 
         <!-- void confirm inline -->
         <div *ngIf="voidingId === d.id" class="flex items-center gap-2 flex-wrap p-2 border-2 border-red-900 rounded bg-red-50">
           <input type="text" [(ngModel)]="voidReason" class="input-base focus-ring flex-1 min-w-[160px]"
                  placeholder="เหตุผลการยกเลิก (บังคับ)" />
           <button type="button" (click)="confirmVoid()"
-                  class="px-3 py-1.5 text-[12px] border-2 border-red-900 rounded bg-red-100 text-red-900 font-bold cursor-pointer">
+                  class="px-3 py-1.5 text-body border-2 border-red-900 rounded bg-red-100 text-red-900 font-bold cursor-pointer">
             ยืนยันยกเลิก</button>
           <button type="button" (click)="cancelVoid()"
-                  class="px-3 py-1.5 text-[12px] border-2 border-ink rounded bg-surface-2 font-bold cursor-pointer">ไม่ยกเลิก</button>
+                  class="px-3 py-1.5 text-body border-2 border-ink rounded bg-surface-2 font-bold cursor-pointer">ไม่ยกเลิก</button>
         </div>
       </div>
     </div>
 
-    <p *ngIf="filteredDocs().length === 0" class="text-body-sm text-ink-3 m-0">ยังไม่มีเอกสารในระบบ</p>
+    <p *ngIf="filteredDocs().length === 0" class="text-body-sm text-ink-3 m-0">
+      {{ hasHistoryFilter ? 'ไม่พบเอกสารตามตัวกรอง — ลองล้างตัวกรองหรือขยายช่วงวันที่' : 'ยังไม่มีเอกสารในระบบ' }}</p>
   </ng-container>
 </div>
